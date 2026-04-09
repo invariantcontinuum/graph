@@ -1,3 +1,11 @@
+// TODO(v0.2): Replace the 1x1 placeholder atlas with a real MSDF font atlas.
+// The text rendering pipeline is structurally complete (shaders, quad generation,
+// atlas sampling) but currently uses a single white pixel as the atlas texture,
+// so labels will not render readable text. To enable real text:
+//   1. Generate an MSDF atlas using msdf-atlas-gen or equivalent tooling.
+//   2. Embed the atlas PNG as a const byte array or load it at runtime.
+//   3. Update glyph metrics (advance widths, UV coordinates) to match the atlas layout.
+
 use web_sys::{
     WebGl2RenderingContext as GL, WebGlBuffer, WebGlProgram, WebGlTexture, WebGlUniformLocation,
     WebGlVertexArrayObject,
