@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-// TODO: implement engine module (Task 2)
-// pub mod engine;
+pub mod engine;
 pub mod protocol;
 pub mod websocket;
 
