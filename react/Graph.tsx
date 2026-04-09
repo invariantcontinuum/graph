@@ -70,7 +70,7 @@ export function Graph({
 
     async function init() {
       // Lazy-load the WASM module
-      const wasm = await import("../crates/graph-wasm/pkg/graph_wasm");
+      const wasm = await import("../graph_wasm.js");
       await wasm.default();
       if (cancelled) return;
       wasmRef.current = wasm;
