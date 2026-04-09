@@ -49,7 +49,9 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo install wasm-pack
-      - run: wasm-pack build --target web --out-dir ../../pkg crates/graph-wasm
+      - run: wasm-pack build --target web --out-dir ../../pkg crates/graph-worker-wasm --out-name graph_worker_wasm
+      - run: wasm-pack build --target web --out-dir ../../pkg-main crates/graph-main-wasm --out-name graph_main_wasm
+      - run: cp pkg-main/graph_main_wasm* pkg/ && rm -rf pkg-main
       - uses: actions/upload-artifact@v5
         with:
           name: wasm-pkg
@@ -66,7 +68,8 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo install wasm-pack
-      - run: wasm-pack test --headless --chrome crates/graph-wasm
+      - run: wasm-pack test --headless --chrome crates/graph-worker-wasm
+      - run: wasm-pack test --headless --chrome crates/graph-main-wasm
 
   bench:
     name: Benchmarks
@@ -99,7 +102,12 @@ jobs:
           node-version: 22
           registry-url: https://npm.pkg.github.com
       - run: cargo install wasm-pack
-      - run: wasm-pack build --target web --out-dir ../../pkg crates/graph-wasm
+      - name: Build both WASM targets
+        run: |
+          wasm-pack build --target web --out-dir ../../pkg crates/graph-worker-wasm --out-name graph_worker_wasm
+          wasm-pack build --target web --out-dir ../../pkg-main crates/graph-main-wasm --out-name graph_main_wasm
+          cp pkg-main/graph_main_wasm* pkg/
+          rm -rf pkg-main
       - name: Copy React wrapper into pkg
         run: |
           cp -r react/ pkg/react/
