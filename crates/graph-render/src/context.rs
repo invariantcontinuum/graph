@@ -38,8 +38,7 @@ impl RenderContext {
             self.canvas.set_height(display_h);
             self.width = display_w;
             self.height = display_h;
-            self.gl
-                .viewport(0, 0, display_w as i32, display_h as i32);
+            self.gl.viewport(0, 0, display_w as i32, display_h as i32);
         }
     }
 
@@ -67,10 +66,7 @@ impl RenderContext {
     pub fn link_program(&self, vert_src: &str, frag_src: &str) -> Result<WebGlProgram, String> {
         let vert = self.compile_shader(GL::VERTEX_SHADER, vert_src)?;
         let frag = self.compile_shader(GL::FRAGMENT_SHADER, frag_src)?;
-        let program = self
-            .gl
-            .create_program()
-            .ok_or("Cannot create program")?;
+        let program = self.gl.create_program().ok_or("Cannot create program")?;
         self.gl.attach_shader(&program, &vert);
         self.gl.attach_shader(&program, &frag);
         self.gl.link_program(&program);

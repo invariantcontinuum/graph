@@ -97,16 +97,8 @@ impl PickBuffer {
             None,
         )
         .map_err(|e| format!("tex_image_2d failed: {:?}", e))?;
-        gl.tex_parameteri(
-            GL::TEXTURE_2D,
-            GL::TEXTURE_MIN_FILTER,
-            GL::NEAREST as i32,
-        );
-        gl.tex_parameteri(
-            GL::TEXTURE_2D,
-            GL::TEXTURE_MAG_FILTER,
-            GL::NEAREST as i32,
-        );
+        gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_MIN_FILTER, GL::NEAREST as i32);
+        gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_MAG_FILTER, GL::NEAREST as i32);
 
         gl.bind_framebuffer(GL::FRAMEBUFFER, Some(&framebuffer));
         gl.framebuffer_texture_2d(
@@ -144,18 +136,17 @@ impl PickBuffer {
         self.width = width;
         self.height = height;
         gl.bind_texture(GL::TEXTURE_2D, Some(&self.color_texture));
-        let _ = gl
-            .tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_u8_array(
-                GL::TEXTURE_2D,
-                0,
-                GL::RGBA8 as i32,
-                width as i32,
-                height as i32,
-                0,
-                GL::RGBA,
-                GL::UNSIGNED_BYTE,
-                None,
-            );
+        let _ = gl.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_u8_array(
+            GL::TEXTURE_2D,
+            0,
+            GL::RGBA8 as i32,
+            width as i32,
+            height as i32,
+            0,
+            GL::RGBA,
+            GL::UNSIGNED_BYTE,
+            None,
+        );
         gl.bind_texture(GL::TEXTURE_2D, None);
     }
 
@@ -197,14 +188,21 @@ impl PickBuffer {
         let mut pixel = [0u8; 4];
         // Flip y for GL coordinate system (origin bottom-left)
         let gl_y = self.height as i32 - 1 - y;
-        let _ = gl.read_pixels_with_opt_u8_array(x, gl_y, 1, 1, GL::RGBA, GL::UNSIGNED_BYTE, Some(&mut pixel));
+        let _ = gl.read_pixels_with_opt_u8_array(
+            x,
+            gl_y,
+            1,
+            1,
+            GL::RGBA,
+            GL::UNSIGNED_BYTE,
+            Some(&mut pixel),
+        );
         gl.bind_framebuffer(GL::FRAMEBUFFER, None);
 
         if pixel[3] == 0 {
             return None;
         }
-        let index =
-            pixel[0] as usize + (pixel[1] as usize) * 256 + (pixel[2] as usize) * 65536;
+        let index = pixel[0] as usize + (pixel[1] as usize) * 256 + (pixel[2] as usize) * 65536;
         Some(index)
     }
 

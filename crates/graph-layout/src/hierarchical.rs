@@ -1,5 +1,5 @@
-use graph_core::graph::GraphStore;
 use crate::LayoutEngine;
+use graph_core::graph::GraphStore;
 use std::collections::{HashMap, VecDeque};
 
 const LAYER_SPACING: f32 = 120.0;
@@ -12,7 +12,10 @@ pub struct HierarchicalLayout {
 
 impl HierarchicalLayout {
     pub fn new() -> Self {
-        Self { positions: Vec::new(), converged: false }
+        Self {
+            positions: Vec::new(),
+            converged: false,
+        }
     }
 
     fn assign_layers(&self, graph: &GraphStore) -> HashMap<String, u32> {
@@ -87,7 +90,8 @@ impl LayoutEngine for HierarchicalLayout {
             let total_width = (nodes.len() as f32 - 1.0) * NODE_SPACING;
             let start_x = -total_width / 2.0;
             for (i, id) in nodes.iter().enumerate() {
-                self.positions.push((id.clone(), start_x + i as f32 * NODE_SPACING, y));
+                self.positions
+                    .push((id.clone(), start_x + i as f32 * NODE_SPACING, y));
             }
         }
         self.converged = true;

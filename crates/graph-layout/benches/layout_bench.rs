@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use graph_core::graph::GraphStore;
 use graph_core::types::*;
 use graph_layout::{ForceLayout, LayoutEngine};

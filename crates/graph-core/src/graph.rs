@@ -1,6 +1,6 @@
+use crate::types::{EdgeData, NodeData};
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
-use crate::types::{NodeData, EdgeData};
 
 pub struct GraphStore {
     graph: DiGraph<NodeData, EdgeData>,
@@ -53,11 +53,16 @@ impl GraphStore {
     }
 
     pub fn get_node(&self, id: &str) -> Option<&NodeData> {
-        self.node_index.get(id).and_then(|&idx| self.graph.node_weight(idx))
+        self.node_index
+            .get(id)
+            .and_then(|&idx| self.graph.node_weight(idx))
     }
 
     pub fn get_node_mut(&mut self, id: &str) -> Option<&mut NodeData> {
-        self.node_index.get(id).copied().and_then(|idx| self.graph.node_weight_mut(idx))
+        self.node_index
+            .get(id)
+            .copied()
+            .and_then(|idx| self.graph.node_weight_mut(idx))
     }
 
     pub fn node_count(&self) -> usize {
@@ -85,7 +90,9 @@ impl GraphStore {
     }
 
     pub fn neighbors(&self, id: &str) -> Vec<&NodeData> {
-        let Some(&idx) = self.node_index.get(id) else { return vec![] };
+        let Some(&idx) = self.node_index.get(id) else {
+            return vec![];
+        };
         self.graph
             .neighbors_undirected(idx)
             .filter_map(|n| self.graph.node_weight(n))

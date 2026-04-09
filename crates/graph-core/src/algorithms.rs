@@ -1,9 +1,11 @@
-use std::collections::{HashMap, HashSet, VecDeque};
 use crate::graph::GraphStore;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 /// BFS from a node, returning all reachable node IDs within `max_depth` hops.
 pub fn bfs_within(graph: &GraphStore, start_id: &str, max_depth: usize) -> Vec<String> {
-    let Some(start) = graph.node_index(start_id) else { return vec![] };
+    let Some(start) = graph.node_index(start_id) else {
+        return vec![];
+    };
     let inner = graph.inner();
     let mut visited = HashSet::new();
     let mut queue = VecDeque::new();
@@ -14,7 +16,9 @@ pub fn bfs_within(graph: &GraphStore, start_id: &str, max_depth: usize) -> Vec<S
         if let Some(data) = inner.node_weight(node) {
             result.push(data.id.clone());
         }
-        if depth >= max_depth { continue; }
+        if depth >= max_depth {
+            continue;
+        }
         for neighbor in inner.neighbors_undirected(node) {
             if visited.insert(neighbor) {
                 queue.push_back((neighbor, depth + 1));
@@ -29,7 +33,8 @@ pub fn shortest_path(graph: &GraphStore, from_id: &str, to_id: &str) -> Option<V
     let from = graph.node_index(from_id)?;
     let to = graph.node_index(to_id)?;
     let inner = graph.inner();
-    let mut visited: HashMap<petgraph::graph::NodeIndex, Option<petgraph::graph::NodeIndex>> = HashMap::new();
+    let mut visited: HashMap<petgraph::graph::NodeIndex, Option<petgraph::graph::NodeIndex>> =
+        HashMap::new();
     let mut queue = VecDeque::new();
     queue.push_back(from);
     visited.insert(from, None);
@@ -59,7 +64,8 @@ pub fn shortest_path(graph: &GraphStore, from_id: &str, to_id: &str) -> Option<V
 /// Extract edge IDs connecting a subset of nodes.
 pub fn subgraph_edge_ids(graph: &GraphStore, node_ids: &[String]) -> Vec<String> {
     let id_set: HashSet<&str> = node_ids.iter().map(|s| s.as_str()).collect();
-    graph.edges()
+    graph
+        .edges()
         .filter(|e| id_set.contains(e.source.as_str()) && id_set.contains(e.target.as_str()))
         .map(|e| e.id.clone())
         .collect()
@@ -68,21 +74,38 @@ pub fn subgraph_edge_ids(graph: &GraphStore, node_ids: &[String]) -> Vec<String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::*;
     use crate::graph::GraphStore;
+    use crate::types::*;
 
     fn make_node(id: &str) -> NodeData {
-        NodeData { id: id.into(), name: id.into(), node_type: NodeType::Service, domain: "test".into(), status: Status::Healthy, community: None, meta: Default::default() }
+        NodeData {
+            id: id.into(),
+            name: id.into(),
+            node_type: NodeType::Service,
+            domain: "test".into(),
+            status: Status::Healthy,
+            community: None,
+            meta: Default::default(),
+        }
     }
     fn make_edge(id: &str, src: &str, tgt: &str) -> EdgeData {
-        EdgeData { id: id.into(), source: src.into(), target: tgt.into(), edge_type: EdgeType::DependsOn, label: String::new(), weight: 1.0 }
+        EdgeData {
+            id: id.into(),
+            source: src.into(),
+            target: tgt.into(),
+            edge_type: EdgeType::DependsOn,
+            label: String::new(),
+            weight: 1.0,
+        }
     }
     fn build_chain() -> GraphStore {
         let mut g = GraphStore::new();
-        for id in ["a","b","c","d"] { g.add_node(make_node(id)); }
-        g.add_edge(make_edge("e1","a","b"));
-        g.add_edge(make_edge("e2","b","c"));
-        g.add_edge(make_edge("e3","c","d"));
+        for id in ["a", "b", "c", "d"] {
+            g.add_node(make_node(id));
+        }
+        g.add_edge(make_edge("e1", "a", "b"));
+        g.add_edge(make_edge("e2", "b", "c"));
+        g.add_edge(make_edge("e3", "c", "d"));
         g
     }
 
@@ -100,7 +123,7 @@ mod tests {
     fn shortest_path_chain() {
         let g = build_chain();
         let path = shortest_path(&g, "a", "d").unwrap();
-        assert_eq!(path, vec!["a","b","c","d"]);
+        assert_eq!(path, vec!["a", "b", "c", "d"]);
     }
 
     #[test]
@@ -114,7 +137,7 @@ mod tests {
     #[test]
     fn subgraph_edges() {
         let g = build_chain();
-        let edges = subgraph_edge_ids(&g, &["a".into(),"b".into(),"c".into()]);
+        let edges = subgraph_edge_ids(&g, &["a".into(), "b".into(), "c".into()]);
         assert_eq!(edges.len(), 2);
     }
 }

@@ -1,6 +1,6 @@
 use web_sys::{
-    WebGl2RenderingContext as GL, WebGlBuffer, WebGlProgram, WebGlTexture,
-    WebGlUniformLocation, WebGlVertexArrayObject,
+    WebGl2RenderingContext as GL, WebGlBuffer, WebGlProgram, WebGlTexture, WebGlUniformLocation,
+    WebGlVertexArrayObject,
 };
 
 use crate::context::RenderContext;
@@ -36,9 +36,7 @@ impl TextRenderer {
         gl.bind_vertex_array(Some(&vao));
 
         // Dynamic vertex buffer for glyph quads
-        let vertex_buffer = gl
-            .create_buffer()
-            .ok_or("Failed to create vertex buffer")?;
+        let vertex_buffer = gl.create_buffer().ok_or("Failed to create vertex buffer")?;
         gl.bind_buffer(GL::ARRAY_BUFFER, Some(&vertex_buffer));
 
         // Attributes are interleaved per-vertex:
@@ -85,16 +83,8 @@ impl TextRenderer {
         .map_err(|e| format!("tex_image_2d failed: {:?}", e))?;
         gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_MIN_FILTER, GL::LINEAR as i32);
         gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_MAG_FILTER, GL::LINEAR as i32);
-        gl.tex_parameteri(
-            GL::TEXTURE_2D,
-            GL::TEXTURE_WRAP_S,
-            GL::CLAMP_TO_EDGE as i32,
-        );
-        gl.tex_parameteri(
-            GL::TEXTURE_2D,
-            GL::TEXTURE_WRAP_T,
-            GL::CLAMP_TO_EDGE as i32,
-        );
+        gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_WRAP_S, GL::CLAMP_TO_EDGE as i32);
+        gl.tex_parameteri(GL::TEXTURE_2D, GL::TEXTURE_WRAP_T, GL::CLAMP_TO_EDGE as i32);
         gl.bind_texture(GL::TEXTURE_2D, None);
 
         let u_vp = gl

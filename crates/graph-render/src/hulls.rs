@@ -27,9 +27,7 @@ impl HullRenderer {
         let vao = gl.create_vertex_array().ok_or("Failed to create VAO")?;
         gl.bind_vertex_array(Some(&vao));
 
-        let vertex_buffer = gl
-            .create_buffer()
-            .ok_or("Failed to create vertex buffer")?;
+        let vertex_buffer = gl.create_buffer().ok_or("Failed to create vertex buffer")?;
         gl.bind_buffer(GL::ARRAY_BUFFER, Some(&vertex_buffer));
 
         let stride = (HULL_VERTEX_FLOATS * 4) as i32;

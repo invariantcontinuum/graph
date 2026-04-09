@@ -3,17 +3,36 @@ pub struct SearchIndex {
 }
 
 impl SearchIndex {
-    pub fn new() -> Self { Self { entries: Vec::new() } }
-    pub fn insert(&mut self, id: &str, name: &str) { self.entries.push((name.to_lowercase(), id.to_string())); }
-    pub fn remove(&mut self, id: &str) { self.entries.retain(|(_, eid)| eid != id); }
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+    pub fn insert(&mut self, id: &str, name: &str) {
+        self.entries.push((name.to_lowercase(), id.to_string()));
+    }
+    pub fn remove(&mut self, id: &str) {
+        self.entries.retain(|(_, eid)| eid != id);
+    }
     pub fn search(&self, prefix: &str, limit: usize) -> Vec<String> {
         let p = prefix.to_lowercase();
-        self.entries.iter().filter(|(name, _)| name.starts_with(&p)).take(limit).map(|(_, id)| id.clone()).collect()
+        self.entries
+            .iter()
+            .filter(|(name, _)| name.starts_with(&p))
+            .take(limit)
+            .map(|(_, id)| id.clone())
+            .collect()
     }
-    pub fn clear(&mut self) { self.entries.clear(); }
+    pub fn clear(&mut self) {
+        self.entries.clear();
+    }
 }
 
-impl Default for SearchIndex { fn default() -> Self { Self::new() } }
+impl Default for SearchIndex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -39,7 +58,9 @@ mod tests {
     #[test]
     fn search_limit() {
         let mut idx = SearchIndex::new();
-        for i in 0..100 { idx.insert(&format!("n-{i}"), &format!("Node{i}")); }
+        for i in 0..100 {
+            idx.insert(&format!("n-{i}"), &format!("Node{i}"));
+        }
         assert_eq!(idx.search("node", 5).len(), 5);
     }
 }

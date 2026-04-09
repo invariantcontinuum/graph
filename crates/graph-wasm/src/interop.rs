@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use serde::de::DeserializeOwned;
+use wasm_bindgen::prelude::*;
 
 pub fn from_js_value<T: DeserializeOwned>(val: &JsValue) -> Result<T, String> {
     serde_wasm_bindgen::from_value(val.clone()).map_err(|e| format!("Deserialize error: {e}"))

@@ -4,13 +4,16 @@ use std::collections::HashMap;
 /// Returns indices of hull vertices in counter-clockwise order.
 pub fn convex_hull(points: &[(f32, f32)]) -> Vec<usize> {
     let n = points.len();
-    if n < 3 { return (0..n).collect(); }
+    if n < 3 {
+        return (0..n).collect();
+    }
 
     // Find lowest-rightmost point as pivot
     let mut pivot = 0;
     for i in 1..n {
         if points[i].1 < points[pivot].1
-            || (points[i].1 == points[pivot].1 && points[i].0 > points[pivot].0) {
+            || (points[i].1 == points[pivot].1 && points[i].0 > points[pivot].0)
+        {
             pivot = i;
         }
     }
@@ -37,7 +40,11 @@ pub fn convex_hull(points: &[(f32, f32)]) -> Vec<usize> {
             let a = stack[stack.len() - 2];
             let b = stack[stack.len() - 1];
             let cross = cross_product(points[a], points[b], points[idx]);
-            if cross <= 0.0 { stack.pop(); } else { break; }
+            if cross <= 0.0 {
+                stack.pop();
+            } else {
+                break;
+            }
         }
         stack.push(idx);
     }
@@ -85,7 +92,7 @@ mod tests {
 
     #[test]
     fn interior_point_excluded() {
-        let points = vec![(0.0,0.0),(2.0,0.0),(2.0,2.0),(0.0,2.0),(1.0,1.0)];
+        let points = vec![(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (1.0, 1.0)];
         let hull = convex_hull(&points);
         assert_eq!(hull.len(), 4);
         assert!(!hull.contains(&4));
@@ -93,7 +100,7 @@ mod tests {
 
     #[test]
     fn two_points() {
-        let hull = convex_hull(&[(0.0,0.0),(1.0,1.0)]);
+        let hull = convex_hull(&[(0.0, 0.0), (1.0, 1.0)]);
         assert_eq!(hull.len(), 2);
     }
 

@@ -15,10 +15,10 @@ use graph_render::camera::Camera;
 use graph_render::context::RenderContext;
 use graph_render::edges::EdgeRenderer;
 use graph_render::hulls::HullRenderer;
-use graph_render::nodes::{NodeRenderer, NODE_INSTANCE_FLOATS};
-use graph_render::picking::{PickBuffer, PICK_INSTANCE_FLOATS};
+use graph_render::nodes::{NODE_INSTANCE_FLOATS, NodeRenderer};
+use graph_render::picking::{PICK_INSTANCE_FLOATS, PickBuffer};
 use graph_render::text::TextRenderer;
-use graph_render::theme::{parse_hex_color, shape_index, ThemeConfig};
+use graph_render::theme::{ThemeConfig, parse_hex_color, shape_index};
 
 use crate::interop::{from_js_value, to_js_value};
 use crate::websocket::WsClient;
@@ -105,8 +105,8 @@ impl GraphEngine {
     pub fn create(canvas: HtmlCanvasElement) -> Result<GraphEngine, JsValue> {
         let ctx = RenderContext::new(canvas).map_err(|e| JsValue::from_str(&e))?;
         let camera = Camera::new(ctx.width as f32, ctx.height as f32);
-        let theme: ThemeConfig =
-            serde_json::from_str(DEFAULT_THEME_JSON).map_err(|e| JsValue::from_str(&format!("Theme parse: {e}")))?;
+        let theme: ThemeConfig = serde_json::from_str(DEFAULT_THEME_JSON)
+            .map_err(|e| JsValue::from_str(&format!("Theme parse: {e}")))?;
 
         let node_renderer = NodeRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
         let edge_renderer = EdgeRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
@@ -243,9 +243,13 @@ impl GraphEngine {
         } else {
             let f: FilterInput = from_js_value(filter_js).map_err(|e| JsValue::from_str(&e))?;
             let core_filter = GraphFilter {
-                types: f.types.map(|ts| ts.into_iter().filter_map(|t| parse_node_type(&t)).collect()),
+                types: f
+                    .types
+                    .map(|ts| ts.into_iter().filter_map(|t| parse_node_type(&t)).collect()),
                 domains: f.domains,
-                statuses: f.statuses.map(|ss| ss.into_iter().filter_map(|s| parse_status(&s)).collect()),
+                statuses: f
+                    .statuses
+                    .map(|ss| ss.into_iter().filter_map(|s| parse_status(&s)).collect()),
             };
             let ids = core_filter.apply(&self.store);
             self.visible_nodes = Some(ids.into_iter().collect());
@@ -536,11 +540,19 @@ impl GraphEngine {
             if !new_ids.is_empty() {
                 let mut neighbor_map = HashMap::new();
                 for id in &new_ids {
-                    let ns: Vec<String> = self.store.neighbors(id).iter().map(|n| n.id.clone()).collect();
+                    let ns: Vec<String> = self
+                        .store
+                        .neighbors(id)
+                        .iter()
+                        .map(|n| n.id.clone())
+                        .collect();
                     neighbor_map.insert(id.clone(), ns);
                 }
-                let placed =
-                    graph_layout::incremental::place_added_nodes(&self.positions, &new_ids, &neighbor_map);
+                let placed = graph_layout::incremental::place_added_nodes(
+                    &self.positions,
+                    &new_ids,
+                    &neighbor_map,
+                );
                 for (id, x, y) in placed {
                     self.positions.insert(id, (x, y));
                 }
@@ -648,10 +660,7 @@ impl GraphEngine {
                 theme.interaction.spotlight.dim_opacity
             } else if self.hovered_id.is_some() && !is_hovered && !is_selected {
                 let is_neighbor = self.hovered_id.as_ref().map_or(false, |hid| {
-                    self.store
-                        .neighbors(hid)
-                        .iter()
-                        .any(|n| n.id == *id)
+                    self.store.neighbors(hid).iter().any(|n| n.id == *id)
                 });
                 if theme.interaction.hover.highlight_neighbors && is_neighbor {
                     1.0
@@ -685,10 +694,8 @@ impl GraphEngine {
             pick_data.extend_from_slice(&[x, y, size / 2.0, pr, pg, pb]);
         }
 
-        self.node_renderer
-            .upload(gl, &node_data, visible.len());
-        self.pick_buffer
-            .upload(gl, &pick_data, visible.len());
+        self.node_renderer.upload(gl, &node_data, visible.len());
+        self.pick_buffer.upload(gl, &pick_data, visible.len());
 
         // --- Edge buffer ---
         let mut edge_data: Vec<f32> = Vec::new();
