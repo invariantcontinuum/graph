@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 graph-core = { path = "../graph-core" }
+petgraph.workspace = true
 serde.workspace = true
 
 [dev-dependencies]
