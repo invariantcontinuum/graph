@@ -6,6 +6,7 @@ members = [
     "crates/graph-render",
     "crates/graph-wasm",
     "crates/graph-worker-wasm",
+    "crates/graph-main-wasm",
 ]
 
 [workspace.package]
