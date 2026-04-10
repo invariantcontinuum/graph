@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "graph-core"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "petgraph",
  "proptest",
@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "graph-layout"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "criterion",
  "graph-core",
@@ -374,8 +374,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "graph-main-wasm"
+version = "0.1.3"
+dependencies = [
+ "console_log",
+ "graph-core",
+ "graph-render",
+ "js-sys",
+ "log",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
+ "web-sys",
+]
+
+[[package]]
 name = "graph-render"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "graph-core",
  "graph-layout",
@@ -388,14 +405,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "graph-wasm"
-version = "0.1.1"
+name = "graph-worker-wasm"
+version = "0.1.3"
 dependencies = [
  "chrono",
  "console_log",
  "graph-core",
  "graph-layout",
- "graph-render",
  "js-sys",
  "log",
  "serde",
