@@ -86,9 +86,6 @@ impl WorkerEngine {
 
         self.force_layout = ForceLayout::new();
         self.layout_running = true;
-        for _ in 0..5 {
-            self.force_layout.tick(&self.store);
-        }
         let result = self.force_layout.compute(&self.store);
         for (id, x, y) in result {
             self.positions.insert(id, (x, y));
@@ -108,7 +105,7 @@ impl WorkerEngine {
                 if !still_moving {
                     self.layout_running = false;
                 }
-                let result = self.force_layout.compute(&self.store);
+                let result = self.force_layout.get_positions();
                 for (id, x, y) in result {
                     self.positions.insert(id, (x, y));
                 }

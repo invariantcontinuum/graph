@@ -366,12 +366,12 @@ impl RenderEngine {
             let _weight = self.edge_data[base + 5];
 
             let type_name = match type_idx {
-                0 => "DEPENDSON",
+                0 => "DEPENDS_ON",
                 1 => "CALLS",
-                2 => "VIOLATION",
-                3 => "ENFORCES",
-                4 => "DRIFT",
-                _ => "DEPENDSON",
+                2 => "violation",
+                3 => "enforces",
+                4 => "drift",
+                _ => "DEPENDS_ON",
             };
 
             let mut ecolor = theme.edges.default.color.clone();

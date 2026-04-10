@@ -201,6 +201,14 @@ impl ForceLayout {
         }
     }
 
+    /// Return current positions without resetting the layout state.
+    pub fn get_positions(&self) -> Vec<(String, f32, f32)> {
+        self.positions
+            .iter()
+            .map(|(id, &(x, y))| (id.clone(), x, y))
+            .collect()
+    }
+
     pub fn total_velocity_energy(&self) -> f32 {
         self.velocities
             .values()

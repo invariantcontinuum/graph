@@ -1,6 +1,6 @@
 {
   "name": "@invariantcontinuum/graph",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "WASM+WebGL2 graph rendering engine with Web Worker layout for large-scale knowledge graphs",
   "type": "module",
   "main": "graph_main_wasm.js",

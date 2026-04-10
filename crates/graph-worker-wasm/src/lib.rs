@@ -76,6 +76,7 @@ pub fn tick() -> bool {
 
         if still_moving || engine.is_layout_running() {
             post_positions(&engine);
+            post_edges(&engine);
         }
 
         if !still_moving && !engine.is_layout_running() {
