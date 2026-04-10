@@ -11,7 +11,7 @@ use graph_render::theme::{ThemeConfig, parse_hex_color, shape_index};
 
 use crate::spatial::SpatialGrid;
 
-const DEFAULT_THEME_JSON: &str = include_str!("../../graph-wasm/src/default_theme.json");
+const DEFAULT_THEME_JSON: &str = include_str!("default_theme.json");
 
 /// Categorical-12 palette for community hull coloring.
 const PALETTE: &[(f32, f32, f32)] = &[
