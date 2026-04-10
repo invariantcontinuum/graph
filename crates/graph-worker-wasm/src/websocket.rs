@@ -1,7 +1,7 @@
+// crates/graph-worker-wasm/src/websocket.rs
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use web_sys::{CloseEvent, ErrorEvent, MessageEvent, WebSocket};
 
@@ -15,15 +15,15 @@ pub struct WsClient {
 
 impl WsClient {
     pub fn connect(url: &str, token: &str) -> Result<Self, JsValue> {
-        let ws_url = format!("{}/ws/graph?token={}", url, token);
-        let ws = WebSocket::new(&ws_url)?;
+        let full_url = format!("{}/ws?token={}", url, token);
+        let ws = WebSocket::new(&full_url)?;
 
         let messages: Rc<RefCell<VecDeque<String>>> = Rc::new(RefCell::new(VecDeque::new()));
 
-        let messages_clone = messages.clone();
+        let msgs = messages.clone();
         let on_message = Closure::wrap(Box::new(move |e: MessageEvent| {
-            if let Some(text) = e.data().as_string() {
-                messages_clone.borrow_mut().push_back(text);
+            if let Some(txt) = e.data().as_string() {
+                msgs.borrow_mut().push_back(txt);
             }
         }) as Box<dyn FnMut(MessageEvent)>);
         ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
@@ -34,7 +34,7 @@ impl WsClient {
         ws.set_onclose(Some(on_close.as_ref().unchecked_ref()));
 
         let on_error = Closure::wrap(Box::new(move |_: ErrorEvent| {
-            log::error!("WebSocket error");
+            log::warn!("WebSocket error");
         }) as Box<dyn FnMut(ErrorEvent)>);
         ws.set_onerror(Some(on_error.as_ref().unchecked_ref()));
 
@@ -56,6 +56,6 @@ impl WsClient {
     }
 
     pub fn close(&self) {
-        self.ws.close().ok();
+        let _ = self.ws.close();
     }
 }

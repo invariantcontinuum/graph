@@ -1,10 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 pub mod engine;
-pub mod events;
-pub mod interop;
-pub mod render_loop;
-pub mod websocket;
+pub mod spatial;
 
 #[wasm_bindgen(start)]
 pub fn init() {

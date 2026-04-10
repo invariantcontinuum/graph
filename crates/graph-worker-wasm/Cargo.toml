@@ -1,5 +1,5 @@
 [package]
-name = "graph-wasm"
+name = "graph-worker-wasm"
 version.workspace = true
 edition.workspace = true
 
@@ -9,20 +9,15 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 graph-core = { path = "../graph-core" }
 graph-layout = { path = "../graph-layout" }
-graph-render = { path = "../graph-render" }
 serde.workspace = true
 serde_json.workspace = true
 wasm-bindgen.workspace = true
 web-sys = { workspace = true, features = [
+    "DedicatedWorkerGlobalScope",
     "WebSocket",
     "MessageEvent",
     "CloseEvent",
     "ErrorEvent",
-    "HtmlCanvasElement",
-    "Window",
-    "Document",
-    "MouseEvent",
-    "WheelEvent",
     "console",
 ] }
 js-sys.workspace = true

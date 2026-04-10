@@ -1,14 +1,18 @@
 {
   "name": "@invariantcontinuum/graph",
-  "version": "0.1.2",
-  "description": "WASM+WebGL2 graph rendering engine for large-scale knowledge graphs",
+  "version": "0.1.3",
+  "description": "WASM+WebGL2 graph rendering engine with Web Worker layout for large-scale knowledge graphs",
   "type": "module",
-  "main": "graph_wasm.js",
-  "types": "graph_wasm.d.ts",
+  "main": "graph_main_wasm.js",
+  "types": "graph_main_wasm.d.ts",
   "exports": {
     ".": {
-      "import": "./graph_wasm.js",
-      "types": "./graph_wasm.d.ts"
+      "import": "./graph_main_wasm.js",
+      "types": "./graph_main_wasm.d.ts"
+    },
+    "./worker": {
+      "import": "./graph_worker_wasm.js",
+      "types": "./graph_worker_wasm.d.ts"
     },
     "./react": {
       "import": "./react/index.ts",
@@ -16,10 +20,14 @@
     }
   },
   "files": [
-    "graph_wasm.js",
-    "graph_wasm.d.ts",
-    "graph_wasm_bg.wasm",
-    "graph_wasm_bg.wasm.d.ts",
+    "graph_main_wasm.js",
+    "graph_main_wasm.d.ts",
+    "graph_main_wasm_bg.wasm",
+    "graph_main_wasm_bg.wasm.d.ts",
+    "graph_worker_wasm.js",
+    "graph_worker_wasm.d.ts",
+    "graph_worker_wasm_bg.wasm",
+    "graph_worker_wasm_bg.wasm.d.ts",
     "react/",
     "README.md"
   ],
