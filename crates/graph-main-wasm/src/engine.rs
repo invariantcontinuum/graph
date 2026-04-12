@@ -14,6 +14,10 @@ use crate::spatial::SpatialGrid;
 
 const DEFAULT_THEME_JSON: &str = include_str!("default_theme.json");
 
+/// Safe fallback bounding half-extent used when node metadata is absent.
+/// Also the minimum coarse lookup radius for the spatial hit test.
+const DEFAULT_HALF_EXTENT: f32 = 20.0;
+
 #[derive(Debug, Clone)]
 pub struct NodeMeta {
     pub node_type: String,
@@ -73,6 +77,14 @@ pub struct RenderEngine {
     // Spatial index
     spatial: SpatialGrid,
 
+    /// Cached (half_w, half_h) per node, index-aligned with `node_ids`.
+    /// Rebuilt in `set_node_metadata` and `set_theme`. Used by `hit_test_node`
+    /// to avoid repeated theme resolution on the hover/click hot path.
+    node_half_dims: Vec<(f32, f32)>,
+    /// Cached worst-case bounding dimension across all nodes (max of max(hw, hh)).
+    /// Used as the coarse spatial-grid lookup radius.
+    cached_max_bound: f32,
+
     // Interaction state
     hovered_idx: Option<usize>,
     selected_idx: Option<usize>,
@@ -129,6 +141,8 @@ impl RenderEngine {
             node_metadata: std::collections::HashMap::new(),
             edge_metadata: std::collections::HashMap::new(),
             spatial: SpatialGrid::new(),
+            node_half_dims: Vec::new(),
+            cached_max_bound: DEFAULT_HALF_EXTENT,
             hovered_idx: None,
             selected_idx: None,
             show_hulls: false,
@@ -183,6 +197,7 @@ impl RenderEngine {
                 },
             );
         }
+        self.rebuild_hit_test_cache();
         self.buffers_dirty = true;
         Ok(())
     }
@@ -250,6 +265,7 @@ impl RenderEngine {
         let theme: ThemeConfig = serde_wasm_bindgen::from_value(theme_js.clone())
             .map_err(|e| JsValue::from_str(&format!("{e}")))?;
         self.theme = theme;
+        self.rebuild_hit_test_cache();
         self.buffers_dirty = true;
         self.needs_render = true;
         Ok(())
@@ -488,41 +504,51 @@ impl RenderEngine {
         }
     }
 
-    /// Coarse-then-fine node picking: uses the spatial grid for a candidate list,
-    /// then performs a per-node AABB check using the theme-resolved half_w / half_h.
-    fn hit_test_node(&self, world_x: f32, world_y: f32) -> Option<usize> {
-        // Conservative bounding radius: worst-case half-dimension of any resolved style.
-        // Cheap since node_metadata is small. Fallback to a safe 20.0 when empty.
-        let max_bound = self
-            .node_ids
-            .iter()
-            .filter_map(|id| self.node_metadata.get(id))
-            .map(|meta| {
-                let style = self.resolved_node_style(&meta.node_type, &meta.status);
-                style.half_w.max(style.half_h)
-            })
-            .fold(0.0_f32, f32::max)
-            .max(20.0);
+    /// Rebuild the cached per-node half-dimensions used by `hit_test_node`.
+    /// Called whenever node_metadata or the theme changes so the hot path
+    /// (hover/click) does not need to resolve styles.
+    fn rebuild_hit_test_cache(&mut self) {
+        self.node_half_dims.clear();
+        self.node_half_dims.reserve(self.node_ids.len());
+        let mut max_bound = 0.0_f32;
+        for id in &self.node_ids {
+            let (hw, hh) = match self.node_metadata.get(id) {
+                Some(meta) => {
+                    let style = self.resolved_node_style(&meta.node_type, &meta.status);
+                    (style.half_w, style.half_h)
+                }
+                None => (DEFAULT_HALF_EXTENT, DEFAULT_HALF_EXTENT),
+            };
+            self.node_half_dims.push((hw, hh));
+            let bound = hw.max(hh);
+            if bound > max_bound {
+                max_bound = bound;
+            }
+        }
+        self.cached_max_bound = max_bound.max(DEFAULT_HALF_EXTENT);
+    }
 
+    /// Coarse-then-fine node picking: uses the spatial grid for a candidate list,
+    /// then performs a per-node AABB check using cached half_w / half_h.
+    fn hit_test_node(&self, world_x: f32, world_y: f32) -> Option<usize> {
+        // Use the cached worst-case bound as the coarse spatial-grid radius.
+        let max_bound = self.cached_max_bound;
         let candidates = self.spatial.candidates_within(world_x, world_y, max_bound);
+
         for idx in candidates {
             if idx * 4 + 1 >= self.positions.len() {
                 continue;
             }
             let cx = self.positions[idx * 4];
             let cy = self.positions[idx * 4 + 1];
-            // Look up this node's AABB via metadata + theme.
-            let (hw, hh) = match self.node_ids.get(idx) {
-                Some(id) => self
-                    .node_metadata
-                    .get(id)
-                    .map(|m| {
-                        let style = self.resolved_node_style(&m.node_type, &m.status);
-                        (style.half_w, style.half_h)
-                    })
-                    .unwrap_or((20.0, 20.0)),
-                None => (20.0, 20.0),
-            };
+
+            // Use cached half-dims if available; otherwise fall back to DEFAULT_HALF_EXTENT.
+            let (hw, hh) = self
+                .node_half_dims
+                .get(idx)
+                .copied()
+                .unwrap_or((DEFAULT_HALF_EXTENT, DEFAULT_HALF_EXTENT));
+
             if (world_x - cx).abs() <= hw && (world_y - cy).abs() <= hh {
                 return Some(idx);
             }
