@@ -397,6 +397,17 @@ impl RenderEngine {
         None
     }
 
+    /// Map a theme edge style string to the `v_dash` mode integer consumed by `edge.frag`.
+    /// 0 = solid, 1 = dashed, 2 = short-dashed, 3 = dotted.
+    fn edge_dash_mode(style: &str) -> f32 {
+        match style {
+            "dashed" => 1.0,
+            "short-dashed" => 2.0,
+            "dotted" => 3.0,
+            _ => 0.0, // solid
+        }
+    }
+
     fn rebuild_buffers(&mut self) {
         let gl = &self.ctx.gl;
         let node_count = self.positions.len() / 4;
@@ -507,6 +518,10 @@ impl RenderEngine {
             let mut dash = 0.0f32;
             let mut animate = 0.0f32;
 
+            // T10: resolve edge style, color, width, and animate from theme per-type overrides.
+            // The type_name is derived from the type_idx encoded in the edge_data buffer.
+            // TODO(T19): when edge_metadata (id→type HashMap) lands, derive type_name from it
+            //            instead of the positional type_idx encoding so arbitrary type strings work.
             if let Some(ov) = self.theme.edges.by_type.get(type_name) {
                 if let Some(ref c) = ov.color {
                     ecolor = c.clone();
@@ -514,8 +529,8 @@ impl RenderEngine {
                 if let Some(ref w) = ov.width {
                     ewidth = *w;
                 }
-                if ov.style.as_deref() == Some("dashed") {
-                    dash = 1.0;
+                if let Some(ref s) = ov.style {
+                    dash = Self::edge_dash_mode(s);
                 }
                 if ov.animate {
                     animate = 1.0;
