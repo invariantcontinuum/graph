@@ -42,6 +42,21 @@ export interface GraphFilter {
 
 export type LayoutType = "force" | "hierarchical";
 
+export interface LegendEntry {
+  type_key: string;
+  label: string;
+  count: number;
+  color: string;
+  border_color: string;
+  shape: string;
+  dash?: string | null;
+}
+
+export interface LegendSummary {
+  node_types: LegendEntry[];
+  edge_types: LegendEntry[];
+}
+
 // --- Worker protocol types ---
 
 export type WorkerOutMessage =

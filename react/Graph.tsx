@@ -6,6 +6,7 @@ import type {
   LayoutType,
   NodeData,
   WorkerOutMessage,
+  LegendSummary,
 } from "./types";
 
 export interface GraphProps {
@@ -17,6 +18,7 @@ export interface GraphProps {
   filter?: GraphFilter | null;
   onNodeClick?: (node: NodeData) => void;
   onNodeHover?: (node: NodeData | null) => void;
+  onLegendChange?: (legend: LegendSummary) => void;
   onStatsChange?: (stats: GraphStats) => void;
   onReady?: () => void;
   spotlightIds?: string[] | null;
@@ -35,6 +37,7 @@ export function Graph({
   filter,
   onNodeClick,
   onNodeHover,
+  onLegendChange,
   onStatsChange,
   onReady,
   spotlightIds,
@@ -48,11 +51,11 @@ export function Graph({
   const workerRef = useRef<Worker | null>(null);
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
-  const callbacksRef = useRef({ onNodeClick, onNodeHover, onStatsChange });
+  const callbacksRef = useRef({ onNodeClick, onNodeHover, onStatsChange, onLegendChange });
   const draggingNodeRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  callbacksRef.current = { onNodeClick, onNodeHover, onStatsChange };
+  callbacksRef.current = { onNodeClick, onNodeHover, onStatsChange, onLegendChange };
 
   // Initialize engine and worker
   useEffect(() => {
@@ -98,6 +101,10 @@ export function Graph({
             violationCount: 0,
             lastUpdated: new Date().toISOString(),
           });
+          const legend = engineRef.current?.get_legend();
+          if (legend && callbacksRef.current.onLegendChange) {
+            callbacksRef.current.onLegendChange(legend as LegendSummary);
+          }
         } else if (msg.type === "stats") {
           callbacksRef.current.onStatsChange?.({
             nodeCount: msg.node_count,

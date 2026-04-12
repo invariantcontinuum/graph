@@ -7,4 +7,6 @@ export type {
   GraphStats,
   GraphFilter,
   LayoutType,
+  LegendEntry,
+  LegendSummary,
 } from "./types";
