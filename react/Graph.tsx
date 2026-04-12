@@ -49,6 +49,7 @@ export function Graph({
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
   const callbacksRef = useRef({ onNodeClick, onNodeHover, onStatsChange });
+  const draggingNodeRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
   callbacksRef.current = { onNodeClick, onNodeHover, onStatsChange };
@@ -273,39 +274,73 @@ export function Graph({
     return () => canvas.removeEventListener("wheel", handler);
   }, []);
 
+  const pumpWorkerMessages = useCallback(() => {
+    const raw = engineRef.current?.drain_worker_messages();
+    if (!raw || !workerRef.current) return;
+    // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
+    // which deserializes into a JS array of message objects.
+    const msgs = Array.isArray(raw) ? raw : [];
+    for (const msg of msgs) {
+      workerRef.current.postMessage(msg);
+    }
+  }, []);
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      engineRef.current?.handle_pan_start(
-        (e.clientX - rect.left) * dpr,
-        (e.clientY - rect.top) * dpr
-      );
+      const sx = (e.clientX - rect.left) * dpr;
+      const sy = (e.clientY - rect.top) * dpr;
+      const nodeId = engineRef.current?.handle_node_drag_start(sx, sy);
+      if (nodeId) {
+        draggingNodeRef.current = nodeId;
+        pumpWorkerMessages();
+      } else {
+        engineRef.current?.handle_pan_start(sx, sy);
+      }
     },
-    []
+    [pumpWorkerMessages]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      const x = (e.clientX - rect.left) * dpr;
-      const y = (e.clientY - rect.top) * dpr;
-      engineRef.current?.handle_pan_move(x, y);
-      const hoveredId = engineRef.current?.handle_hover(x, y);
+      const sx = (e.clientX - rect.left) * dpr;
+      const sy = (e.clientY - rect.top) * dpr;
+
+      if (draggingNodeRef.current) {
+        engineRef.current?.handle_node_drag_move(sx, sy);
+        pumpWorkerMessages();
+        return;
+      }
+
+      engineRef.current?.handle_pan_move(sx, sy);
+      const hoveredId = engineRef.current?.handle_hover(sx, sy);
       if (hoveredId !== undefined) {
         callbacksRef.current.onNodeHover?.({ id: hoveredId } as NodeData);
       }
     },
-    []
+    [pumpWorkerMessages]
   );
 
   const handleMouseUp = useCallback(() => {
+    if (draggingNodeRef.current !== null) {
+      engineRef.current?.handle_node_drag_end();
+      pumpWorkerMessages();
+      // Clear the ref on the next tick to block the synthetic click event that
+      // fires immediately after mouseup on the same element.
+      setTimeout(() => {
+        draggingNodeRef.current = null;
+      }, 0);
+      return;
+    }
     engineRef.current?.handle_pan_end();
-  }, []);
+  }, [pumpWorkerMessages]);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (draggingNodeRef.current !== null) return; // consumed by drag
       const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       const clickedId = engineRef.current?.handle_click(
