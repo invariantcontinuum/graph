@@ -13,6 +13,12 @@ use crate::spatial::SpatialGrid;
 
 const DEFAULT_THEME_JSON: &str = include_str!("default_theme.json");
 
+#[derive(Debug, Clone)]
+pub struct NodeMeta {
+    pub node_type: String,
+    pub status: String,
+}
+
 /// Categorical-12 palette for community hull coloring.
 #[allow(dead_code)]
 const PALETTE: &[(f32, f32, f32)] = &[
@@ -48,6 +54,7 @@ pub struct RenderEngine {
     edge_data: Vec<f32>,
     edge_count: usize,
     node_ids: Vec<String>,
+    node_metadata: std::collections::HashMap<String, NodeMeta>,
 
     // Spatial index
     spatial: SpatialGrid,
@@ -98,6 +105,7 @@ impl RenderEngine {
             edge_data: Vec::new(),
             edge_count: 0,
             node_ids: Vec::new(),
+            node_metadata: std::collections::HashMap::new(),
             spatial: SpatialGrid::new(),
             hovered_idx: None,
             selected_idx: None,
@@ -131,6 +139,27 @@ impl RenderEngine {
 
     pub fn set_node_ids(&mut self, ids: Vec<String>) {
         self.node_ids = ids;
+    }
+
+    pub fn set_node_metadata(&mut self, ids_js: JsValue, types_js: JsValue, statuses_js: JsValue) -> Result<(), JsValue> {
+        let ids: Vec<String> = serde_wasm_bindgen::from_value(ids_js)
+            .map_err(|e| JsValue::from_str(&format!("ids: {e}")))?;
+        let types: Vec<String> = serde_wasm_bindgen::from_value(types_js)
+            .map_err(|e| JsValue::from_str(&format!("types: {e}")))?;
+        let statuses: Vec<String> = serde_wasm_bindgen::from_value(statuses_js)
+            .map_err(|e| JsValue::from_str(&format!("statuses: {e}")))?;
+        self.node_metadata.clear();
+        for (i, id) in ids.iter().enumerate() {
+            self.node_metadata.insert(
+                id.clone(),
+                NodeMeta {
+                    node_type: types.get(i).cloned().unwrap_or_else(|| "service".into()),
+                    status: statuses.get(i).cloned().unwrap_or_else(|| "healthy".into()),
+                },
+            );
+        }
+        self.buffers_dirty = true;
+        Ok(())
     }
 
     // --- Configuration ---
@@ -256,97 +285,139 @@ impl RenderEngine {
 // --- Private ---
 
 impl RenderEngine {
+    /// Resolve effective per-node style from theme: default + type override + status override.
+    /// Returns (half_w, half_h, color[4], border_color[4], border_width, shape, flags).
+    fn resolved_node_style(
+        &self,
+        node_type: &str,
+        status: &str,
+    ) -> (f32, f32, [f32; 4], [f32; 4], f32, f32, f32) {
+        let default = &self.theme.nodes.default;
+        let type_override = self.theme.nodes.by_type.get(node_type);
+        let status_override = self.theme.nodes.by_status.get(status);
+
+        let shape_name = type_override
+            .and_then(|o| o.shape.clone())
+            .unwrap_or_else(|| default.shape.clone());
+        let shape = shape_index(&shape_name);
+
+        let half_w = type_override
+            .and_then(|o| o.half_width)
+            .or(default.half_width)
+            .unwrap_or(default.size);
+        let half_h = type_override
+            .and_then(|o| o.half_height)
+            .or(default.half_height)
+            .unwrap_or(default.size);
+
+        let color_hex = type_override
+            .and_then(|o| o.color.clone())
+            .unwrap_or_else(|| default.color.clone());
+        let (cr, cg, cb, ca) = parse_hex_color(&color_hex);
+        let color = [cr, cg, cb, ca];
+
+        let border_color_hex = status_override
+            .and_then(|o| o.border_color.clone())
+            .or_else(|| type_override.and_then(|o| o.border_color.clone()))
+            .unwrap_or_else(|| default.border_color.clone());
+        let (br, bg, bb, ba) = parse_hex_color(&border_color_hex);
+        let border_color = [br, bg, bb, ba];
+
+        let border_width = status_override
+            .and_then(|o| o.border_width)
+            .or_else(|| type_override.and_then(|o| o.border_width))
+            .unwrap_or(default.border_width);
+
+        let mut flags: f32 = 0.0;
+        if status_override.map(|o| o.pulse).unwrap_or(false) {
+            flags += 1.0; // bit 0 = pulse
+        }
+
+        (half_w, half_h, color, border_color, border_width, shape, flags)
+    }
+
     fn rebuild_buffers(&mut self) {
         let gl = &self.ctx.gl;
-        let theme = &self.theme;
         let node_count = self.positions.len() / 4;
 
         // --- Node buffer ---
         let mut node_data = Vec::with_capacity(node_count * NODE_INSTANCE_FLOATS);
 
         for i in 0..node_count {
-            let x = self.positions[i * 4];
-            let y = self.positions[i * 4 + 1];
-            let _radius = self.positions[i * 4 + 2];
+            let cx = self.positions[i * 4];
+            let cy = self.positions[i * 4 + 1];
             let type_idx = self.positions[i * 4 + 3] as usize;
             let is_dimmed = self.visual_flags.get(i).copied().unwrap_or(0) == 1;
 
-            let type_name = match type_idx {
-                0 => "service",
-                1 => "database",
-                2 => "cache",
-                3 => "external",
-                4 => "policy",
-                5 => "adr",
-                6 => "incident",
-                _ => "service",
-            };
+            // Prefer node_metadata lookup; fall back to type_idx from position buffer.
+            let (node_type, status) = self
+                .node_ids
+                .get(i)
+                .and_then(|id| self.node_metadata.get(id))
+                .map(|m| (m.node_type.as_str(), m.status.as_str()))
+                .unwrap_or_else(|| {
+                    let t = match type_idx {
+                        0 => "service",
+                        1 => "database",
+                        2 => "cache",
+                        3 => "external",
+                        4 => "policy",
+                        5 => "adr",
+                        6 => "incident",
+                        _ => "service",
+                    };
+                    (t, "healthy")
+                });
 
-            let mut size = theme.nodes.default.size;
-            let mut color = theme.nodes.default.color.clone();
-            let mut border_color = theme.nodes.default.border_color.clone();
-            let mut border_width = theme.nodes.default.border_width;
-            let mut shape_name = theme.nodes.default.shape.clone();
+            let (half_w, half_h, color, mut border_color, mut border_width, shape, mut flags) =
+                self.resolved_node_style(node_type, status);
 
-            if let Some(ov) = theme.nodes.by_type.get(type_name) {
-                if let Some(ref s) = ov.size {
-                    size = *s;
-                }
-                if let Some(ref c) = ov.color {
-                    color = c.clone();
-                }
-                if let Some(ref bc) = ov.border_color {
-                    border_color = bc.clone();
-                }
-                if let Some(ref bw) = ov.border_width {
-                    border_width = *bw;
-                }
-                if let Some(ref sh) = ov.shape {
-                    shape_name = sh.clone();
-                }
-            }
-
-            let mut flags = 0.0f32;
             let is_hovered = self.hovered_idx == Some(i);
             let is_selected = self.selected_idx == Some(i);
 
+            // Hovered: bit 1 of flags (additive with pulse bit 0)
             if is_hovered {
-                size *= theme.interaction.hover.scale;
-                flags = 1.0;
+                if (flags as u32) & 2 == 0 {
+                    flags += 2.0;
+                }
             }
+            // Selected: override border, set bit 2
             if is_selected {
-                border_color = theme.interaction.select.border_color.clone();
-                border_width = theme.interaction.select.border_width;
-                flags = 2.0;
+                let sel_border = self.theme.interaction.select.border_color.clone();
+                let (br, bg, bb, ba) = parse_hex_color(&sel_border);
+                border_color = [br, bg, bb, ba];
+                border_width = self.theme.interaction.select.border_width;
+                if (flags as u32) & 4 == 0 {
+                    flags += 4.0;
+                }
             }
-
-            let (cr, cg, cb, ca) = parse_hex_color(&color);
-            let (br2, bg2, bb2, ba2) = parse_hex_color(&border_color);
 
             let alpha_mult = if is_dimmed {
-                theme.interaction.spotlight.dim_opacity
+                self.theme.interaction.spotlight.dim_opacity
             } else if self.hovered_idx.is_some() && !is_hovered && !is_selected {
-                theme.interaction.hover.dim_others
+                self.theme.interaction.hover.dim_others
             } else {
                 1.0
             };
 
             node_data.extend_from_slice(&[
-                x,
-                y,
-                size / 2.0,
-                cr,
-                cg,
-                cb,
-                ca * alpha_mult,
-                br2,
-                bg2,
-                bb2,
-                ba2 * alpha_mult,
+                cx,
+                cy,
+                half_w,
+                half_h,
+                color[0],
+                color[1],
+                color[2],
+                color[3] * alpha_mult,
+                border_color[0],
+                border_color[1],
+                border_color[2],
+                border_color[3] * alpha_mult,
                 border_width,
-                shape_index(&shape_name),
+                shape,
                 flags,
             ]);
+
         }
         self.node_renderer.upload(gl, &node_data, node_count);
 
@@ -374,12 +445,12 @@ impl RenderEngine {
                 _ => "DEPENDS_ON",
             };
 
-            let mut ecolor = theme.edges.default.color.clone();
-            let mut ewidth = theme.edges.default.width;
+            let mut ecolor = self.theme.edges.default.color.clone();
+            let mut ewidth = self.theme.edges.default.width;
             let mut dash = 0.0f32;
             let mut animate = 0.0f32;
 
-            if let Some(ov) = theme.edges.by_type.get(type_name) {
+            if let Some(ov) = self.theme.edges.by_type.get(type_name) {
                 if let Some(ref c) = ov.color {
                     ecolor = c.clone();
                 }
