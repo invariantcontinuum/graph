@@ -195,18 +195,80 @@ impl Default for SpotlightStyle {
     }
 }
 
-/// Parse a hex color string (e.g. "#ff0000" or "#ff000080") into (r, g, b, a) floats in [0, 1].
-pub fn parse_hex_color(hex: &str) -> (f32, f32, f32, f32) {
-    let hex = hex.trim_start_matches('#');
-    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(128) as f32 / 255.0;
-    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(128) as f32 / 255.0;
-    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(128) as f32 / 255.0;
-    let a = if hex.len() >= 8 {
-        u8::from_str_radix(&hex[6..8], 16).unwrap_or(255) as f32 / 255.0
+/// Parse a CSS-style color string into `(r, g, b, a)` floats in [0, 1].
+/// Accepts `#RRGGBB`, `#RRGGBBAA`, `rgb(r, g, b)`, and `rgba(r, g, b, a)`.
+/// Returns `(0.5, 0.5, 0.5, 1.0)` on parse failure as a safe fallback.
+pub fn parse_css_color(s: &str) -> (f32, f32, f32, f32) {
+    let trimmed = s.trim();
+    if trimmed.starts_with('#') {
+        return parse_hex_internal(trimmed);
+    }
+    if trimmed.starts_with("rgba(") && trimmed.ends_with(')') {
+        return parse_rgba(&trimmed[5..trimmed.len() - 1]);
+    }
+    if trimmed.starts_with("rgb(") && trimmed.ends_with(')') {
+        let (r, g, b, _) = parse_rgba(&trimmed[4..trimmed.len() - 1]);
+        return (r, g, b, 1.0);
+    }
+    (0.5, 0.5, 0.5, 1.0)
+}
+
+fn parse_hex_internal(hex: &str) -> (f32, f32, f32, f32) {
+    let h = hex.trim_start_matches('#');
+    if h.len() != 6 && h.len() != 8 {
+        return (0.5, 0.5, 0.5, 1.0);
+    }
+    let r = u8::from_str_radix(&h[0..2], 16);
+    let g = u8::from_str_radix(&h[2..4], 16);
+    let b = u8::from_str_radix(&h[4..6], 16);
+    let a = if h.len() == 8 {
+        u8::from_str_radix(&h[6..8], 16).map(|v| v as f32 / 255.0).unwrap_or(1.0)
     } else {
         1.0
     };
-    (r, g, b, a)
+    match (r, g, b) {
+        (Ok(r), Ok(g), Ok(b)) => (
+            r as f32 / 255.0,
+            g as f32 / 255.0,
+            b as f32 / 255.0,
+            a,
+        ),
+        _ => (0.5, 0.5, 0.5, 1.0),
+    }
+}
+
+fn parse_rgba(inside: &str) -> (f32, f32, f32, f32) {
+    let parts: Vec<&str> = inside.split(',').map(|p| p.trim()).collect();
+    if parts.len() < 3 || parts.len() > 4 {
+        return (0.5, 0.5, 0.5, 1.0);
+    }
+    let r: Result<u32, _> = parts[0].parse();
+    let g: Result<u32, _> = parts[1].parse();
+    let b: Result<u32, _> = parts[2].parse();
+    let a_val: f32 = if parts.len() == 4 {
+        match parts[3].parse::<f32>() {
+            Ok(v) if (0.0..=1.0).contains(&v) => v,
+            _ => return (0.5, 0.5, 0.5, 1.0),
+        }
+    } else {
+        1.0
+    };
+    match (r, g, b) {
+        (Ok(r), Ok(g), Ok(b)) if r <= 255 && g <= 255 && b <= 255 => (
+            r as f32 / 255.0,
+            g as f32 / 255.0,
+            b as f32 / 255.0,
+            a_val,
+        ),
+        _ => (0.5, 0.5, 0.5, 1.0),
+    }
+}
+
+/// Parse a hex color string (e.g. "#ff0000" or "#ff000080") into (r, g, b, a) floats in [0, 1].
+/// Kept for backward compatibility — now delegates to `parse_css_color` which also accepts
+/// `rgb(...)` and `rgba(...)` strings.
+pub fn parse_hex_color(hex: &str) -> (f32, f32, f32, f32) {
+    parse_css_color(hex)
 }
 
 /// Map a shape name to its shader index.
@@ -357,5 +419,66 @@ mod tests {
             theme.edges.by_type["enforces"].style.as_deref(),
             Some("dotted")
         );
+    }
+
+    #[test]
+    fn css_color_hex_6() {
+        let (r, g, b, a) = parse_css_color("#ff0000");
+        assert!((r - 1.0).abs() < 0.01);
+        assert!(g < 0.01);
+        assert!(b < 0.01);
+        assert!((a - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn css_color_hex_8() {
+        let (r, g, b, a) = parse_css_color("#00ff0080");
+        assert!(r < 0.01);
+        assert!((g - 1.0).abs() < 0.01);
+        assert!(b < 0.01);
+        assert!((a - 128.0 / 255.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn css_color_rgb() {
+        let (r, g, b, a) = parse_css_color("rgb(255, 0, 0)");
+        assert!((r - 1.0).abs() < 0.01);
+        assert!(g < 0.01);
+        assert!(b < 0.01);
+        assert!((a - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn css_color_rgba() {
+        let (r, g, b, a) = parse_css_color("rgba(99, 102, 241, 0.3)");
+        assert!((r - 99.0 / 255.0).abs() < 0.01);
+        assert!((g - 102.0 / 255.0).abs() < 0.01);
+        assert!((b - 241.0 / 255.0).abs() < 0.01);
+        assert!((a - 0.3).abs() < 0.01);
+    }
+
+    #[test]
+    fn css_color_rgba_flexible_whitespace() {
+        let (r, g, b, a) = parse_css_color("rgba(255,255,255,0.12)");
+        assert!((r - 1.0).abs() < 0.01);
+        assert!((a - 0.12).abs() < 0.01);
+    }
+
+    #[test]
+    fn css_color_invalid_fallback() {
+        let (r, g, b, a) = parse_css_color("not-a-color");
+        assert!((r - 0.5).abs() < 0.01);
+        assert!((g - 0.5).abs() < 0.01);
+        assert!((b - 0.5).abs() < 0.01);
+        assert!((a - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn parse_hex_color_still_works() {
+        // Backward compat: existing call sites passing hex strings must still work.
+        let (r, g, b, _a) = parse_hex_color("#3b4199");
+        assert!((r - 0x3b as f32 / 255.0).abs() < 0.01);
+        assert!((g - 0x41 as f32 / 255.0).abs() < 0.01);
+        assert!((b - 0x99 as f32 / 255.0).abs() < 0.01);
     }
 }
