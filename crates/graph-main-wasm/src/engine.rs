@@ -19,6 +19,17 @@ pub struct NodeMeta {
     pub status: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct ResolvedNodeStyle {
+    pub half_w: f32,
+    pub half_h: f32,
+    pub color: [f32; 4],
+    pub border_color: [f32; 4],
+    pub border_width: f32,
+    pub shape: f32,
+    pub flags: u32,
+}
+
 /// Categorical-12 palette for community hull coloring.
 #[allow(dead_code)]
 const PALETTE: &[(f32, f32, f32)] = &[
@@ -286,12 +297,12 @@ impl RenderEngine {
 
 impl RenderEngine {
     /// Resolve effective per-node style from theme: default + type override + status override.
-    /// Returns (half_w, half_h, color[4], border_color[4], border_width, shape, flags).
+    /// Returns a struct with named fields instead of a positional tuple.
     fn resolved_node_style(
         &self,
         node_type: &str,
         status: &str,
-    ) -> (f32, f32, [f32; 4], [f32; 4], f32, f32, f32) {
+    ) -> ResolvedNodeStyle {
         let default = &self.theme.nodes.default;
         let type_override = self.theme.nodes.by_type.get(node_type);
         let status_override = self.theme.nodes.by_status.get(status);
@@ -328,12 +339,20 @@ impl RenderEngine {
             .or_else(|| type_override.and_then(|o| o.border_width))
             .unwrap_or(default.border_width);
 
-        let mut flags: f32 = 0.0;
+        let mut flags: u32 = 0;
         if status_override.map(|o| o.pulse).unwrap_or(false) {
-            flags += 1.0; // bit 0 = pulse
+            flags |= 1; // bit 0 = pulse
         }
 
-        (half_w, half_h, color, border_color, border_width, shape, flags)
+        ResolvedNodeStyle {
+            half_w,
+            half_h,
+            color,
+            border_color,
+            border_width,
+            shape,
+            flags,
+        }
     }
 
     fn rebuild_buffers(&mut self) {
@@ -369,17 +388,17 @@ impl RenderEngine {
                     (t, "healthy")
                 });
 
-            let (half_w, half_h, color, mut border_color, mut border_width, shape, mut flags) =
-                self.resolved_node_style(node_type, status);
+            let style = self.resolved_node_style(node_type, status);
+            let mut flags: u32 = style.flags;
+            let mut border_color = style.border_color;
+            let mut border_width = style.border_width;
 
             let is_hovered = self.hovered_idx == Some(i);
             let is_selected = self.selected_idx == Some(i);
 
             // Hovered: bit 1 of flags (additive with pulse bit 0)
             if is_hovered {
-                if (flags as u32) & 2 == 0 {
-                    flags += 2.0;
-                }
+                flags |= 2; // bit 1 = hovered
             }
             // Selected: override border, set bit 2
             if is_selected {
@@ -387,35 +406,31 @@ impl RenderEngine {
                 let (br, bg, bb, ba) = parse_hex_color(&sel_border);
                 border_color = [br, bg, bb, ba];
                 border_width = self.theme.interaction.select.border_width;
-                if (flags as u32) & 4 == 0 {
-                    flags += 4.0;
-                }
+                flags |= 4; // bit 2 = selected
             }
 
-            let alpha_mult = if is_dimmed {
-                self.theme.interaction.spotlight.dim_opacity
-            } else if self.hovered_idx.is_some() && !is_hovered && !is_selected {
-                self.theme.interaction.hover.dim_others
-            } else {
-                1.0
-            };
+            // Dimmed: bit 3 of flags — drives shader alpha, no Rust-side alpha multiplication.
+            // Covers both spotlight dimming (visual_flags == 1) and hover dim-others.
+            if is_dimmed || (self.hovered_idx.is_some() && !is_hovered && !is_selected) {
+                flags |= 8; // bit 3 = dimmed
+            }
 
             node_data.extend_from_slice(&[
                 cx,
                 cy,
-                half_w,
-                half_h,
-                color[0],
-                color[1],
-                color[2],
-                color[3] * alpha_mult,
+                style.half_w,
+                style.half_h,
+                style.color[0],
+                style.color[1],
+                style.color[2],
+                style.color[3],
                 border_color[0],
                 border_color[1],
                 border_color[2],
-                border_color[3] * alpha_mult,
+                border_color[3],
                 border_width,
-                shape,
-                flags,
+                style.shape,
+                flags as f32,
             ]);
 
         }
