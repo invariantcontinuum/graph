@@ -201,6 +201,119 @@ impl ForceLayout {
         }
     }
 
+    /// Run one force-integration step on an external flat positions buffer
+    /// (layout: [x0, y0, x1, y1, ...]) with index-based edges, skipping
+    /// position updates for any node index in `pinned`.
+    ///
+    /// Returns `true` if any free node is still moving above the minimum
+    /// velocity threshold, `false` when the system has effectively settled.
+    pub fn step_with_pins(
+        &mut self,
+        positions: &mut [f32],
+        edges: &[(usize, usize)],
+        pinned: &std::collections::HashSet<usize>,
+    ) -> bool {
+        let n = positions.len() / 2;
+        if n == 0 {
+            return false;
+        }
+
+        // Save pinned positions so we can restore them after the step.
+        let mut saved: Vec<(usize, f32, f32)> = pinned
+            .iter()
+            .filter_map(|&idx| {
+                let i = idx * 2;
+                if i + 1 < positions.len() {
+                    Some((idx, positions[i], positions[i + 1]))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // --- Compute bounding box for the quad-tree ---
+        let mut x_min = f32::MAX;
+        let mut y_min = f32::MAX;
+        let mut x_max = f32::MIN;
+        let mut y_max = f32::MIN;
+        for i in 0..n {
+            let x = positions[i * 2];
+            let y = positions[i * 2 + 1];
+            x_min = x_min.min(x);
+            y_min = y_min.min(y);
+            x_max = x_max.max(x);
+            y_max = y_max.max(y);
+        }
+        let pad = 10.0_f32;
+        x_min -= pad;
+        y_min -= pad;
+        x_max += pad;
+        y_max += pad;
+
+        // --- Build quad-tree ---
+        let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
+        for i in 0..n {
+            root.insert(positions[i * 2], positions[i * 2 + 1]);
+        }
+
+        // --- Repulsive forces (Barnes-Hut) ---
+        let mut forces: Vec<(f32, f32)> = (0..n)
+            .map(|i| root.compute_force(positions[i * 2], positions[i * 2 + 1]))
+            .collect();
+
+        // --- Attractive forces from edges ---
+        for &(src, tgt) in edges {
+            if src >= n || tgt >= n {
+                continue;
+            }
+            let sx = positions[src * 2];
+            let sy = positions[src * 2 + 1];
+            let tx = positions[tgt * 2];
+            let ty = positions[tgt * 2 + 1];
+            let dx = tx - sx;
+            let dy = ty - sy;
+            let dist = (dx * dx + dy * dy).sqrt().max(0.1);
+            let force = ATTRACTION * dist;
+            let fx = force * dx / dist;
+            let fy = force * dy / dist;
+            forces[src].0 += fx;
+            forces[src].1 += fy;
+            forces[tgt].0 -= fx;
+            forces[tgt].1 -= fy;
+        }
+
+        // --- Integrate velocities and positions ---
+        // Lazily grow the internal velocity store as the external buffer grows.
+        // We key velocities by index using a synthetic string key to reuse the
+        // existing HashMap without touching the internal positions HashMap.
+        let mut max_velocity_sq: f32 = 0.0;
+        for i in 0..n {
+            let (fx, fy) = forces[i];
+            let key = format!("__idx_{}", i);
+            let vel = self
+                .velocities
+                .entry(key)
+                .or_insert((0.0_f32, 0.0_f32));
+            vel.0 = (vel.0 + fx) * DAMPING;
+            vel.1 = (vel.1 + fy) * DAMPING;
+            let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
+            max_velocity_sq = max_velocity_sq.max(v_sq);
+            positions[i * 2] += vel.0;
+            positions[i * 2 + 1] += vel.1;
+        }
+
+        // --- Restore pinned positions ---
+        for (idx, x, y) in saved.drain(..) {
+            let i = idx * 2;
+            if i + 1 < positions.len() {
+                positions[i] = x;
+                positions[i + 1] = y;
+            }
+        }
+
+        max_velocity_sq >= MIN_VELOCITY * MIN_VELOCITY
+    }
+
     /// Return current positions without resetting the layout state.
     pub fn get_positions(&self) -> Vec<(String, f32, f32)> {
         self.positions
@@ -341,6 +454,7 @@ impl LayoutEngine for ForceLayout {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
     use graph_core::types::*;
 
     fn make_node(id: &str) -> NodeData {
@@ -420,5 +534,24 @@ mod tests {
             energy_early,
             energy_late
         );
+    }
+
+    #[test]
+    fn pinned_nodes_do_not_move() {
+        let mut layout = ForceLayout::new();
+        // Two nodes at (0,0) and (100,0), one edge between them.
+        let mut positions = vec![0.0_f32, 0.0, 100.0, 0.0];
+        let edges: Vec<(usize, usize)> = vec![(0, 1)];
+
+        let mut pinned = HashSet::new();
+        pinned.insert(0); // pin node 0
+
+        // Run a single step that honors pinned set.
+        layout.step_with_pins(&mut positions, &edges, &pinned);
+
+        // Node 0 must stay exactly at (0,0).
+        assert!((positions[0]).abs() < 1e-4, "pinned x drifted: {}", positions[0]);
+        assert!((positions[1]).abs() < 1e-4, "pinned y drifted: {}", positions[1]);
+        // Node 1 is free — it may or may not move depending on the force model.
     }
 }
