@@ -340,4 +340,22 @@ mod tests {
         assert_eq!(shape_index("barrel"), 7.0);
         assert_eq!(shape_index("unknown"), 0.0);
     }
+
+    #[test]
+    fn default_theme_json_parses() {
+        let json = include_str!("../../graph-main-wasm/src/default_theme.json");
+        let theme: ThemeConfig = serde_json::from_str(json).expect("default_theme.json must parse");
+        assert_eq!(theme.nodes.default.shape, "roundrectangle");
+        assert_eq!(theme.nodes.default.half_width, Some(55.0));
+        assert_eq!(theme.nodes.default.half_height, Some(19.0));
+        assert_eq!(theme.nodes.by_type["database"].shape.as_deref(), Some("barrel"));
+        assert_eq!(theme.nodes.by_type["policy"].shape.as_deref(), Some("diamond"));
+        assert!(theme.nodes.by_status["violation"].pulse);
+        assert!(theme.edges.by_type.contains_key("violation"));
+        assert!(theme.edges.by_type.contains_key("enforces"));
+        assert_eq!(
+            theme.edges.by_type["enforces"].style.as_deref(),
+            Some("dotted")
+        );
+    }
 }
