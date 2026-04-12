@@ -222,17 +222,14 @@ fn parse_hex_internal(hex: &str) -> (f32, f32, f32, f32) {
     let g = u8::from_str_radix(&h[2..4], 16);
     let b = u8::from_str_radix(&h[4..6], 16);
     let a = if h.len() == 8 {
-        u8::from_str_radix(&h[6..8], 16).map(|v| v as f32 / 255.0).unwrap_or(1.0)
+        u8::from_str_radix(&h[6..8], 16)
+            .map(|v| v as f32 / 255.0)
+            .unwrap_or(1.0)
     } else {
         1.0
     };
     match (r, g, b) {
-        (Ok(r), Ok(g), Ok(b)) => (
-            r as f32 / 255.0,
-            g as f32 / 255.0,
-            b as f32 / 255.0,
-            a,
-        ),
+        (Ok(r), Ok(g), Ok(b)) => (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, a),
         _ => (0.5, 0.5, 0.5, 1.0),
     }
 }
@@ -254,12 +251,9 @@ fn parse_rgba(inside: &str) -> (f32, f32, f32, f32) {
         1.0
     };
     match (r, g, b) {
-        (Ok(r), Ok(g), Ok(b)) if r <= 255 && g <= 255 && b <= 255 => (
-            r as f32 / 255.0,
-            g as f32 / 255.0,
-            b as f32 / 255.0,
-            a_val,
-        ),
+        (Ok(r), Ok(g), Ok(b)) if r <= 255 && g <= 255 && b <= 255 => {
+            (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, a_val)
+        }
         _ => (0.5, 0.5, 0.5, 1.0),
     }
 }
@@ -410,8 +404,14 @@ mod tests {
         assert_eq!(theme.nodes.default.shape, "roundrectangle");
         assert_eq!(theme.nodes.default.half_width, Some(55.0));
         assert_eq!(theme.nodes.default.half_height, Some(19.0));
-        assert_eq!(theme.nodes.by_type["database"].shape.as_deref(), Some("barrel"));
-        assert_eq!(theme.nodes.by_type["policy"].shape.as_deref(), Some("diamond"));
+        assert_eq!(
+            theme.nodes.by_type["database"].shape.as_deref(),
+            Some("barrel")
+        );
+        assert_eq!(
+            theme.nodes.by_type["policy"].shape.as_deref(),
+            Some("diamond")
+        );
         assert!(theme.nodes.by_status["violation"].pulse);
         assert!(theme.edges.by_type.contains_key("violation"));
         assert!(theme.edges.by_type.contains_key("enforces"));
@@ -459,7 +459,7 @@ mod tests {
 
     #[test]
     fn css_color_rgba_flexible_whitespace() {
-        let (r, g, b, a) = parse_css_color("rgba(255,255,255,0.12)");
+        let (r, _g, _b, a) = parse_css_color("rgba(255,255,255,0.12)");
         assert!((r - 1.0).abs() < 0.01);
         assert!((a - 0.12).abs() < 0.01);
     }

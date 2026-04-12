@@ -153,7 +153,10 @@ impl GraphStore {
             .collect();
         edge_types.sort_by(|a, b| a.type_key.cmp(&b.type_key));
 
-        LegendSummary { node_types, edge_types }
+        LegendSummary {
+            node_types,
+            edge_types,
+        }
     }
 }
 

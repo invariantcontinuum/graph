@@ -290,10 +290,7 @@ impl ForceLayout {
         for i in 0..n {
             let (fx, fy) = forces[i];
             let key = format!("__idx_{}", i);
-            let vel = self
-                .velocities
-                .entry(key)
-                .or_insert((0.0_f32, 0.0_f32));
+            let vel = self.velocities.entry(key).or_insert((0.0_f32, 0.0_f32));
             vel.0 = (vel.0 + fx) * DAMPING;
             vel.1 = (vel.1 + fy) * DAMPING;
             let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
@@ -454,8 +451,8 @@ impl LayoutEngine for ForceLayout {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashSet;
     use graph_core::types::*;
+    use std::collections::HashSet;
 
     fn make_node(id: &str) -> NodeData {
         NodeData {
@@ -550,8 +547,16 @@ mod tests {
         layout.step_with_pins(&mut positions, &edges, &pinned);
 
         // Node 0 must stay exactly at (0,0).
-        assert!((positions[0]).abs() < 1e-4, "pinned x drifted: {}", positions[0]);
-        assert!((positions[1]).abs() < 1e-4, "pinned y drifted: {}", positions[1]);
+        assert!(
+            (positions[0]).abs() < 1e-4,
+            "pinned x drifted: {}",
+            positions[0]
+        );
+        assert!(
+            (positions[1]).abs() < 1e-4,
+            "pinned y drifted: {}",
+            positions[1]
+        );
         // Node 1 is free — it may or may not move depending on the force model.
     }
 }

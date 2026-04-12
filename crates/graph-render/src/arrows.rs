@@ -27,7 +27,9 @@ impl ArrowRenderer {
         let gl = &ctx.gl;
         let program = ctx.link_program(ARROW_VERT, ARROW_FRAG)?;
 
-        let vao = gl.create_vertex_array().ok_or("Failed to create arrow VAO")?;
+        let vao = gl
+            .create_vertex_array()
+            .ok_or("Failed to create arrow VAO")?;
         gl.bind_vertex_array(Some(&vao));
 
         // Static triangle buffer at location 0.

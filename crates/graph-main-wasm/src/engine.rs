@@ -1,9 +1,9 @@
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
 
+use graph_render::arrows::{ARROW_INSTANCE_FLOATS, ArrowRenderer};
 use graph_render::camera::Camera;
 use graph_render::context::RenderContext;
-use graph_render::arrows::{ARROW_INSTANCE_FLOATS, ArrowRenderer};
 use graph_render::edges::{EDGE_INSTANCE_FLOATS, EdgeRenderer};
 use graph_render::hulls::HullRenderer;
 use graph_render::nodes::{NODE_INSTANCE_FLOATS, NodeRenderer};
@@ -180,7 +180,12 @@ impl RenderEngine {
         self.node_ids = ids;
     }
 
-    pub fn set_node_metadata(&mut self, ids_js: JsValue, types_js: JsValue, statuses_js: JsValue) -> Result<(), JsValue> {
+    pub fn set_node_metadata(
+        &mut self,
+        ids_js: JsValue,
+        types_js: JsValue,
+        statuses_js: JsValue,
+    ) -> Result<(), JsValue> {
         let ids: Vec<String> = serde_wasm_bindgen::from_value(ids_js)
             .map_err(|e| JsValue::from_str(&format!("ids: {e}")))?;
         let types: Vec<String> = serde_wasm_bindgen::from_value(types_js)
@@ -229,10 +234,8 @@ impl RenderEngine {
             *edge_counts.entry(etype.clone()).or_insert(0) += 1;
         }
 
-        let mut summary = graph_core::graph::GraphStore::legend_summary_from_counts(
-            &node_counts,
-            &edge_counts,
-        );
+        let mut summary =
+            graph_core::graph::GraphStore::legend_summary_from_counts(&node_counts, &edge_counts);
 
         // Populate node style fields from theme.
         for entry in &mut summary.node_types {
@@ -353,12 +356,14 @@ impl RenderEngine {
 
     /// Update the currently-dragged node's position. No-op if no drag active.
     pub fn handle_node_drag_move(&mut self, screen_x: f32, screen_y: f32) {
-        let Some(idx) = self.dragged_idx else { return; };
+        let Some(idx) = self.dragged_idx else {
+            return;
+        };
         let (wx, wy) = self.camera.screen_to_world(screen_x, screen_y);
         // Stride-4 positions buffer: x, y, radius_legacy, type_idx.
         let base = idx * 4;
         if base + 1 < self.positions.len() {
-            self.positions[base]     = wx;
+            self.positions[base] = wx;
             self.positions[base + 1] = wy;
         }
         self.buffers_dirty = true;
@@ -447,11 +452,7 @@ impl RenderEngine {
 impl RenderEngine {
     /// Resolve effective per-node style from theme: default + type override + status override.
     /// Returns a struct with named fields instead of a positional tuple.
-    fn resolved_node_style(
-        &self,
-        node_type: &str,
-        status: &str,
-    ) -> ResolvedNodeStyle {
+    fn resolved_node_style(&self, node_type: &str, status: &str) -> ResolvedNodeStyle {
         let default = &self.theme.nodes.default;
         let type_override = self.theme.nodes.by_type.get(node_type);
         let status_override = self.theme.nodes.by_status.get(status);
@@ -644,13 +645,13 @@ impl RenderEngine {
                 style.shape,
                 flags as f32,
             ]);
-
         }
         self.node_renderer.upload(gl, &node_data, node_count);
 
         // --- Edge buffer ---
         let mut edge_buf = Vec::with_capacity(self.edge_count * EDGE_INSTANCE_FLOATS);
-        let mut arrow_instances: Vec<f32> = Vec::with_capacity(self.edge_count * ARROW_INSTANCE_FLOATS);
+        let mut arrow_instances: Vec<f32> =
+            Vec::with_capacity(self.edge_count * ARROW_INSTANCE_FLOATS);
         let edge_stride = 6;
         for i in 0..self.edge_count {
             let base = i * edge_stride;
@@ -702,14 +703,14 @@ impl RenderEngine {
 
             // T11: build arrow instance data alongside each edge.
             arrow_instances.extend_from_slice(&[
-                sx, sy, tx, ty,
-                6.0, // arrow scale in world units
+                sx, sy, tx, ty, 6.0, // arrow scale in world units
                 er, eg, eb, ea,
             ]);
         }
         let arrow_count = arrow_instances.len() / ARROW_INSTANCE_FLOATS;
         self.edge_renderer.upload(gl, &edge_buf, self.edge_count);
-        self.arrow_renderer.upload(gl, &arrow_instances, arrow_count);
+        self.arrow_renderer
+            .upload(gl, &arrow_instances, arrow_count);
 
         // --- Hull buffer ---
         self.hull_renderer.upload(gl, &[], 0);

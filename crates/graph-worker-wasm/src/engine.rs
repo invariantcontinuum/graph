@@ -121,15 +121,15 @@ impl WorkerEngine {
         match self.active_layout {
             LayoutKind::Force => {
                 // Save pinned positions before the physics step.
-                let pinned_saved: Vec<(String, (f32, f32))> = self
-                    .pinned
-                    .iter()
-                    .filter_map(|&idx| {
-                        self.node_order.get(idx).cloned().and_then(|id| {
-                            self.positions.get(&id).copied().map(|pos| (id, pos))
+                let pinned_saved: Vec<(String, (f32, f32))> =
+                    self.pinned
+                        .iter()
+                        .filter_map(|&idx| {
+                            self.node_order.get(idx).cloned().and_then(|id| {
+                                self.positions.get(&id).copied().map(|pos| (id, pos))
+                            })
                         })
-                    })
-                    .collect();
+                        .collect();
 
                 let still_moving = self.force_layout.tick(&self.store);
                 if !still_moving {
