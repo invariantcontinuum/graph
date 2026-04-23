@@ -1,0 +1,15 @@
+{
+  "name": "graph-main-wasm",
+  "type": "module",
+  "version": "0.2.0",
+  "files": [
+    "graph_main_wasm_bg.wasm",
+    "graph_main_wasm.js",
+    "graph_main_wasm.d.ts"
+  ],
+  "main": "graph_main_wasm.js",
+  "types": "graph_main_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

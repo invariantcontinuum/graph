@@ -1,0 +1,15 @@
+{
+  "name": "graph-worker-wasm",
+  "type": "module",
+  "version": "0.2.0",
+  "files": [
+    "graph_worker_wasm_bg.wasm",
+    "graph_worker_wasm.js",
+    "graph_worker_wasm.d.ts"
+  ],
+  "main": "graph_worker_wasm.js",
+  "types": "graph_worker_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
