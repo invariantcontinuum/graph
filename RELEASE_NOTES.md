@@ -1,62 +1,81 @@
-# Release Notes: v0.1.3
+# Release Notes: v0.3.0
 
-## Web Worker Architecture for Large-Scale Graph Rendering
+## Scene Composition And Package Ergonomics
 
-This release fundamentally restructures the rendering engine to support smooth 60fps interaction at scale (target: up to 100K nodes). The monolithic WASM module has been split into two specialized modules communicating via zero-copy `Transferable` buffers.
+`v0.3.0` turns `@invariantcontinuum/graph` into a more complete package for app teams. The worker-split rendering architecture from the earlier releases is still the foundation, but the public surface now adds a higher-level React scene, overlay exports, theme helpers, grid layout support, and a broader imperative API for focus and camera control.
 
-### Architecture
+## Highlights
 
-```
-Main Thread                          Web Worker
-+--------------------------+         +---------------------------+
-| RenderEngine (WASM)      |  <---   | WorkerEngine (WASM)       |
-| - WebGL2 draw calls      |  Float  | - Graph data (nodes/edges)|
-| - Frame-budgeted buffers |  32Arr  | - Force-directed layout   |
-| - CPU spatial index      |  Transf | - Hierarchical layout     |
-| - Theme application      |  erable | - Filter/spotlight logic  |
-| - Pan/zoom/click         |         | - WebSocket connection    |
-+--------------------------+         +---------------------------+
-         ^                                    ^
-         |                                    |
-    React Graph                         worker.ts
-    (orchestrator)                    (bootstrap + tick loop)
-```
+### `GraphScene` Becomes The Recommended Integration Surface
 
-### What Changed for Consumers
+The package now exports a high-level `GraphScene` component from `@invariantcontinuum/graph/react`. It composes:
 
-**If you use the React `<Graph>` component** — no API changes required. The component signature is identical. The only breaking change is the `onReady` callback, which no longer receives an engine reference (signature changed from `(engine: any) => void` to `() => void`).
+- the WebGL/WASM graph canvas
+- the camera-synced grid overlay
+- compound source frames
+- Canvas2D labels
+- theme conversion from `themeMode`
+- an app-owned `chrome` slot for legends and toolbars
 
-**If you use the WASM module directly** — the package entry point changed from `graph_wasm.js` to `graph_main_wasm.js`. The Worker module is available at the `./worker` export path. Direct WASM usage now requires coordinating both modules.
+This means most consumers no longer need to build their own scene shell around the low-level `Graph` component.
 
-### Performance Improvements
+### New React-Level APIs
 
-| Metric | v0.1.1 | v0.1.3 |
-|--------|--------|--------|
-| Initial load (5K nodes) | UI frozen 2-5s | Progressive, interactive immediately |
-| Layout animation | Blocks main thread per frame | Off-thread, zero-copy position updates |
-| Node picking (hover/click) | Sync GPU readPixels (~2ms stall) | CPU spatial grid (~0.01ms) |
-| Idle CPU after convergence | 60fps render loop running | 0fps, on-demand only |
+The low-level `Graph` component remains available and now exposes more of the renderer's current capabilities:
 
-### Known Limitations
+- `layout` accepts `"grid"` in addition to `"force"` and `"hierarchical"`
+- `onLegendChange` surfaces theme-resolved legend data
+- `onBackgroundClick` lets hosts clear selection on empty-canvas clicks
+- `onPositionsReady` signals the first post-layout positions
+- `GraphHandle` now includes `panToNode`, `focusFit`, `subscribeFrame`, and `subscribeEdges`
 
-- **Text labels**: Still using placeholder 1x1 atlas (no visible text rendering)
-- **WebSocket**: Client structure exists but `connect_ws` handler is a stub — real-time updates not yet functional in this architecture
-- **Progressive loading**: Snapshot is loaded atomically; chunked ingestion planned for next release
-- **LOD**: No level-of-detail rendering at extreme zoom-out yet
-- **Tab backgrounding**: No `visibilitychange` throttling yet
+### Theme Toolkit Exports
 
-### Upgrade Path
+The React package now exports the theme primitives used by the bundled scene:
 
-```bash
-# Update dependency
-npm install @invariantcontinuum/graph@0.1.3
+- `buildGraphTheme`
+- `graphThemeToEngineJson`
+- `LIGHT` / `DARK`
+- per-type style and palette constants
+- individual overlay components for custom composition
 
-# No code changes needed if using the React component
-import { Graph } from "@invariantcontinuum/graph/react";
-```
+This makes it practical to stay visually aligned with the engine even when the application owns the legend, panels, or scene layering.
 
-If you were using `onReady` to access the engine directly, remove the parameter:
+### Interaction And Layout Refinements
+
+The current package state also includes a number of behavior upgrades relative to the earlier `0.2.x` line:
+
+- unified pointer handling for mouse, touch, and pen gestures
+- pinch zoom support
+- drag-to-pin interaction flowing through worker messages
+- viewport-aware grid layout via live canvas aspect ratio updates
+- id-aligned position updates so click/focus resolution stays matched to the active worker order
+- redraw recovery when an early converged layout would otherwise leave the canvas blank after an initial `0x0` paint
+
+## Upgrade Notes
+
+### Existing `Graph` Users
+
+Existing `Graph` integrations remain valid. `v0.3.0` is primarily an additive release for React consumers.
+
+### Recommended Migration
+
+If your app currently wraps `Graph` with its own overlay and theme plumbing, the recommended migration is:
+
 ```diff
-- onReady={(engine) => setEngine(engine)}
-+ onReady={() => setReady(true)}
+- import { Graph } from "@invariantcontinuum/graph/react";
++ import { GraphScene } from "@invariantcontinuum/graph/react";
 ```
+
+Then move your scene-level UI into the `chrome` prop and drive theme selection through `themeMode`.
+
+### Layout Choice
+
+`"grid"` is now the best default when you want a stable, readable initial topology without waiting for force simulation convergence. Use `"force"` when organic clustering matters more than deterministic placement.
+
+## Known Limitations
+
+- The React API still exposes `wsUrl` / `authToken`, but worker-side live WebSocket mutation ingestion is not fully wired yet.
+- `Graph` by itself is still canvas-only; use `GraphScene` or the exported overlays for readable labels and scene chrome.
+- The core text renderer remains placeholder-grade internally; production labels currently come from Canvas2D overlays.
+- WebGL2 remains the only rendering backend.

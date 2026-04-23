@@ -2,6 +2,25 @@
 
 All notable changes to `@invariantcontinuum/graph` will be documented in this file.
 
+## [0.3.0] - 2026-04-23
+
+### Added
+- **`GraphScene` composite:** New high-level React entry point that composes `Graph`, `GridOverlay`, `CompoundFramesOverlay`, `LabelOverlay`, theme conversion, and a `chrome` slot for app-owned UI.
+- **Overlay exports:** `GridOverlay`, `CompoundFramesOverlay`, `LabelOverlay`, and `EdgeLabelsOverlay` are exported individually for custom scene composition.
+- **Theme toolkit exports:** `buildGraphTheme`, `graphThemeToEngineJson`, `LIGHT`, `DARK`, palette constants, and type-style helpers are now part of the public React package surface.
+- **Grid layout mode:** `LayoutType` now includes `"grid"` for stable, viewport-aware non-overlapping placement.
+- **Expanded React callbacks:** `onBackgroundClick`, `onLegendChange`, and `onPositionsReady` are available on `Graph`.
+- **Expanded imperative API:** `GraphHandle` now includes `panToNode`, `focusFit`, `subscribeFrame`, and `subscribeEdges`.
+
+### Changed
+- **Recommended integration path:** Application consumers should prefer `GraphScene` for the full graph experience and use raw `Graph` only when they need custom overlay ownership.
+- **Interaction model:** Pointer handling is unified across mouse, touch, and pen input, including pinch zoom for dual-pointer gestures.
+- **Viewport propagation:** The worker receives live canvas aspect ratio updates so grid layout is computed against the actual viewport rather than a fixed fallback ratio.
+
+### Fixed
+- **Initial blank-canvas recovery:** Resize-triggered redraws now recover scenes that would otherwise stay blank after an early converged layout painted against a `0x0` backing store.
+- **Node id alignment:** Worker `positions` messages now carry `node_ids`, and the React bridge reapplies them to the engine so click, drag, and focus stay aligned with the active worker ordering.
+
 ## [0.2.0] - 2026-04-12
 
 ### Breaking Changes
