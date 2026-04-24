@@ -10,6 +10,8 @@ export const sampleSnapshot: GraphSnapshot = {
     { id: "ext1", name: "Stripe API", type: "external", domain: "payments", status: "healthy", meta: {} },
     { id: "adr1", name: "ADR-001", type: "adr", domain: "docs", status: "healthy", meta: {} },
     { id: "pol1", name: "Auth Policy", type: "policy", domain: "security", status: "violation", meta: {} },
+    { id: "inc1", name: "Latency Spike", type: "incident", domain: "ops", status: "critical", meta: {} },
+    { id: "db2", name: "Metrics Store", type: "database", domain: "ops", status: "healthy", meta: {} },
   ],
   edges: [
     { id: "e1", source: "s1", target: "s2", type: "depends", label: "calls", weight: 1 },
@@ -19,10 +21,12 @@ export const sampleSnapshot: GraphSnapshot = {
     { id: "e5", source: "s1", target: "src1", type: "depends_on", label: "hosted on", weight: 1 },
     { id: "e6", source: "s1", target: "adr1", type: "why", label: "documented in", weight: 1 },
     { id: "e7", source: "s1", target: "pol1", type: "violation", label: "breaks", weight: 1 },
+    { id: "e8", source: "inc1", target: "s1", type: "why", label: "affects", weight: 1 },
+    { id: "e9", source: "s1", target: "db2", type: "depends", label: "reports", weight: 1 },
   ],
   meta: {
-    node_count: 8,
-    edge_count: 7,
+    node_count: 10,
+    edge_count: 9,
     last_updated: new Date().toISOString(),
   },
 };
