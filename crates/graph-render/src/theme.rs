@@ -258,13 +258,6 @@ fn parse_rgba(inside: &str) -> (f32, f32, f32, f32) {
     }
 }
 
-/// Parse a hex color string (e.g. "#ff0000" or "#ff000080") into (r, g, b, a) floats in [0, 1].
-/// Kept for backward compatibility — now delegates to `parse_css_color` which also accepts
-/// `rgb(...)` and `rgba(...)` strings.
-pub fn parse_hex_color(hex: &str) -> (f32, f32, f32, f32) {
-    parse_css_color(hex)
-}
-
 /// Map a shape name to its shader index.
 pub fn shape_index(shape: &str) -> f32 {
     match shape {
@@ -354,8 +347,8 @@ mod tests {
     }
 
     #[test]
-    fn hex_color_parsing() {
-        let (r, g, b, a) = parse_hex_color("#ff0000");
+    fn css_color_hex_parsing() {
+        let (r, g, b, a) = parse_css_color("#ff0000");
         assert!((r - 1.0).abs() < 0.01);
         assert!(g < 0.01);
         assert!(b < 0.01);
@@ -471,14 +464,5 @@ mod tests {
         assert!((g - 0.5).abs() < 0.01);
         assert!((b - 0.5).abs() < 0.01);
         assert!((a - 1.0).abs() < 0.01);
-    }
-
-    #[test]
-    fn parse_hex_color_still_works() {
-        // Backward compat: existing call sites passing hex strings must still work.
-        let (r, g, b, _a) = parse_hex_color("#3b4199");
-        assert!((r - 0x3b as f32 / 255.0).abs() < 0.01);
-        assert!((g - 0x41 as f32 / 255.0).abs() < 0.01);
-        assert!((b - 0x99 as f32 / 255.0).abs() < 0.01);
     }
 }

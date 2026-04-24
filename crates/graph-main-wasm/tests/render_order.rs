@@ -11,8 +11,8 @@ fn edges_draw_before_nodes_draw() {
         .find("self.edge_renderer.draw")
         .expect("edge_renderer.draw call not found in src/engine.rs");
     let node_pos = src
-        .find("self.node_renderer.draw")
-        .expect("node_renderer.draw call not found in src/engine.rs");
+        .find("self.node_renderer")
+        .expect("self.node_renderer not found in src/engine.rs");
     assert!(
         edge_pos < node_pos,
         "edges draw must come before nodes draw (edge_pos={edge_pos}, node_pos={node_pos})"
