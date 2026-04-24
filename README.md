@@ -1,6 +1,7 @@
 # @invariantcontinuum/graph
 
 WASM + WebGL2 graph renderer for large knowledge graphs, with layout work offloaded to a Web Worker and a React surface that ranges from a low-level `<Graph>` canvas bridge to a full `<GraphScene>` with overlays and theme wiring.
+<img width="1327" height="677" alt="image" src="https://github.com/user-attachments/assets/fd29f11e-4e25-41cb-890e-828109b4382e" />
 
 ## Installation
 
