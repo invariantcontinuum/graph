@@ -36,10 +36,16 @@ export default function Showcase() {
   return (
     <div className={`flex flex-col h-screen ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
       {/* Header / Toolbar */}
-      <header className="p-4 border-b border-gray-700 flex flex-wrap gap-4 items-center justify-between z-10">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold font-mono">@invariantcontinuum/graph</h1>
-          <span className="px-2 py-1 bg-blue-600 rounded text-xs font-bold uppercase">v0.2.0-preview</span>
+      <header className="p-4 border-b border-gray-700 flex flex-wrap gap-4 items-center justify-between z-10 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+            <img src="/graph/globe.svg" alt="Logo" className="w-6 h-6 invert" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold font-mono tracking-tight text-blue-400">@invariantcontinuum/graph</h1>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold -mt-1">Knowledge Graph Engine</div>
+          </div>
+          <span className="px-2 py-0.5 bg-gray-800 border border-gray-700 rounded text-[10px] font-bold text-gray-300 ml-2">v0.2.0</span>
         </div>
         
         <div className="flex gap-2">
