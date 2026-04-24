@@ -10,7 +10,6 @@ import {
   type GraphStats,
   type GraphThemeOverrides,
   type LayoutType,
-  type LegendSummary,
   type NodeTypeStyleOverride,
   type Shape,
 } from "@invariantcontinuum/graph/react";
@@ -41,6 +40,19 @@ interface LegendEdgeDesign {
 interface LegendDesignConfig {
   nodes: Record<string, LegendNodeDesign>;
   edges: Record<string, LegendEdgeDesign>;
+}
+
+interface CanvasLegendEntry {
+  typeKey: string;
+  label: string;
+  count: number;
+  color: string;
+  borderColor?: string;
+}
+
+interface CanvasLegend {
+  nodes: CanvasLegendEntry[];
+  edges: CanvasLegendEntry[];
 }
 
 const SHAPES: Shape[] = [
@@ -242,6 +254,49 @@ function buildThemeOverrides(config: LegendDesignConfig): GraphThemeOverrides {
   return { nodeTypes, edgeTypes };
 }
 
+function labelForType(type: string, label?: string): string {
+  return label?.trim() || type.replace(/_/g, " ");
+}
+
+function countByType<T>(items: T[], getType: (item: T) => string): Record<string, number> {
+  return items.reduce<Record<string, number>>((counts, item) => {
+    const type = getType(item);
+    counts[type] = (counts[type] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function buildCanvasLegend(snapshot: GraphSnapshot, config: LegendDesignConfig): CanvasLegend {
+  const nodeCounts = countByType(snapshot.nodes, (node) => node.type);
+  const edgeCounts = countByType(snapshot.edges, (edge) => edge.type);
+
+  return {
+    nodes: Object.entries(nodeCounts)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([typeKey, count]) => {
+        const design = config.nodes[typeKey];
+        return {
+          typeKey,
+          count,
+          label: labelForType(typeKey, design?.label),
+          color: design?.color ?? "#ffffff",
+          borderColor: design?.borderColor ?? "#6fb5a7",
+        };
+      }),
+    edges: Object.entries(edgeCounts)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([typeKey, count]) => {
+        const design = config.edges[typeKey];
+        return {
+          typeKey,
+          count,
+          label: labelForType(typeKey, design?.label),
+          color: design?.color ?? "#6fb5a7",
+        };
+      }),
+  };
+}
+
 function emptySnapshot(): GraphSnapshot {
   return {
     nodes: [],
@@ -260,7 +315,6 @@ export default function Showcase() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [layout, setLayout] = useState<LayoutType>("force");
   const [showCommunities, setShowCommunities] = useState(false);
-  const [legend, setLegend] = useState<LegendSummary | null>(null);
   const [stats, setStats] = useState<GraphStats | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [legendConfig, setLegendConfig] = useState<LegendDesignConfig>(() =>
@@ -284,6 +338,10 @@ export default function Showcase() {
   );
 
   const themeOverrides = useMemo(() => buildThemeOverrides(legendConfig), [legendConfig]);
+  const canvasLegend = useMemo(
+    () => buildCanvasLegend(snapshot, legendConfig),
+    [snapshot, legendConfig],
+  );
 
   const renderGraphJson = () => {
     try {
@@ -303,7 +361,6 @@ export default function Showcase() {
           violationCount: 0,
           lastUpdated: nextSnapshot.meta.last_updated ?? new Date().toISOString(),
         });
-        setLegend({ node_types: [], edge_types: [] });
       }
       graphRef.current?.focusFit(null);
     } catch (error) {
@@ -323,7 +380,6 @@ export default function Showcase() {
       violationCount: 0,
       lastUpdated: nextSnapshot.meta.last_updated ?? new Date().toISOString(),
     });
-    setLegend({ node_types: [], edge_types: [] });
     graphRef.current?.focusFit(null);
   };
 
@@ -444,7 +500,6 @@ export default function Showcase() {
             themeOverrides={themeOverrides}
             layout={layout}
             showCommunities={showCommunities}
-            onLegendChange={setLegend}
             onStatsChange={setStats}
             onNodeClick={(node) => {
               setSelectedNode(node.id);
@@ -468,20 +523,20 @@ export default function Showcase() {
                   <div className="max-h-60 space-y-3 overflow-y-auto">
                     <div className="space-y-1">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Nodes</div>
-                      {legend?.node_types.map((entry) => (
-                        <div key={entry.type_key} className="flex items-center gap-2">
-                          <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: entry.color, borderColor: entry.border_color }} />
-                          <span className="truncate">{legendConfig.nodes[entry.type_key]?.label ?? entry.label}</span>
+                      {canvasLegend.nodes.map((entry) => (
+                        <div key={entry.typeKey} className="flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: entry.color, borderColor: entry.borderColor }} />
+                          <span className="truncate">{entry.label}</span>
                           <span className="ml-auto text-slate-400">{entry.count}</span>
                         </div>
                       ))}
                     </div>
                     <div className="space-y-1">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Edges</div>
-                      {legend?.edge_types.map((entry) => (
-                        <div key={entry.type_key} className="flex items-center gap-2">
+                      {canvasLegend.edges.map((entry) => (
+                        <div key={entry.typeKey} className="flex items-center gap-2">
                           <span className="h-0.5 w-5 rounded" style={{ backgroundColor: entry.color }} />
-                          <span className="truncate">{legendConfig.edges[entry.type_key]?.label ?? entry.label}</span>
+                          <span className="truncate">{entry.label}</span>
                           <span className="ml-auto text-slate-400">{entry.count}</span>
                         </div>
                       ))}
@@ -541,7 +596,7 @@ export default function Showcase() {
               <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Nodes</h3>
               {Object.entries(legendConfig.nodes).map(([type, design]) => (
                 <details key={type} className="rounded-lg border border-slate-800 bg-slate-900/70 p-3" open={Object.keys(legendConfig.nodes).length <= 3}>
-                  <summary className="cursor-pointer font-mono text-sm">{design.label ?? type}</summary>
+                  <summary className="cursor-pointer font-mono text-sm">{labelForType(type, design.label)}</summary>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                     <label className="space-y-1">
                       <span className="text-slate-400">Fill</span>
@@ -582,7 +637,7 @@ export default function Showcase() {
               <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-amber-300">Edges</h3>
               {Object.entries(legendConfig.edges).map(([type, design]) => (
                 <details key={type} className="rounded-lg border border-slate-800 bg-slate-900/70 p-3" open={Object.keys(legendConfig.edges).length <= 3}>
-                  <summary className="cursor-pointer font-mono text-sm">{design.label ?? type}</summary>
+                  <summary className="cursor-pointer font-mono text-sm">{labelForType(type, design.label)}</summary>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                     <label className="space-y-1">
                       <span className="text-slate-400">Color</span>
