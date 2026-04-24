@@ -1,0 +1,50 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version override (leave empty to use release tag)"
+        required: false
+
+jobs:
+  publish-npm:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          target: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "latest"
+      - name: Build WASM targets
+        run: |
+          wasm-pack build --target web --out-dir ../../pkg crates/graph-worker-wasm --out-name graph_worker_wasm
+          wasm-pack build --target web --out-dir ../../pkg-main crates/graph-main-wasm --out-name graph_main_wasm
+          cp pkg-main/graph_main_wasm* pkg/
+          rm -rf pkg-main
+      - name: Prepare package
+        run: |
+          cp -r react/ pkg/react/
+          cp package.json pkg/package.json
+          [ -f README.md ] && cp README.md pkg/README.md || true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+      - name: Publish
+        working-directory: pkg
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
