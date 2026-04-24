@@ -122,14 +122,14 @@ impl GraphStore {
     /// border_color, shape, dash) from their theme — graph-core has no theme
     /// awareness.
     pub fn legend_summary_from_counts(
-        node_counts: &HashMap<String, usize>,
-        edge_counts: &HashMap<String, usize>,
+        node_counts: &HashMap<&str, usize>,
+        edge_counts: &HashMap<&str, usize>,
     ) -> LegendSummary {
         let mut node_types: Vec<LegendEntry> = node_counts
             .iter()
             .map(|(type_key, count)| LegendEntry {
-                type_key: type_key.clone(),
-                label: type_key.clone(),
+                type_key: type_key.to_string(),
+                label: type_key.to_string(),
                 count: *count,
                 color: String::new(),
                 border_color: String::new(),
@@ -142,7 +142,7 @@ impl GraphStore {
         let mut edge_types: Vec<LegendEntry> = edge_counts
             .iter()
             .map(|(type_key, count)| LegendEntry {
-                type_key: type_key.clone(),
+                type_key: type_key.to_string(),
                 label: type_key.replace('_', " "),
                 count: *count,
                 color: String::new(),
@@ -174,8 +174,8 @@ mod legend_tests {
     #[test]
     fn legend_summary_counts_and_sorts() {
         let mut nodes = HashMap::new();
-        nodes.insert("service".to_string(), 3);
-        nodes.insert("database".to_string(), 1);
+        nodes.insert("service", 3);
+        nodes.insert("database", 1);
         let edges = HashMap::new();
 
         let s = GraphStore::legend_summary_from_counts(&nodes, &edges);
@@ -193,7 +193,7 @@ mod legend_tests {
     fn edge_type_label_replaces_underscores() {
         let nodes = HashMap::new();
         let mut edges = HashMap::new();
-        edges.insert("depends_on".to_string(), 5);
+        edges.insert("depends_on", 5);
 
         let s = GraphStore::legend_summary_from_counts(&nodes, &edges);
         assert_eq!(s.edge_types[0].type_key, "depends_on");

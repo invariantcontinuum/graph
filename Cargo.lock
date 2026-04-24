@@ -378,6 +378,7 @@ name = "graph-main-wasm"
 version = "0.2.0"
 dependencies = [
  "console_log",
+ "criterion",
  "graph-core",
  "graph-render",
  "js-sys",

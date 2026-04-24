@@ -26,3 +26,10 @@ serde-wasm-bindgen = "0.6"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+
+[[bench]]
+name = "legend_bench"
+harness = false
+
+[dev-dependencies.criterion]
+version = "0.5"
