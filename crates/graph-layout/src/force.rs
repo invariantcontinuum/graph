@@ -23,8 +23,9 @@ const MIN_VELOCITY: f32 = 0.02;
 const MAX_ITERATIONS: usize = 300;
 
 pub struct ForceLayout {
-    positions: HashMap<String, (f32, f32)>,
-    velocities: HashMap<String, (f32, f32)>,
+    node_ids: Vec<String>,
+    positions_vec: Vec<(f32, f32)>,
+    velocities_vec: Vec<(f32, f32)>,
     converged: bool,
     iteration: usize,
 }
@@ -189,35 +190,47 @@ impl QuadNode {
 impl ForceLayout {
     pub fn new() -> Self {
         Self {
-            positions: HashMap::new(),
-            velocities: HashMap::new(),
+            node_ids: Vec::new(),
+            positions_vec: Vec::new(),
+            velocities_vec: Vec::new(),
             converged: false,
             iteration: 0,
         }
     }
 
     fn init_positions(&mut self, graph: &GraphStore) {
-        // Sort ids so the golden-angle seeding is reproducible across runs —
-        // HashMap iteration order is otherwise random and a fresh reload would
-        // produce a visually different converged layout every time.
+        // Sort ids so the golden-angle seeding is reproducible across runs.
         let mut node_ids: Vec<String> = graph.nodes().map(|n| n.id.clone()).collect();
         node_ids.sort();
+
         let n = node_ids.len() as f32;
         let golden_angle = std::f32::consts::PI * (3.0 - 5.0_f32.sqrt());
-        // Seed radius scales with sqrt(N) so 700+-node graphs get more initial
-        // spread — otherwise they start as a tight blob and the force layout
-        // needs many more iterations to spread them out.
         let seed_radius = 60.0 * (n.max(1.0)).sqrt().min(64.0);
 
-        for (i, id) in node_ids.iter().enumerate() {
-            if !self.positions.contains_key(id) {
-                let r = (i as f32 / n).sqrt() * seed_radius;
+        // Build a temporary map of current positions to reuse them if the ID exists.
+        let mut old_positions = HashMap::new();
+        for (id, pos) in self.node_ids.drain(..).zip(self.positions_vec.drain(..)) {
+            old_positions.insert(id, pos);
+        }
+
+        self.node_ids = node_ids;
+        self.positions_vec.clear();
+        self.positions_vec.reserve(self.node_ids.len());
+
+        for (i, id) in self.node_ids.iter().enumerate() {
+            if let Some(pos) = old_positions.get(id) {
+                self.positions_vec.push(*pos);
+            } else {
+                let r = (i as f32 / n.max(1.0)).sqrt() * seed_radius;
                 let theta = i as f32 * golden_angle;
                 let x = r * theta.cos();
                 let y = r * theta.sin();
-                self.positions.insert(id.clone(), (x, y));
-                self.velocities.insert(id.clone(), (0.0, 0.0));
+                self.positions_vec.push((x, y));
             }
+        }
+
+        if self.velocities_vec.len() < self.node_ids.len() {
+            self.velocities_vec.resize(self.node_ids.len(), (0.0, 0.0));
         }
     }
 
@@ -303,14 +316,16 @@ impl ForceLayout {
         }
 
         // --- Integrate velocities and positions ---
-        // Lazily grow the internal velocity store as the external buffer grows.
-        // We key velocities by index using a synthetic string key to reuse the
-        // existing HashMap without touching the internal positions HashMap.
+        // We use a flat vector for velocities, index-aligned with positions.
+        // If the number of nodes grew, we resize the velocity store.
+        if self.velocities_vec.len() < n {
+            self.velocities_vec.resize(n, (0.0, 0.0));
+        }
+
         let mut max_velocity_sq: f32 = 0.0;
         for i in 0..n {
             let (fx, fy) = forces[i];
-            let key = format!("__idx_{}", i);
-            let vel = self.velocities.entry(key).or_insert((0.0_f32, 0.0_f32));
+            let vel = &mut self.velocities_vec[i];
             vel.0 = (vel.0 + fx) * DAMPING;
             vel.1 = (vel.1 + fy) * DAMPING;
             let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
@@ -332,16 +347,16 @@ impl ForceLayout {
     }
 
     /// Return current positions without resetting the layout state.
-    pub fn get_positions(&self) -> Vec<(String, f32, f32)> {
-        self.positions
+    pub fn get_positions(&self) -> impl Iterator<Item = (&String, f32, f32)> {
+        self.node_ids
             .iter()
-            .map(|(id, &(x, y))| (id.clone(), x, y))
-            .collect()
+            .zip(self.positions_vec.iter())
+            .map(|(id, &(x, y))| (id, x, y))
     }
 
     pub fn total_velocity_energy(&self) -> f32 {
-        self.velocities
-            .values()
+        self.velocities_vec
+            .iter()
             .map(|(vx, vy)| vx * vx + vy * vy)
             .sum()
     }
@@ -366,9 +381,8 @@ impl LayoutEngine for ForceLayout {
             }
         }
 
-        self.positions
-            .iter()
-            .map(|(id, &(x, y))| (id.clone(), x, y))
+        self.get_positions()
+            .map(|(id, x, y)| (id.clone(), x, y))
             .collect()
     }
 
@@ -376,18 +390,26 @@ impl LayoutEngine for ForceLayout {
         self.init_positions(graph);
         self.iteration += 1;
 
-        let ids: Vec<String> = self.positions.keys().cloned().collect();
-        if ids.is_empty() {
+        let n = self.node_ids.len();
+        if n == 0 {
             self.converged = true;
             return false;
         }
+
+        // Build a mapping from node ID to its index for O(1) edge lookup.
+        let id_to_idx: HashMap<&str, usize> = self
+            .node_ids
+            .iter()
+            .enumerate()
+            .map(|(i, id)| (id.as_str(), i))
+            .collect();
 
         // Compute bounding box for quad-tree
         let mut x_min = f32::MAX;
         let mut y_min = f32::MAX;
         let mut x_max = f32::MIN;
         let mut y_max = f32::MIN;
-        for &(x, y) in self.positions.values() {
+        for &(x, y) in &self.positions_vec {
             x_min = x_min.min(x);
             y_min = y_min.min(y);
             x_max = x_max.max(x);
@@ -402,25 +424,24 @@ impl LayoutEngine for ForceLayout {
 
         // Build quad-tree
         let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
-        for &(x, y) in self.positions.values() {
+        for &(x, y) in &self.positions_vec {
             root.insert(x, y);
         }
 
         // Compute repulsive forces via Barnes-Hut
-        let mut forces: HashMap<String, (f32, f32)> = HashMap::new();
-        for id in &ids {
-            let (x, y) = self.positions[id];
-            let (fx, fy) = root.compute_force(x, y);
-            forces.insert(id.clone(), (fx, fy));
-        }
+        let mut forces: Vec<(f32, f32)> = self
+            .positions_vec
+            .iter()
+            .map(|&(x, y)| root.compute_force(x, y))
+            .collect();
 
         // Compute attractive forces from edges
         for edge in graph.edges() {
-            let source = &edge.source;
-            let target = &edge.target;
-            if let (Some(&(sx, sy)), Some(&(tx, ty))) =
-                (self.positions.get(source), self.positions.get(target))
+            if let (Some(&src_idx), Some(&tgt_idx)) =
+                (id_to_idx.get(edge.source.as_str()), id_to_idx.get(edge.target.as_str()))
             {
+                let (sx, sy) = self.positions_vec[src_idx];
+                let (tx, ty) = self.positions_vec[tgt_idx];
                 let dx = tx - sx;
                 let dy = ty - sy;
                 let dist = (dx * dx + dy * dy).sqrt().max(0.1);
@@ -428,60 +449,51 @@ impl LayoutEngine for ForceLayout {
                 let fx = force * dx / dist;
                 let fy = force * dy / dist;
 
-                forces.entry(source.clone()).and_modify(|(rfx, rfy)| {
-                    *rfx += fx;
-                    *rfy += fy;
-                });
-                forces.entry(target.clone()).and_modify(|(rfx, rfy)| {
-                    *rfx -= fx;
-                    *rfy -= fy;
-                });
+                forces[src_idx].0 += fx;
+                forces[src_idx].1 += fy;
+                forces[tgt_idx].0 -= fx;
+                forces[tgt_idx].1 -= fy;
             }
         }
 
         // Apply forces to velocities and positions
         let mut max_velocity_sq: f32 = 0.0;
-        for id in &ids {
-            let (fx, fy) = forces.get(id).copied().unwrap_or((0.0, 0.0));
-            let vel = self.velocities.get_mut(id).unwrap();
+        for i in 0..n {
+            let (fx, fy) = forces[i];
+            let vel = &mut self.velocities_vec[i];
             vel.0 = (vel.0 + fx) * DAMPING;
             vel.1 = (vel.1 + fy) * DAMPING;
 
             let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
             max_velocity_sq = max_velocity_sq.max(v_sq);
 
-            let pos = self.positions.get_mut(id).unwrap();
+            let pos = &mut self.positions_vec[i];
             pos.0 += vel.0;
             pos.1 += vel.1;
         }
 
-        // Local overlap resolution: for each node, nudge it away from any
-        // neighbor that's closer than MIN_NODE_GAP. O(N*K) where K is the
-        // bucket occupancy — a coarse grid keeps this linear in N for the
-        // densities we see (700-1000 nodes). This prevents the node
-        // rectangles from visually overlapping after convergence, which the
-        // pure force model alone does not guarantee.
+        // Local overlap resolution
         let gap_sq = MIN_NODE_GAP * MIN_NODE_GAP;
         let bucket_size = MIN_NODE_GAP;
-        let mut buckets: HashMap<(i32, i32), Vec<String>> = HashMap::new();
-        for id in &ids {
-            let (x, y) = self.positions[id];
+        let mut buckets: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
+        for i in 0..n {
+            let (x, y) = self.positions_vec[i];
             let key = ((x / bucket_size).floor() as i32, (y / bucket_size).floor() as i32);
-            buckets.entry(key).or_default().push(id.clone());
+            buckets.entry(key).or_default().push(i);
         }
-        for id in &ids {
-            let (x, y) = self.positions[id];
+        for i in 0..n {
+            let (x, y) = self.positions_vec[i];
             let key = ((x / bucket_size).floor() as i32, (y / bucket_size).floor() as i32);
             let mut push_dx = 0.0_f32;
             let mut push_dy = 0.0_f32;
             for dx in -1..=1 {
                 for dy in -1..=1 {
                     if let Some(bucket) = buckets.get(&(key.0 + dx, key.1 + dy)) {
-                        for other in bucket {
-                            if other == id {
+                        for &other_idx in bucket {
+                            if other_idx == i {
                                 continue;
                             }
-                            let (ox, oy) = self.positions[other];
+                            let (ox, oy) = self.positions_vec[other_idx];
                             let ddx = x - ox;
                             let ddy = y - oy;
                             let d_sq = ddx * ddx + ddy * ddy;
@@ -496,7 +508,7 @@ impl LayoutEngine for ForceLayout {
                 }
             }
             if push_dx != 0.0 || push_dy != 0.0 {
-                let pos = self.positions.get_mut(id).unwrap();
+                let pos = &mut self.positions_vec[i];
                 pos.0 += push_dx;
                 pos.1 += push_dy;
             }

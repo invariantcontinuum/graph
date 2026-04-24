@@ -188,7 +188,7 @@ impl WorkerEngine {
                 }
                 let result = self.force_layout.get_positions();
                 for (id, x, y) in result {
-                    self.positions.insert(id, (x, y));
+                    self.positions.insert(id.clone(), (x, y));
                 }
 
                 // Restore pinned positions so physics cannot move them.

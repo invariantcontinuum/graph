@@ -8,7 +8,7 @@ use graph_render::edges::{EDGE_INSTANCE_FLOATS, EdgeRenderer};
 use graph_render::hulls::HullRenderer;
 use graph_render::nodes::{NODE_INSTANCE_FLOATS, NodeRenderer};
 use graph_render::text::TextRenderer;
-use graph_render::theme::{ThemeConfig, parse_hex_color, shape_index};
+use graph_render::theme::{ThemeConfig, parse_css_color, shape_index};
 
 use crate::pulse::PulseState;
 use crate::spatial::SpatialGrid;
@@ -35,23 +35,6 @@ pub struct ResolvedNodeStyle {
     pub shape: f32,
     pub flags: u32,
 }
-
-/// Categorical-12 palette for community hull coloring.
-#[allow(dead_code)]
-const PALETTE: &[(f32, f32, f32)] = &[
-    (0.35, 0.65, 1.0),
-    (1.0, 0.45, 0.35),
-    (0.35, 0.85, 0.55),
-    (0.95, 0.75, 0.25),
-    (0.65, 0.45, 0.95),
-    (1.0, 0.55, 0.75),
-    (0.45, 0.85, 0.85),
-    (0.85, 0.55, 0.35),
-    (0.55, 0.75, 0.35),
-    (0.75, 0.35, 0.55),
-    (0.35, 0.55, 0.75),
-    (0.85, 0.85, 0.35),
-];
 
 #[wasm_bindgen]
 pub struct RenderEngine {
@@ -268,14 +251,25 @@ impl RenderEngine {
         let mut edge_counts: HashMap<&str, usize> = HashMap::new();
 
         for meta in self.node_metadata.values() {
-            *node_counts.entry(meta.node_type.as_str()).or_insert(0) += 1;
+            *node_counts.entry(&meta.node_type).or_insert(0) += 1;
         }
         for etype in self.edge_metadata.values() {
-            *edge_counts.entry(etype.as_str()).or_insert(0) += 1;
+            *edge_counts.entry(etype).or_insert(0) += 1;
         }
 
-        let mut summary =
-            graph_core::graph::GraphStore::legend_summary_from_counts(&node_counts, &edge_counts);
+        let node_counts_owned: HashMap<String, usize> = node_counts
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        let edge_counts_owned: HashMap<String, usize> = edge_counts
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+
+        let mut summary = graph_core::graph::GraphStore::legend_summary_from_counts(
+            &node_counts_owned,
+            &edge_counts_owned,
+        );
 
         // Populate node style fields from theme.
         for entry in &mut summary.node_types {
@@ -509,7 +503,7 @@ impl RenderEngine {
             self.buffers_dirty = false;
         }
 
-        let (br, bg, bb, ba) = parse_hex_color(&self.theme.background);
+        let (br, bg, bb, ba) = parse_css_color(&self.theme.background);
         self.ctx.clear(br, bg, bb, ba);
 
         self.hull_renderer.draw(&self.ctx.gl, &vp);
@@ -1003,14 +997,14 @@ impl RenderEngine {
         let color_hex = type_override
             .and_then(|o| o.color.clone())
             .unwrap_or_else(|| default.color.clone());
-        let (cr, cg, cb, ca) = parse_hex_color(&color_hex);
+        let (cr, cg, cb, ca) = parse_css_color(&color_hex);
         let color = [cr, cg, cb, ca];
 
         let border_color_hex = status_override
             .and_then(|o| o.border_color.clone())
             .or_else(|| type_override.and_then(|o| o.border_color.clone()))
             .unwrap_or_else(|| default.border_color.clone());
-        let (br, bg, bb, ba) = parse_hex_color(&border_color_hex);
+        let (br, bg, bb, ba) = parse_css_color(&border_color_hex);
         let border_color = [br, bg, bb, ba];
 
         let border_width = status_override
@@ -1184,7 +1178,7 @@ impl RenderEngine {
             // border; the filled tint makes it instantly recognisable.
             if is_selected {
                 let sel_border = self.theme.interaction.select.border_color.clone();
-                let (br, bg, bb, ba) = parse_hex_color(&sel_border);
+                let (br, bg, bb, ba) = parse_css_color(&sel_border);
                 border_color = [br, bg, bb, ba];
                 // Fill at 78% of the selection color's alpha so the label
                 // (dark brown in dark-theme) still reads against it.
@@ -1317,7 +1311,7 @@ impl RenderEngine {
             }
 
             let resolved_color = focus_color_override.as_deref().unwrap_or(&ecolor);
-            let (er, eg, eb, ea0) = parse_hex_color(resolved_color);
+            let (er, eg, eb, ea0) = parse_css_color(resolved_color);
             // Focus edges: force high alpha so the selection tint isn't scaled
             // down by the per-type color's translucency.
             let base_alpha = if focus_color_override.is_some() { 0.95 } else { ea0 };
