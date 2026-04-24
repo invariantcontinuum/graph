@@ -4,11 +4,6 @@ import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
-// Matches ThemeConfig's edge byType index order. Keep in sync with the Rust side.
-const EDGE_TYPE_NAMES: Record<number, string> = {
-  0: "depends", 1: "violation", 2: "enforces", 3: "why", 4: "drift",
-};
-
 export interface EdgeLabelsOverlayProps {
   engineRef: React.RefObject<GraphHandle | null>;
   theme: GraphTheme;
@@ -19,10 +14,11 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     edgeData: Float32Array | null;
+    edgeTypeKeys: string[];
     focusIdx: number;
     positions: Float32Array | null;
     vp: Float32Array | null;
-  }>({ edgeData: null, focusIdx: -1, positions: null, vp: null });
+  }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
   const rafRef = useRef<number | null>(null);
 
   useDprCanvas(canvasRef);
@@ -31,8 +27,9 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     if (!ready) return;
     const engine = engineRef.current;
     if (!engine) return;
-    const unsubEdges = engine.subscribeEdges(({ edgeData, focusIdx }) => {
+    const unsubEdges = engine.subscribeEdges(({ edgeData, focusIdx, edgeTypeKeys }) => {
       stateRef.current.edgeData = edgeData;
+      stateRef.current.edgeTypeKeys = edgeTypeKeys;
       stateRef.current.focusIdx = focusIdx;
     });
     const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
@@ -50,7 +47,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-      const { edgeData, focusIdx, positions, vp } = stateRef.current;
+      const { edgeData, edgeTypeKeys, focusIdx, positions, vp } = stateRef.current;
       if (focusIdx < 0 || !edgeData || !positions || !vp) {
         rafRef.current = requestAnimationFrame(tick);
         return;
@@ -71,7 +68,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
         if (sKey !== focusKey && tKey !== focusKey) continue;
 
         const typeIdx = Math.floor(edgeData[i + 4]);
-        const label = EDGE_TYPE_NAMES[typeIdx] ?? "";
+        const label = edgeTypeKeys[typeIdx]?.replace(/_/g, " ") ?? "";
         if (!label) continue;
 
         const mx = (sx + tx) / 2;

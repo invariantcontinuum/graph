@@ -1,36 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum NodeType {
-    Service,
-    Database,
-    Cache,
-    External,
-    Policy,
-    Adr,
-    Incident,
-}
+pub type NodeType = String;
+pub type EdgeType = String;
+pub type Status = String;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum EdgeType {
-    DependsOn,
-    Calls,
-    Violation,
-    Enforces,
-    Drift,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Status {
-    Healthy,
-    Violation,
-    Warning,
-    Enforced,
-}
+pub const DEFAULT_NODE_TYPE: &str = "service";
+pub const DEFAULT_EDGE_TYPE: &str = "depends";
+pub const DEFAULT_STATUS: &str = "healthy";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeData {
@@ -80,8 +57,8 @@ mod tests {
         }"#;
         let node: NodeData = serde_json::from_str(json).unwrap();
         assert_eq!(node.id, "svc-42");
-        assert_eq!(node.node_type, NodeType::Service);
-        assert_eq!(node.status, Status::Healthy);
+        assert_eq!(node.node_type, "service");
+        assert_eq!(node.status, "healthy");
         assert_eq!(node.community, Some(7));
     }
 
@@ -95,7 +72,21 @@ mod tests {
             "weight": 0.85
         }"#;
         let edge: EdgeData = serde_json::from_str(json).unwrap();
-        assert_eq!(edge.edge_type, EdgeType::DependsOn);
+        assert_eq!(edge.edge_type, "DEPENDS_ON");
         assert_eq!(edge.weight, 0.85);
+    }
+
+    #[test]
+    fn preserves_custom_type_strings() {
+        let json = r#"{
+            "id": "svc-99",
+            "name": "Custom",
+            "type": "workflow_trigger",
+            "domain": "automation",
+            "status": "degraded"
+        }"#;
+        let node: NodeData = serde_json::from_str(json).unwrap();
+        assert_eq!(node.node_type, "workflow_trigger");
+        assert_eq!(node.status, "degraded");
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "graph-main-wasm",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "files": [
     "graph_main_wasm_bg.wasm",
     "graph_main_wasm.js",

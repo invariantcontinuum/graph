@@ -9,9 +9,9 @@ fn make_graph(node_count: usize, edge_count: usize) -> GraphStore {
         g.add_node(NodeData {
             id: format!("n{i}"),
             name: format!("Node{i}"),
-            node_type: NodeType::Service,
+            node_type: "service".into(),
             domain: "bench".into(),
-            status: Status::Healthy,
+            status: "healthy".into(),
             community: Some((i % 10) as u32),
             meta: Default::default(),
         });
@@ -24,7 +24,7 @@ fn make_graph(node_count: usize, edge_count: usize) -> GraphStore {
                 id: format!("e{i}"),
                 source: format!("n{src}"),
                 target: format!("n{tgt}"),
-                edge_type: EdgeType::DependsOn,
+                edge_type: "depends".into(),
                 label: String::new(),
                 weight: 1.0,
             });

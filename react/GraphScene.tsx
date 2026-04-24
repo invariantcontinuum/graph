@@ -4,8 +4,9 @@ import { GridOverlay } from "./GridOverlay";
 import { CompoundFramesOverlay } from "./CompoundFramesOverlay";
 import { LabelOverlay } from "./LabelOverlay";
 import { buildGraphTheme } from "./theme/buildTheme";
+import { mergeGraphTheme } from "./theme/mergeTheme";
 import { graphThemeToEngineJson } from "./theme/toEngineTheme";
-import type { GraphTheme } from "./theme/types";
+import type { GraphTheme, GraphThemeOverrides } from "./theme/types";
 
 export type ThemeMode = "light" | "dark";
 
@@ -15,6 +16,9 @@ export interface GraphSceneProps
    *  turns this into the full GraphTheme + engine JSON in one place so every
    *  overlay + the WASM shader stay in lock-step. */
   themeMode: ThemeMode;
+  /** Optional app-owned style overrides keyed by graph type strings. This is
+   *  the package-level extension point for user-defined legend types. */
+  themeOverrides?: GraphThemeOverrides | null;
   /** Ordered list of node ids matching the snapshot's node order. Used by
    *  overlays for label/frame lookup. Defaults to `snapshot.nodes.map(n=>n.id)`
    *  if omitted. */
@@ -61,6 +65,7 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
 ) {
   const {
     themeMode,
+    themeOverrides,
     snapshot,
     nodeIds: nodeIdsProp,
     labels: labelsProp,
@@ -74,9 +79,13 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
     ...graphProps
   } = props;
 
-  const graphTheme: GraphTheme = useMemo(
+  const baseGraphTheme: GraphTheme = useMemo(
     () => buildGraphTheme(themeMode),
     [themeMode],
+  );
+  const graphTheme: GraphTheme = useMemo(
+    () => mergeGraphTheme(baseGraphTheme, themeOverrides),
+    [baseGraphTheme, themeOverrides],
   );
   const engineTheme = useMemo(
     () => graphThemeToEngineJson(graphTheme),
@@ -192,7 +201,19 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
        *  infer from the neighbor panel. Legacy Cytoscape never rendered per-
        *  edge labels in the spotlighted state. The component is still exported
        *  from the package for apps that genuinely want it. */}
-      {chrome}
+      {chrome ? (
+        <div
+          className="graph-scene-chrome"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          {chrome}
+        </div>
+      ) : null}
     </div>
   );
 });

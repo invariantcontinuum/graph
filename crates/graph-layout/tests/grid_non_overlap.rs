@@ -1,15 +1,15 @@
 use graph_core::graph::GraphStore;
-use graph_core::types::{NodeData, NodeType, Status};
+use graph_core::types::NodeData;
 use graph_layout::{GridLayout, LayoutEngine};
 use std::collections::HashMap;
 
-fn node(id: &str, t: NodeType) -> NodeData {
+fn node(id: &str, t: &str) -> NodeData {
     NodeData {
         id: id.to_string(),
         name: id.to_string(),
-        node_type: t,
+        node_type: t.to_string(),
         domain: "test".into(),
-        status: Status::Healthy,
+        status: "healthy".into(),
         community: None,
         meta: HashMap::new(),
     }
@@ -31,7 +31,7 @@ fn grid_layout_no_overlap_for_various_sizes() {
         for ratio in [0.5_f32, 1.0, 1.77, 2.0] {
             let mut store = GraphStore::new();
             for i in 0..n {
-                store.add_node(node(&format!("n{i}"), NodeType::Service));
+                store.add_node(node(&format!("n{i}"), "service"));
             }
             let mut layout = GridLayout::new(20.0, W, H, ratio);
             let positions = layout.compute(&store);
@@ -68,7 +68,7 @@ fn grid_layout_no_overlap_for_various_sizes() {
 fn grid_layout_is_centered_on_origin() {
     let mut store = GraphStore::new();
     for i in 0..16 {
-        store.add_node(node(&format!("n{i}"), NodeType::Service));
+        store.add_node(node(&format!("n{i}"), "service"));
     }
     let mut layout = GridLayout::new(20.0, W, H, 1.0);
     let positions = layout.compute(&store);

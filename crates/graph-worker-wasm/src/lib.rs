@@ -159,6 +159,9 @@ fn post_edges(engine: &WorkerEngine) {
     let msg = js_sys::Object::new();
     js_sys::Reflect::set(&msg, &"type".into(), &"edges".into()).ok();
     js_sys::Reflect::set(&msg, &"edges".into(), &edge_array).ok();
+    if let Ok(keys_js) = serde_wasm_bindgen::to_value(engine.edge_type_keys()) {
+        js_sys::Reflect::set(&msg, &"edge_type_keys".into(), &keys_js).ok();
+    }
     js_sys::Reflect::set(
         &msg,
         &"edge_count".into(),
@@ -182,9 +185,9 @@ fn convert_node(n: NodeIn) -> graph_core::types::NodeData {
     graph_core::types::NodeData {
         id: n.id,
         name: n.name,
-        node_type: parse_node_type(&n.node_type),
+        node_type: n.node_type,
         domain: n.domain,
-        status: parse_status(&n.status),
+        status: n.status,
         community: n.community,
         meta: match n.meta {
             serde_json::Value::Object(m) => m.into_iter().collect(),
@@ -198,42 +201,8 @@ fn convert_edge(e: EdgeIn) -> graph_core::types::EdgeData {
         id: e.id,
         source: e.source,
         target: e.target,
-        edge_type: parse_edge_type(&e.edge_type),
+        edge_type: e.edge_type,
         label: e.label,
         weight: e.weight,
-    }
-}
-
-fn parse_node_type(s: &str) -> graph_core::types::NodeType {
-    match s {
-        "service" => graph_core::types::NodeType::Service,
-        "database" => graph_core::types::NodeType::Database,
-        "cache" => graph_core::types::NodeType::Cache,
-        "external" => graph_core::types::NodeType::External,
-        "policy" => graph_core::types::NodeType::Policy,
-        "adr" => graph_core::types::NodeType::Adr,
-        "incident" => graph_core::types::NodeType::Incident,
-        _ => graph_core::types::NodeType::Service,
-    }
-}
-
-fn parse_status(s: &str) -> graph_core::types::Status {
-    match s {
-        "healthy" => graph_core::types::Status::Healthy,
-        "violation" => graph_core::types::Status::Violation,
-        "warning" => graph_core::types::Status::Warning,
-        "enforced" => graph_core::types::Status::Enforced,
-        _ => graph_core::types::Status::Healthy,
-    }
-}
-
-fn parse_edge_type(s: &str) -> graph_core::types::EdgeType {
-    match s {
-        "depends_on" => graph_core::types::EdgeType::DependsOn,
-        "calls" => graph_core::types::EdgeType::Calls,
-        "violation" => graph_core::types::EdgeType::Violation,
-        "enforces" => graph_core::types::EdgeType::Enforces,
-        "drift" => graph_core::types::EdgeType::Drift,
-        _ => graph_core::types::EdgeType::DependsOn,
     }
 }

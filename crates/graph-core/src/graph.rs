@@ -206,13 +206,13 @@ mod tests {
     use super::*;
     use crate::types::*;
 
-    fn make_node(id: &str, node_type: NodeType) -> NodeData {
+    fn make_node(id: &str, node_type: &str) -> NodeData {
         NodeData {
             id: id.to_string(),
             name: id.to_string(),
-            node_type,
+            node_type: node_type.to_string(),
             domain: "test".to_string(),
-            status: Status::Healthy,
+            status: "healthy".to_string(),
             community: None,
             meta: Default::default(),
         }
@@ -223,7 +223,7 @@ mod tests {
             id: id.to_string(),
             source: source.to_string(),
             target: target.to_string(),
-            edge_type: EdgeType::DependsOn,
+            edge_type: "depends".to_string(),
             label: String::new(),
             weight: 1.0,
         }
@@ -232,16 +232,16 @@ mod tests {
     #[test]
     fn add_and_get_node() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("svc-1", NodeType::Service));
+        g.add_node(make_node("svc-1", "service"));
         assert_eq!(g.node_count(), 1);
-        assert_eq!(g.get_node("svc-1").unwrap().node_type, NodeType::Service);
+        assert_eq!(g.get_node("svc-1").unwrap().node_type, "service");
     }
 
     #[test]
     fn add_edge_between_nodes() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("a", NodeType::Service));
-        g.add_node(make_node("b", NodeType::Database));
+        g.add_node(make_node("a", "service"));
+        g.add_node(make_node("b", "database"));
         assert!(g.add_edge(make_edge("e1", "a", "b")));
         assert_eq!(g.edge_count(), 1);
     }
@@ -249,15 +249,15 @@ mod tests {
     #[test]
     fn edge_fails_with_missing_node() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("a", NodeType::Service));
+        g.add_node(make_node("a", "service"));
         assert!(!g.add_edge(make_edge("e1", "a", "missing")));
     }
 
     #[test]
     fn remove_node() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("a", NodeType::Service));
-        g.add_node(make_node("b", NodeType::Database));
+        g.add_node(make_node("a", "service"));
+        g.add_node(make_node("b", "database"));
         assert!(g.remove_node("a"));
         assert_eq!(g.node_count(), 1);
         assert!(g.get_node("a").is_none());
@@ -267,9 +267,9 @@ mod tests {
     #[test]
     fn neighbors() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("a", NodeType::Service));
-        g.add_node(make_node("b", NodeType::Database));
-        g.add_node(make_node("c", NodeType::Cache));
+        g.add_node(make_node("a", "service"));
+        g.add_node(make_node("b", "database"));
+        g.add_node(make_node("c", "cache"));
         g.add_edge(make_edge("e1", "a", "b"));
         g.add_edge(make_edge("e2", "a", "c"));
         let neighbors = g.neighbors("a");
@@ -279,11 +279,11 @@ mod tests {
     #[test]
     fn upsert_node() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("a", NodeType::Service));
-        let mut updated = make_node("a", NodeType::Service);
-        updated.status = Status::Violation;
+        g.add_node(make_node("a", "service"));
+        let mut updated = make_node("a", "service");
+        updated.status = "violation".to_string();
         g.add_node(updated);
         assert_eq!(g.node_count(), 1);
-        assert_eq!(g.get_node("a").unwrap().status, Status::Violation);
+        assert_eq!(g.get_node("a").unwrap().status, "violation");
     }
 }

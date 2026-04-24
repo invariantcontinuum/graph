@@ -1,11 +1,10 @@
 use crate::graph::GraphStore;
-use crate::types::{NodeType, Status};
 
 #[derive(Debug, Clone, Default)]
 pub struct GraphFilter {
-    pub types: Option<Vec<NodeType>>,
+    pub types: Option<Vec<String>>,
     pub domains: Option<Vec<String>>,
-    pub statuses: Option<Vec<Status>>,
+    pub statuses: Option<Vec<String>>,
 }
 
 impl GraphFilter {
@@ -26,15 +25,15 @@ impl GraphFilter {
 mod tests {
     use super::*;
     use crate::graph::GraphStore;
-    use crate::types::*;
+    use crate::types::NodeData;
 
-    fn make_node(id: &str, nt: NodeType, domain: &str, status: Status) -> NodeData {
+    fn make_node(id: &str, nt: &str, domain: &str, status: &str) -> NodeData {
         NodeData {
             id: id.into(),
             name: id.into(),
-            node_type: nt,
+            node_type: nt.into(),
             domain: domain.into(),
-            status,
+            status: status.into(),
             community: None,
             meta: Default::default(),
         }
@@ -43,10 +42,10 @@ mod tests {
     #[test]
     fn filter_by_type() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("s1", NodeType::Service, "pay", Status::Healthy));
-        g.add_node(make_node("d1", NodeType::Database, "pay", Status::Healthy));
+        g.add_node(make_node("s1", "service", "pay", "healthy"));
+        g.add_node(make_node("d1", "database", "pay", "healthy"));
         let f = GraphFilter {
-            types: Some(vec![NodeType::Service]),
+            types: Some(vec!["service".into()]),
             ..Default::default()
         };
         assert_eq!(f.apply(&g), vec!["s1"]);
@@ -55,17 +54,12 @@ mod tests {
     #[test]
     fn filter_by_domain_and_status() {
         let mut g = GraphStore::new();
-        g.add_node(make_node("s1", NodeType::Service, "pay", Status::Healthy));
-        g.add_node(make_node(
-            "s2",
-            NodeType::Service,
-            "auth",
-            Status::Violation,
-        ));
-        g.add_node(make_node("s3", NodeType::Service, "pay", Status::Violation));
+        g.add_node(make_node("s1", "service", "pay", "healthy"));
+        g.add_node(make_node("s2", "service", "auth", "violation"));
+        g.add_node(make_node("s3", "service", "pay", "violation"));
         let f = GraphFilter {
             domains: Some(vec!["pay".into()]),
-            statuses: Some(vec![Status::Violation]),
+            statuses: Some(vec!["violation".into()]),
             ..Default::default()
         };
         assert_eq!(f.apply(&g), vec!["s3"]);

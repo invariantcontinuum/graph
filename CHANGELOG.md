@@ -2,6 +2,21 @@
 
 All notable changes to `@invariantcontinuum/graph` will be documented in this file.
 
+## [0.2.2] - 2026-04-24
+
+### Added
+- **User-defined type styling:** `GraphScene` accepts `themeOverrides`, and `mergeGraphTheme` is exported so apps can style arbitrary node and edge type strings from their own legends.
+- **Generic edge type rendering:** Worker edge buffers now carry stable edge type keys so the renderer can resolve theme styles for custom edge types instead of a fixed enum.
+
+### Changed
+- **Core graph model:** Node types, edge types, and statuses are preserved as strings throughout `graph-core` and the worker so snapshots from arbitrary domains remain lossless.
+- **Force layout behavior:** Force layout now computes a settled placement and stops, preventing background floating after first render.
+- **Scene layering:** `GraphScene` wraps chrome above overlays so labels stay visually attached to nodes and do not cover app-owned stats or legend panels.
+
+### Fixed
+- **Cursor-anchored zoom:** Camera zoom now preserves the world point under the cursor.
+- **Fit and focus centering:** Camera projection now uses `x/y` consistently as the viewport center, fixing full-graph fit and node focus centering for off-origin layouts.
+
 ## [0.3.0] - 2026-04-23
 
 ### Added

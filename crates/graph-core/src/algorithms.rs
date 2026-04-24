@@ -81,9 +81,9 @@ mod tests {
         NodeData {
             id: id.into(),
             name: id.into(),
-            node_type: NodeType::Service,
+            node_type: "service".into(),
             domain: "test".into(),
-            status: Status::Healthy,
+            status: "healthy".into(),
             community: None,
             meta: Default::default(),
         }
@@ -93,7 +93,7 @@ mod tests {
             id: id.into(),
             source: src.into(),
             target: tgt.into(),
-            edge_type: EdgeType::DependsOn,
+            edge_type: "depends".into(),
             label: String::new(),
             weight: 1.0,
         }

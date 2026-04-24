@@ -70,6 +70,7 @@ export class RenderEngine {
     request_render(): void;
     set_community_hulls(show: boolean): void;
     set_edge_metadata(ids_js: any, types_js: any): void;
+    set_edge_type_keys(keys: string[]): void;
     /**
      * Focus a node: dim every non-neighbor via `visual_flags` (bit 0 = dimmed).
      * `None` clears the focus.
@@ -155,6 +156,7 @@ export interface InitOutput {
     readonly renderengine_request_render: (a: number) => void;
     readonly renderengine_set_community_hulls: (a: number, b: number) => void;
     readonly renderengine_set_edge_metadata: (a: number, b: any, c: any) => [number, number];
+    readonly renderengine_set_edge_type_keys: (a: number, b: number, c: number) => void;
     readonly renderengine_set_focus: (a: number, b: number, c: number) => void;
     readonly renderengine_set_node_ids: (a: number, b: number, c: number) => void;
     readonly renderengine_set_node_metadata: (a: number, b: any, c: any, d: any) => [number, number];

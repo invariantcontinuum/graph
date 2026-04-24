@@ -1,7 +1,7 @@
 {
   "name": "graph-worker-wasm",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "files": [
     "graph_worker_wasm_bg.wasm",
     "graph_worker_wasm.js",

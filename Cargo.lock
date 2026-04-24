@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "graph-core"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "petgraph",
  "proptest",
@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "graph-layout"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "criterion",
  "graph-core",
@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "graph-main-wasm"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "console_log",
  "criterion",
@@ -393,7 +393,7 @@ dependencies = [
 
 [[package]]
 name = "graph-render"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "graph-core",
  "graph-layout",
@@ -407,7 +407,7 @@ dependencies = [
 
 [[package]]
 name = "graph-worker-wasm"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "chrono",
  "console_log",

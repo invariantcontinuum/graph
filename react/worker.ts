@@ -6,7 +6,7 @@ let tickScheduled = false;
 
 self.onmessage = async (e: MessageEvent) => {
   if (!initPromise) {
-    initPromise = init("/graph/graph_worker_wasm_bg.wasm");
+    initPromise = init("/graph/graph_worker_wasm_bg.wasm").then(() => undefined);
   }
   await initPromise;
 

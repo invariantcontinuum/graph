@@ -1,81 +1,55 @@
-# Release Notes: v0.3.0
+# Release Notes: v0.2.2
 
-## Scene Composition And Package Ergonomics
+## Showcase-Ready JSON And Styling Release
 
-`v0.3.0` turns `@invariantcontinuum/graph` into a more complete package for app teams. The worker-split rendering architecture from the earlier releases is still the foundation, but the public surface now adds a higher-level React scene, overlay exports, theme helpers, grid layout support, and a broader imperative API for focus and camera control.
+`v0.2.2` makes the package suitable for the public showcase's interactive JSON and legend styling controls. The core change is that graph type information is now preserved as user-defined strings from snapshot ingestion through worker layout, renderer styling, legend extraction, filtering, and React overlays.
 
 ## Highlights
 
-### `GraphScene` Becomes The Recommended Integration Surface
+### User-Defined Type Styling
 
-The package now exports a high-level `GraphScene` component from `@invariantcontinuum/graph/react`. It composes:
+`GraphScene` now accepts `themeOverrides`, and `mergeGraphTheme` is exported for custom composition. Apps can define node and edge styles keyed by the same type strings found in their graph data or legend JSON:
 
-- the WebGL/WASM graph canvas
-- the camera-synced grid overlay
-- compound source frames
-- Canvas2D labels
-- theme conversion from `themeMode`
-- an app-owned `chrome` slot for legends and toolbars
+```tsx
+<GraphScene
+  snapshot={snapshot}
+  themeMode="dark"
+  themeOverrides={{
+    nodeTypes: {
+      risk: { shape: "hexagon", borderColor: "#f97316" },
+    },
+    edgeTypes: {
+      blocks: { color: "#22c55e", width: 3, style: "dashed" },
+    },
+  }}
+/>
+```
 
-This means most consumers no longer need to build their own scene shell around the low-level `Graph` component.
+### Camera And Focus Fixes
 
-### New React-Level APIs
+The camera now treats `x/y` consistently as the viewport center. Wheel and pinch zoom preserve the world point under the cursor, `fit()` centers the full graph, and `focusFit(id)` centers the selected node or its 1-hop neighborhood reliably.
 
-The low-level `Graph` component remains available and now exposes more of the renderer's current capabilities:
+### Static Force Layout
 
-- `layout` accepts `"grid"` in addition to `"force"` and `"hierarchical"`
-- `onLegendChange` surfaces theme-resolved legend data
-- `onBackgroundClick` lets hosts clear selection on empty-canvas clicks
-- `onPositionsReady` signals the first post-layout positions
-- `GraphHandle` now includes `panToNode`, `focusFit`, `subscribeFrame`, and `subscribeEdges`
+Force layout computes a settled placement and stops instead of leaving the graph floating. Dragging a node updates that node and its connected edge geometry without restarting background drift.
 
-### Theme Toolkit Exports
+### Chrome Layering
 
-The React package now exports the theme primitives used by the bundled scene:
-
-- `buildGraphTheme`
-- `graphThemeToEngineJson`
-- `LIGHT` / `DARK`
-- per-type style and palette constants
-- individual overlay components for custom composition
-
-This makes it practical to stay visually aligned with the engine even when the application owns the legend, panels, or scene layering.
-
-### Interaction And Layout Refinements
-
-The current package state also includes a number of behavior upgrades relative to the earlier `0.2.x` line:
-
-- unified pointer handling for mouse, touch, and pen gestures
-- pinch zoom support
-- drag-to-pin interaction flowing through worker messages
-- viewport-aware grid layout via live canvas aspect ratio updates
-- id-aligned position updates so click/focus resolution stays matched to the active worker order
-- redraw recovery when an early converged layout would otherwise leave the canvas blank after an initial `0x0` paint
+`GraphScene` now wraps app chrome above renderer overlays. Canvas labels remain clipped to their nodes and no longer visually cover stats, legends, or inspector chrome supplied through the `chrome` slot.
 
 ## Upgrade Notes
 
-### Existing `Graph` Users
+### Existing Consumers
 
-Existing `Graph` integrations remain valid. `v0.3.0` is primarily an additive release for React consumers.
+Existing `Graph` and `GraphScene` integrations remain valid. `themeOverrides` and `mergeGraphTheme` are additive.
 
-### Recommended Migration
+### Snapshot Type Semantics
 
-If your app currently wraps `Graph` with its own overlay and theme plumbing, the recommended migration is:
-
-```diff
-- import { Graph } from "@invariantcontinuum/graph/react";
-+ import { GraphScene } from "@invariantcontinuum/graph/react";
-```
-
-Then move your scene-level UI into the `chrome` prop and drive theme selection through `themeMode`.
-
-### Layout Choice
-
-`"grid"` is now the best default when you want a stable, readable initial topology without waiting for force simulation convergence. Use `"force"` when organic clustering matters more than deterministic placement.
+Node `type`, edge `type`, and node `status` values are no longer limited to built-in package enums internally. Built-in style presets still exist, but unknown type keys are preserved and fall back to default visual styles unless the app supplies overrides.
 
 ## Known Limitations
 
-- The React API still exposes `wsUrl` / `authToken`, but worker-side live WebSocket mutation ingestion is not fully wired yet.
-- `Graph` by itself is still canvas-only; use `GraphScene` or the exported overlays for readable labels and scene chrome.
-- The core text renderer remains placeholder-grade internally; production labels currently come from Canvas2D overlays.
+- `wsUrl` / `authToken` remain experimental.
+- `Graph` by itself is canvas-only; use `GraphScene` or exported overlays for labels and chrome.
+- The internal SDF text renderer is still placeholder-grade; production labels come from Canvas2D overlays.
 - WebGL2 remains the only rendering backend.

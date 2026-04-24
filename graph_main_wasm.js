@@ -212,6 +212,14 @@ export class RenderEngine {
         }
     }
     /**
+     * @param {string[]} keys
+     */
+    set_edge_type_keys(keys) {
+        const ptr0 = passArrayJsValueToWasm0(keys, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.renderengine_set_edge_type_keys(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * Focus a node: dim every non-neighbor via `visual_flags` (bit 0 = dimmed).
      * `None` clears the focus.
      *

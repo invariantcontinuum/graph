@@ -37,25 +37,28 @@ impl Camera {
     }
 
     pub fn pan(&mut self, dx: f32, dy: f32) {
-        self.x += dx / self.zoom;
+        self.x -= dx / self.zoom;
         self.y += dy / self.zoom;
     }
 
     pub fn zoom_at(&mut self, factor: f32, screen_x: f32, screen_y: f32) {
         let old_zoom = self.zoom;
+        if old_zoom <= 0.0 {
+            return;
+        }
+        let world_x_before = (screen_x - self.viewport_width / 2.0) / old_zoom + self.x;
+        let world_y_before = (self.viewport_height / 2.0 - screen_y) / old_zoom + self.y;
+
         self.zoom = (self.zoom * factor).clamp(self.min_zoom, self.max_zoom);
-        let actual_factor = self.zoom / old_zoom;
-        let world_x = (screen_x - self.viewport_width / 2.0) / old_zoom - self.x;
-        let world_y = (screen_y - self.viewport_height / 2.0) / old_zoom - self.y;
-        self.x -= world_x * (1.0 - 1.0 / actual_factor);
-        self.y -= world_y * (1.0 - 1.0 / actual_factor);
+        self.x = world_x_before - (screen_x - self.viewport_width / 2.0) / self.zoom;
+        self.y = world_y_before - (self.viewport_height / 2.0 - screen_y) / self.zoom;
     }
 
     pub fn view_projection_matrix(&self) -> [f32; 16] {
         let hw = self.viewport_width / (2.0 * self.zoom);
         let hh = self.viewport_height / (2.0 * self.zoom);
-        let (left, right) = (-self.x - hw, -self.x + hw);
-        let (bottom, top) = (-self.y - hh, -self.y + hh);
+        let (left, right) = (self.x - hw, self.x + hw);
+        let (bottom, top) = (self.y - hh, self.y + hh);
         let (sx, sy) = (2.0 / (right - left), 2.0 / (top - bottom));
         let (tx, ty) = (
             -(right + left) / (right - left),
@@ -69,15 +72,15 @@ impl Camera {
     pub fn visible_bounds(&self) -> (f32, f32, f32, f32) {
         let hw = self.viewport_width / (2.0 * self.zoom);
         let hh = self.viewport_height / (2.0 * self.zoom);
-        (-self.x - hw, -self.y - hh, -self.x + hw, -self.y + hh)
+        (self.x - hw, self.y - hh, self.x + hw, self.y + hh)
     }
 
     pub fn screen_to_world(&self, screen_x: f32, screen_y: f32) -> (f32, f32) {
         (
-            (screen_x - self.viewport_width / 2.0) / self.zoom - self.x,
+            (screen_x - self.viewport_width / 2.0) / self.zoom + self.x,
             // World Y points up; screen Y points down. Flip so hit-testing
             // agrees with view_projection (which has sy > 0).
-            (self.viewport_height / 2.0 - screen_y) / self.zoom - self.y,
+            (self.viewport_height / 2.0 - screen_y) / self.zoom + self.y,
         )
     }
 
@@ -156,5 +159,21 @@ mod tests {
         cam.zoom = 1.0;
         cam.zoom_at(1000.0, 400.0, 300.0);
         assert!(cam.zoom <= cam.max_zoom);
+    }
+
+    #[test]
+    fn zoom_at_keeps_anchor_world_point_stable() {
+        let mut cam = Camera::new(800.0, 600.0);
+        cam.x = 125.0;
+        cam.y = -75.0;
+        cam.zoom = 1.3;
+        let anchor = (615.0, 155.0);
+        let before = cam.screen_to_world(anchor.0, anchor.1);
+
+        cam.zoom_at(1.8, anchor.0, anchor.1);
+
+        let after = cam.screen_to_world(anchor.0, anchor.1);
+        assert!((before.0 - after.0).abs() < 0.001);
+        assert!((before.1 - after.1).abs() < 0.001);
     }
 }

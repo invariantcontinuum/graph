@@ -20,12 +20,20 @@ export type { EdgeLabelsOverlayProps } from "./EdgeLabelsOverlay";
 // Theme system — frontends that need to read colors (e.g., for a legend or
 // sidebar) build their own GraphTheme via `buildGraphTheme(mode)`.
 export { buildGraphTheme } from "./theme/buildTheme";
+export { mergeGraphTheme } from "./theme/mergeTheme";
 export { graphThemeToEngineJson } from "./theme/toEngineTheme";
 export { typeStyleFor, TYPE_STYLES, DEFAULT_STYLE } from "./theme/typeStyles";
 export type { TypeShape, Shape } from "./theme/typeStyles";
 export { LIGHT, DARK, NODE_TYPES, EDGE_TYPES } from "./theme/palette";
 export type { Palette, NodeType, EdgeType, EdgeAccent } from "./theme/palette";
-export type { GraphTheme, NodeTypeStyle, EdgeTypeStyle } from "./theme/types";
+export type {
+  GraphTheme,
+  GraphThemeOverrides,
+  NodeTypeStyle,
+  NodeTypeStyleOverride,
+  EdgeTypeStyle,
+  EdgeTypeStyleOverride,
+} from "./theme/types";
 
 // Raw engine types.
 export type {

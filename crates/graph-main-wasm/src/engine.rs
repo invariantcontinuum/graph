@@ -54,6 +54,7 @@ pub struct RenderEngine {
     visual_flags: Vec<u8>,
     edge_data: Vec<f32>,
     edge_count: usize,
+    edge_type_keys: Vec<String>,
     node_ids: Vec<String>,
     node_metadata: std::collections::HashMap<String, NodeMeta>,
     edge_metadata: std::collections::HashMap<String, String>, // edge_id -> edge_type
@@ -143,6 +144,7 @@ impl RenderEngine {
             visual_flags: Vec::new(),
             edge_data: Vec::new(),
             edge_count: 0,
+            edge_type_keys: Vec::new(),
             node_ids: Vec::new(),
             node_metadata: std::collections::HashMap::new(),
             edge_metadata: std::collections::HashMap::new(),
@@ -190,6 +192,12 @@ impl RenderEngine {
     pub fn update_edges(&mut self, edge_data: &[f32], edge_count: usize) {
         self.edge_data = edge_data.to_vec();
         self.edge_count = edge_count;
+        self.buffers_dirty = true;
+        self.needs_render = true;
+    }
+
+    pub fn set_edge_type_keys(&mut self, keys: Vec<String>) {
+        self.edge_type_keys = keys;
         self.buffers_dirty = true;
         self.needs_render = true;
     }
@@ -339,8 +347,8 @@ impl RenderEngine {
         if self.is_panning {
             let dx = x - self.last_mouse_x;
             let dy = y - self.last_mouse_y;
-            // World Y is up, screen Y is down. Flip dy so drag-down pans content down.
-            self.camera.pan(dx, -dy);
+            // Dragging the pointer moves the graph with the pointer.
+            self.camera.pan(dx, dy);
             self.last_mouse_x = x;
             self.last_mouse_y = y;
             self.needs_render = true;
@@ -542,6 +550,9 @@ impl RenderEngine {
             &"focusIdx".into(),
             &wasm_bindgen::JsValue::from(focus),
         );
+        if let Ok(keys) = serde_wasm_bindgen::to_value(&self.edge_type_keys) {
+            let _ = js_sys::Reflect::set(&obj, &"edgeTypeKeys".into(), &keys);
+        }
         let obj_val: wasm_bindgen::JsValue = obj.into();
         for cb in &self.edge_subscribers {
             let _ = cb.call1(&wasm_bindgen::JsValue::NULL, &obj_val);
@@ -1266,24 +1277,21 @@ impl RenderEngine {
             let type_idx = self.edge_data[base + 4] as usize;
             let _weight = self.edge_data[base + 5];
 
-            let type_name = match type_idx {
-                0 => "DEPENDS_ON",
-                1 => "CALLS",
-                2 => "violation",
-                3 => "enforces",
-                4 => "drift",
-                _ => "DEPENDS_ON",
-            };
+            let type_name = self
+                .edge_type_keys
+                .get(type_idx)
+                .map(String::as_str)
+                .unwrap_or("depends");
 
             let mut ecolor = self.theme.edges.default.color.clone();
             let mut ewidth = self.theme.edges.default.width;
             let mut dash = 0.0f32;
             let mut animate = 0.0f32;
 
-            // T10: resolve edge style, color, width, and animate from theme per-type overrides.
-            // The type_name is derived from the type_idx encoded in the edge_data buffer.
-            // TODO(T19): when edge_metadata (id→type HashMap) lands, derive type_name from it
-            //            instead of the positional type_idx encoding so arbitrary type strings work.
+            // Resolve edge style from worker-provided type keys. This keeps
+            // arbitrary user-defined edge types styled by the same legend/theme
+            // keys that came from the snapshot instead of collapsing to a fixed
+            // built-in enum.
             if let Some(ov) = self.theme.edges.by_type.get(type_name) {
                 if let Some(ref c) = ov.color {
                     ecolor = c.clone();

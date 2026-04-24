@@ -45,6 +45,14 @@ function GraphPage({ snapshot }: { snapshot: GraphSnapshot }) {
         themeMode="dark"
         layout="grid"
         showCommunities
+        themeOverrides={{
+          nodeTypes: {
+            risk: { shape: "hexagon", borderColor: "#f97316" },
+          },
+          edgeTypes: {
+            blocks: { color: "#22c55e", width: 3, style: "dashed" },
+          },
+        }}
         onLegendChange={setLegend}
         onNodeClick={(node) => console.log("node", node.id)}
         chrome={
@@ -101,6 +109,7 @@ Key props:
 | Prop | Type | Description |
 | --- | --- | --- |
 | `themeMode` | `"light" \| "dark"` | Required. Builds the package theme and engine JSON from a single mode flag |
+| `themeOverrides` | `GraphThemeOverrides \| null` | Optional per-type and token overrides keyed by snapshot/legend type strings |
 | `snapshot` | `GraphSnapshot` | Snapshot payload to render |
 | `layout` | `"force" \| "hierarchical" \| "grid"` | Layout strategy passed through to the worker |
 | `focusIds` | `Set<string> \| null` | Spotlight neighborhood for heavy dimming outside the focus set |
@@ -157,6 +166,7 @@ The forwarded ref exposes imperative controls:
 | Export | Purpose |
 | --- | --- |
 | `buildGraphTheme(mode)` | Build the package's high-level light/dark theme |
+| `mergeGraphTheme(theme, overrides)` | Merge app-owned style overrides, including arbitrary node/edge type keys |
 | `graphThemeToEngineJson(theme)` | Convert the theme into the JSON schema consumed by the WASM engine |
 | `GridOverlay` | Background grid tied to the camera transform |
 | `CompoundFramesOverlay` | Dashed grouping frames around `source_id` clusters |
@@ -193,7 +203,7 @@ interface GraphSnapshot {
 }
 ```
 
-The bundled theme presets recognize node types such as `service`, `source`, `database`, `cache`, `data`, `policy`, `adr`, `incident`, `external`, `config`, `script`, `doc`, and `asset`, and edge types such as `depends`, `depends_on`, `violation`, `enforces`, `why`, and `drift`.
+The bundled theme presets recognize node types such as `service`, `source`, `database`, `cache`, `data`, `policy`, `adr`, `incident`, `external`, `config`, `script`, `doc`, and `asset`, and edge types such as `depends`, `depends_on`, `violation`, `enforces`, `why`, and `drift`. Unknown node types, edge types, and statuses are preserved as strings and fall back to default styling unless supplied through `themeOverrides` or `mergeGraphTheme`.
 
 ## Architecture
 

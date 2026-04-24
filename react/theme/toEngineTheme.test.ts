@@ -45,9 +45,9 @@ describe("graphThemeToEngineJson", () => {
     expect(json.background).toMatch(/rgba\(0\s*,\s*0\s*,\s*0\s*,\s*0\)/);
   });
 
-  test("spotlight.dimOpacity = 0.28", () => {
+  test("spotlight.dimOpacity = 0.08", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
-    expect(json.interaction.spotlight.dimOpacity).toBeCloseTo(0.28);
+    expect(json.interaction.spotlight.dimOpacity).toBeCloseTo(0.08);
   });
 
   test("every byType node override has camelCase keys only", () => {

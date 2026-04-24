@@ -24,6 +24,7 @@ export const renderengine_rehydrate: (a: number) => void;
 export const renderengine_request_render: (a: number) => void;
 export const renderengine_set_community_hulls: (a: number, b: number) => void;
 export const renderengine_set_edge_metadata: (a: number, b: any, c: any) => [number, number];
+export const renderengine_set_edge_type_keys: (a: number, b: number, c: number) => void;
 export const renderengine_set_focus: (a: number, b: number, c: number) => void;
 export const renderengine_set_node_ids: (a: number, b: number, c: number) => void;
 export const renderengine_set_node_metadata: (a: number, b: any, c: any, d: any) => [number, number];

@@ -56,7 +56,7 @@ export interface GraphHandle {
     cb: (m: { positions: Float32Array; vpMatrix: Float32Array }) => void,
   ) => () => void;
   subscribeEdges: (
-    cb: (e: { edgeData: Float32Array; focusIdx: number }) => void,
+    cb: (e: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys: string[] }) => void,
   ) => () => void;
 }
 
@@ -167,6 +167,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           requestRender();
         } else if (msg.type === "edges") {
           const edges = new Float32Array(msg.edges);
+          if (Array.isArray(msg.edge_type_keys)) {
+            engine.set_edge_type_keys(msg.edge_type_keys);
+          }
           engine.update_edges(edges, msg.edge_count);
           requestRender();
         } else if (msg.type === "snapshot_loaded") {
@@ -671,8 +674,12 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Copy edgeData into a detached JS-owned buffer before handing off so
         // the overlay can safely retain it across frames without aliasing the
         // WASM linear-memory view (which may be invalidated on the next tick).
-        const wrapped = (obj: { edgeData: Float32Array; focusIdx: number }) =>
-          cb({ edgeData: new Float32Array(obj.edgeData), focusIdx: obj.focusIdx });
+        const wrapped = (obj: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys?: string[] }) =>
+          cb({
+            edgeData: new Float32Array(obj.edgeData),
+            focusIdx: obj.focusIdx,
+            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys) ? [...obj.edgeTypeKeys] : [],
+          });
         const idx = engineRef.current.subscribe_edges(wrapped);
         return () => engineRef.current?.unsubscribe_edges(idx);
       },

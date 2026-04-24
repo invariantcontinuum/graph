@@ -542,9 +542,9 @@ mod tests {
         NodeData {
             id: id.to_string(),
             name: id.to_string(),
-            node_type: NodeType::Service,
+            node_type: "service".to_string(),
             domain: "test".to_string(),
-            status: Status::Healthy,
+            status: "healthy".to_string(),
             community: None,
             meta: Default::default(),
         }
@@ -555,7 +555,7 @@ mod tests {
             id: format!("{}-{}", source, target),
             source: source.to_string(),
             target: target.to_string(),
-            edge_type: EdgeType::DependsOn,
+            edge_type: "depends".to_string(),
             label: String::new(),
             weight: 1.0,
         }

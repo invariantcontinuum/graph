@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use graph_core::filter::GraphFilter;
 use graph_core::graph::GraphStore;
 use graph_core::search::SearchIndex;
-use graph_core::types::{EdgeData, NodeData, NodeType, Status};
+use graph_core::types::{EdgeData, NodeData};
 use graph_layout::incremental::place_added_nodes;
 use graph_layout::{ForceLayout, GridLayout, HierarchicalLayout, LayoutEngine};
 
@@ -37,6 +37,8 @@ pub struct WorkerEngine {
     search: SearchIndex,
     positions: HashMap<String, (f32, f32)>,
     node_order: Vec<String>,
+    node_type_keys: Vec<String>,
+    edge_type_keys: Vec<String>,
 
     force_layout: ForceLayout,
     hier_layout: HierarchicalLayout,
@@ -66,6 +68,8 @@ impl WorkerEngine {
             search: SearchIndex::new(),
             positions: HashMap::new(),
             node_order: Vec::new(),
+            node_type_keys: Vec::new(),
+            edge_type_keys: Vec::new(),
             force_layout: ForceLayout::new(),
             hier_layout: HierarchicalLayout::new(),
             grid_layout: GridLayout::new(
@@ -101,6 +105,8 @@ impl WorkerEngine {
         self.search.clear();
         self.positions.clear();
         self.node_order.clear();
+        self.node_type_keys.clear();
+        self.edge_type_keys.clear();
 
         for node in nodes {
             self.search.insert(&node.id, &node.name);
@@ -110,6 +116,7 @@ impl WorkerEngine {
         for edge in edges {
             self.store.add_edge(edge);
         }
+        self.rebuild_type_keys();
 
         // Run the layout that was set via `set_layout`. Force is iterative and
         // keeps `layout_running=true` so the tick loop advances it; grid and
@@ -117,11 +124,11 @@ impl WorkerEngine {
         match self.active_layout {
             LayoutKind::Force => {
                 self.force_layout = ForceLayout::new();
-                self.layout_running = true;
                 let result = self.force_layout.compute(&self.store);
                 for (id, x, y) in result {
                     self.positions.insert(id, (x, y));
                 }
+                self.layout_running = false;
             }
             LayoutKind::Hierarchical => {
                 let result = self.hier_layout.compute(&self.store);
@@ -156,6 +163,8 @@ impl WorkerEngine {
         self.search.clear();
         self.positions.clear();
         self.node_order.clear();
+        self.node_type_keys.clear();
+        self.edge_type_keys.clear();
         self.visual_flags.clear();
         self.visible_nodes = None;
         self.spotlight_ids.clear();
@@ -211,13 +220,14 @@ impl WorkerEngine {
     }
 
     /// Mark a node as pinned and move it to the given position immediately.
-    /// Restarts the layout so that neighboring nodes can reflow.
+    /// Leaves the graph static; force layout is computed as a settled snapshot
+    /// rather than a continuously-running simulation.
     pub fn pin_node(&mut self, idx: usize, x: f32, y: f32) {
         if let Some(id) = self.node_order.get(idx).cloned() {
             self.positions.insert(id, (x, y));
         }
         self.pinned.insert(idx);
-        self.layout_running = true;
+        self.layout_running = false;
     }
 
     /// Remove a node from the pinned set so the force layout can move it again.
@@ -255,7 +265,11 @@ impl WorkerEngine {
             _ => {
                 self.active_layout = LayoutKind::Force;
                 self.force_layout = ForceLayout::new();
-                self.layout_running = true;
+                let result = self.force_layout.compute(&self.store);
+                for (id, x, y) in result {
+                    self.positions.insert(id, (x, y));
+                }
+                self.layout_running = false;
             }
         }
     }
@@ -273,13 +287,9 @@ impl WorkerEngine {
             None => self.visible_nodes = None,
             Some(f) => {
                 let core_filter = GraphFilter {
-                    types: f
-                        .types
-                        .map(|ts| ts.into_iter().filter_map(|t| parse_node_type(&t)).collect()),
+                    types: f.types,
                     domains: f.domains,
-                    statuses: f
-                        .status
-                        .map(|ss| ss.into_iter().filter_map(|s| parse_status(&s)).collect()),
+                    statuses: f.status,
                 };
                 let ids = core_filter.apply(&self.store);
                 self.visible_nodes = Some(ids.into_iter().collect());
@@ -313,6 +323,7 @@ impl WorkerEngine {
         for edge in edges {
             self.store.add_edge(edge);
         }
+        self.rebuild_type_keys();
 
         let new_ids: Vec<String> = self
             .node_order
@@ -349,6 +360,7 @@ impl WorkerEngine {
         self.search.remove(id);
         self.node_order.retain(|n| n != id);
         self.positions.remove(id);
+        self.rebuild_type_keys();
         self.rebuild_visual_flags();
     }
 
@@ -361,7 +373,7 @@ impl WorkerEngine {
             let type_index = self
                 .store
                 .get_node(id)
-                .map(|n| node_type_index(&n.node_type))
+                .map(|n| type_key_index(&self.node_type_keys, &n.node_type))
                 .unwrap_or(0.0);
             buf.extend_from_slice(&[x, y, 55.0, type_index]);
         }
@@ -383,9 +395,13 @@ impl WorkerEngine {
         let violations = self
             .store
             .nodes()
-            .filter(|n| n.status == Status::Violation)
+            .filter(|n| n.status == "violation")
             .count();
         (self.store.node_count(), self.store.edge_count(), violations)
+    }
+
+    pub fn edge_type_keys(&self) -> &[String] {
+        &self.edge_type_keys
     }
 
     pub fn get_edge_buffer(&self) -> Vec<f32> {
@@ -408,7 +424,7 @@ impl WorkerEngine {
             let Some(&(tx, ty)) = self.positions.get(&edge.target) else {
                 continue;
             };
-            let type_index = edge_type_index(&edge.edge_type);
+            let type_index = type_key_index(&self.edge_type_keys, &edge.edge_type);
             buf.extend_from_slice(&[sx, sy, tx, ty, type_index, edge.weight]);
         }
         buf
@@ -436,65 +452,53 @@ impl WorkerEngine {
             self.visual_flags.push(if dimmed { 1 } else { 0 });
         }
     }
-}
 
-fn node_type_index(nt: &NodeType) -> f32 {
-    match nt {
-        NodeType::Service => 0.0,
-        NodeType::Database => 1.0,
-        NodeType::Cache => 2.0,
-        NodeType::External => 3.0,
-        NodeType::Policy => 4.0,
-        NodeType::Adr => 5.0,
-        NodeType::Incident => 6.0,
+    fn rebuild_type_keys(&mut self) {
+        self.node_type_keys.clear();
+        self.edge_type_keys.clear();
+
+        let ordered_node_types: Vec<String> = self
+            .node_order
+            .iter()
+            .filter_map(|id| self.store.get_node(id).map(|n| n.node_type.clone()))
+            .collect();
+        for type_key in ordered_node_types {
+            push_unique_type_key(&mut self.node_type_keys, type_key);
+        }
+
+        let ordered_edge_types: Vec<String> = self
+            .store
+            .edges()
+            .map(|edge| edge.edge_type.clone())
+            .collect();
+        for type_key in ordered_edge_types {
+            push_unique_type_key(&mut self.edge_type_keys, type_key);
+        }
     }
 }
 
-fn edge_type_index(et: &graph_core::types::EdgeType) -> f32 {
-    match et {
-        graph_core::types::EdgeType::DependsOn => 0.0,
-        graph_core::types::EdgeType::Calls => 1.0,
-        graph_core::types::EdgeType::Violation => 2.0,
-        graph_core::types::EdgeType::Enforces => 3.0,
-        graph_core::types::EdgeType::Drift => 4.0,
+fn push_unique_type_key(keys: &mut Vec<String>, type_key: String) {
+    if !keys.iter().any(|known| known == &type_key) {
+        keys.push(type_key);
     }
 }
 
-fn parse_node_type(s: &str) -> Option<NodeType> {
-    match s {
-        "service" => Some(NodeType::Service),
-        "database" => Some(NodeType::Database),
-        "cache" => Some(NodeType::Cache),
-        "external" => Some(NodeType::External),
-        "policy" => Some(NodeType::Policy),
-        "adr" => Some(NodeType::Adr),
-        "incident" => Some(NodeType::Incident),
-        _ => None,
-    }
-}
-
-fn parse_status(s: &str) -> Option<Status> {
-    match s {
-        "healthy" => Some(Status::Healthy),
-        "violation" => Some(Status::Violation),
-        "warning" => Some(Status::Warning),
-        "enforced" => Some(Status::Enforced),
-        _ => None,
-    }
+fn type_key_index(keys: &[String], type_key: &str) -> f32 {
+    keys.iter().position(|known| known == type_key).unwrap_or(0) as f32
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use graph_core::types::{EdgeData, EdgeType, NodeData, NodeType, Status};
+    use graph_core::types::{EdgeData, NodeData};
 
     fn make_node(id: &str) -> NodeData {
         NodeData {
             id: id.to_string(),
             name: id.to_string(),
-            node_type: NodeType::Service,
+            node_type: "service".to_string(),
             domain: "test".to_string(),
-            status: Status::Healthy,
+            status: "healthy".to_string(),
             community: None,
             meta: std::collections::HashMap::new(),
         }
@@ -505,7 +509,7 @@ mod tests {
             id: id.to_string(),
             source: src.to_string(),
             target: tgt.to_string(),
-            edge_type: EdgeType::DependsOn,
+            edge_type: "depends".to_string(),
             label: "depends".to_string(),
             weight: 1.0,
         }
@@ -541,9 +545,9 @@ mod tests {
     fn filter_reduces_visible_set() {
         let mut engine = WorkerEngine::new();
         let mut node_a = make_node("a");
-        node_a.node_type = NodeType::Service;
+        node_a.node_type = "service".to_string();
         let mut node_b = make_node("b");
-        node_b.node_type = NodeType::Database;
+        node_b.node_type = "database".to_string();
         engine.load_snapshot(vec![node_a, node_b], vec![]);
 
         engine.set_filter(Some(FilterIn {
@@ -602,8 +606,8 @@ mod tests {
         engine.pin_node(0, 5.0, 5.0);
         assert!(engine.pinned.contains(&0));
         assert_eq!(engine.positions.get("a"), Some(&(5.0, 5.0)));
-        // Pinning should restart layout.
-        assert!(engine.is_layout_running());
+        // Pinning is static; dragging a node should not restart background drift.
+        assert!(!engine.is_layout_running());
 
         // Tick: pinned position must be preserved despite physics.
         engine.tick();

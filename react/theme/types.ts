@@ -36,3 +36,22 @@ export interface GraphTheme {
   defaultNodeStyle: NodeTypeStyle;
   defaultEdgeStyle: EdgeTypeStyle;
 }
+
+export type NodeTypeStyleOverride = Partial<NodeTypeStyle>;
+export type EdgeTypeStyleOverride = Partial<EdgeTypeStyle>;
+
+export interface GraphThemeOverrides {
+  canvasBg?: string;
+  gridLineColor?: string;
+  selectionBorder?: string;
+  selectionFill?: string;
+  hullFill?: string;
+  hullStroke?: string;
+  dimOpacity?: number;
+  labelHalo?: string;
+  dimText?: string;
+  nodeTypes?: Record<string, NodeTypeStyleOverride>;
+  edgeTypes?: Record<string, EdgeTypeStyleOverride>;
+  defaultNodeStyle?: NodeTypeStyleOverride;
+  defaultEdgeStyle?: EdgeTypeStyleOverride;
+}
