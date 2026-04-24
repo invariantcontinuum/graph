@@ -38,6 +38,7 @@ export interface GraphProps {
   className?: string;
   style?: React.CSSProperties;
   authToken?: string;
+  "aria-label"?: string;
 }
 
 export interface GraphHandle {
@@ -691,6 +692,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     <canvas
       ref={canvasRef}
       className={className}
+      aria-label={props["aria-label"] ?? "Interactive graph visualization"}
+      role="img"
       style={{ width: "100%", height: "100%", display: "block", touchAction: "none", ...style }}
     />
   );
