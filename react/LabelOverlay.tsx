@@ -58,6 +58,7 @@ export function LabelOverlay({
   nodeTypes,
   minZoomToShowLabels = 0.04,
   ready,
+  focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
@@ -123,6 +124,12 @@ export function LabelOverlay({
     <canvas
       ref={canvasRef}
       className="graph-label-overlay"
+      // The WASM shader dims non-focus fills via u_dim_opacity, so labels stay
+      // at uniform brightness. We surface the focus-set size as a data
+      // attribute so app CSS / devtools can read it without an extra render
+      // path, and so the prop has a concrete consumer (guards against a
+      // future refactor silently dropping it from the public API).
+      data-focus-count={focusIds?.size ?? 0}
       style={{
         position: "absolute",
         inset: 0,
