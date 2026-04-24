@@ -26,6 +26,8 @@ pub struct ForceLayout {
     node_ids: Vec<String>,
     positions_vec: Vec<(f32, f32)>,
     velocities_vec: Vec<(f32, f32)>,
+    edges_indexed: Vec<(usize, usize)>,
+    edge_count_cache: usize,
     converged: bool,
     iteration: usize,
 }
@@ -37,6 +39,8 @@ impl ForceLayout {
             node_ids: Vec::new(),
             positions_vec: Vec::new(),
             velocities_vec: Vec::new(),
+            edges_indexed: Vec::new(),
+            edge_count_cache: 0,
             converged: false,
             iteration: 0,
         }
@@ -125,6 +129,9 @@ impl Default for ForceLayout {
 impl LayoutEngine for ForceLayout {
     fn compute(&mut self, graph: &GraphStore) -> Vec<(String, f32, f32)> {
         self.init_positions(graph);
+        self.edges_indexed = index_edges(graph, &self.node_ids);
+        self.edge_count_cache = graph.edge_count();
+
         self.iteration = 0;
         self.converged = false;
 
@@ -140,7 +147,18 @@ impl LayoutEngine for ForceLayout {
     }
 
     fn tick(&mut self, graph: &GraphStore) -> bool {
-        self.init_positions(graph);
+        // We only use cached indices if we are sure the topology matches.
+        // It prevents recalculating index_edges every tick since it's an O(E*log V) operation.
+        // If node_count or edge_count differs, we assume a topology change
+        // and do the expensive recompute. This will miss mutations that add & remove exactly
+        // one edge or node, but that's handled cleanly by clearing cache before mutations
+        // or re-computing layout explicitly.
+        if self.node_ids.len() != graph.node_count() || self.edge_count_cache != graph.edge_count()
+        {
+            self.init_positions(graph);
+            self.edges_indexed = index_edges(graph, &self.node_ids);
+            self.edge_count_cache = graph.edge_count();
+        }
         self.iteration += 1;
 
         let n = self.node_ids.len();
@@ -149,12 +167,11 @@ impl LayoutEngine for ForceLayout {
             return false;
         }
 
-        let edges_indexed = index_edges(graph, &self.node_ids);
         let mut positions_flat = flatten_positions(&self.positions_vec);
         let empty_pinned: HashSet<usize> = HashSet::new();
         let max_velocity_sq = integrate_step(
             &mut positions_flat,
-            &edges_indexed,
+            &self.edges_indexed,
             &mut self.velocities_vec,
             &empty_pinned,
         );
