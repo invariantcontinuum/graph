@@ -27,6 +27,7 @@ export default function Showcase() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    console.log("Showcase component mounted, setting isClient to true");
     setIsClient(true);
   }, []);
 

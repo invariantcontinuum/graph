@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'export',
+  basePath: '/graph',
   transpilePackages: ["@invariantcontinuum/graph"],
   typescript: {
     ignoreBuildErrors: true,
