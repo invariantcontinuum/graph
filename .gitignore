@@ -6,3 +6,8 @@ node_modules/
 
 # vitest coverage output — regenerated on every `npm test`
 coverage/
+
+# npmrc files carry GHCR auth tokens for @invariantcontinuum scope.
+# Publish workflow writes its own in CI; locally, consumers install via
+# ~/.npmrc or per-checkout `.npmrc` that stays on disk only.
+.npmrc

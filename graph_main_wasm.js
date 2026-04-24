@@ -25,9 +25,7 @@ export class RenderEngine {
     }
     /**
      * Debug: return current dim tween state so the host can confirm spotlight
-     * is reaching the GPU. Returned object has { progress, target, start,
-     * dimOpacity, selectedIdx, dimmedCount }. Cheap — used only by tests and
-     * ad-hoc DevTools probes, not the render path.
+     * is reaching the GPU.
      * @returns {any}
      */
     debug_focus_state() {
@@ -55,17 +53,19 @@ export class RenderEngine {
         wasm.renderengine_fit(this.__wbg_ptr, padding_px);
     }
     /**
-     * Focus a node AND animate the camera to frame its 1-hop neighborhood over 400 ms.
+     * Focus a node AND animate the camera to frame its 1-hop neighborhood.
      * When `id` is `None`, clears focus and animates to fit all nodes.
      * @param {string | null | undefined} id
      * @param {number} padding_px
      */
     focus_fit(id, padding_px) {
-        let ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        let len0 = WASM_VECTOR_LEN;
+        var ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len0 = WASM_VECTOR_LEN;
         wasm.renderengine_focus_fit(this.__wbg_ptr, ptr0, len0, padding_px);
     }
     /**
+     * Main render tick. Returns `true` when the scene actually repainted
+     * (so the host can schedule the next RAF only when needed).
      * @param {number} timestamp
      * @returns {boolean}
      */
@@ -109,8 +109,8 @@ export class RenderEngine {
         return v1;
     }
     /**
-     * End the current drag. Queues an unpin message so the force layout reclaims
-     * the node.
+     * End the current drag. Queues an `unpin_node` message so the force
+     * layout reclaims the node.
      */
     handle_node_drag_end() {
         wasm.renderengine_handle_node_drag_end(this.__wbg_ptr);
@@ -125,7 +125,7 @@ export class RenderEngine {
     }
     /**
      * Start dragging the node at the given screen coordinates.
-     * Returns the node id if a node was picked, otherwise None (caller should
+     * Returns the node id if a node was picked, otherwise `None` (caller should
      * fall back to pan).
      * @param {number} screen_x
      * @param {number} screen_y
@@ -174,11 +174,7 @@ export class RenderEngine {
     }
     /**
      * Pan the camera to center on the node with id `id`, preserving the
-     * current zoom level. This is the default click behaviour — a legacy
-     * Cytoscape `cy.center(node)` equivalent: the clicked node smoothly
-     * slides into the middle of the viewport so the user doesn't lose
-     * it in a 10 000-node grid. Zoom is deliberately NOT touched so the
-     * user's spatial context is preserved across sequential clicks.
+     * current zoom level. Legacy Cytoscape `cy.center(node)` equivalent.
      * @param {string} id
      */
     pan_to_node(id) {
@@ -222,35 +218,11 @@ export class RenderEngine {
     /**
      * Focus a node: dim every non-neighbor via `visual_flags` (bit 0 = dimmed).
      * `None` clears the focus.
-     *
-     * NOTE on data layout: the plan spec assumed `edge_data` stride-4 with
-     * `[source_idx, target_idx, ...]`, but the actual worker layout is stride-6
-     * `[sx, sy, tx, ty, type_idx, weight]` in world coordinates (see
-     * `graph-worker-wasm::engine::get_edge_buffer`). We therefore resolve
-     * source/target node indices by matching edge endpoint coordinates to
-     * `self.positions`. This is semantically equivalent — the coordinates came
-     * from the same `positions` map — and avoids a worker-side schema change.
-     *
-     * NOTE on coordinate keying: we key the position→index map by
-     * `(x.to_bits(), y.to_bits())` rather than rounded integers. f32 values
-     * transit through the worker boundary bit-identical — Float32Array
-     * preserves exact bits — so bit-for-bit matching is correct and
-     * collision-free. Rounded-integer keys would silently collide for any
-     * two nodes whose positions round to the same integer pair (realistic
-     * at sub-pixel separation during layout convergence), dropping one of
-     * them from the lookup. Bit keys only collide when two nodes occupy the
-     * exact same f32 position — a genuine overlap, not an aliasing artifact.
-     *
-     * NOTE on `visual_flags` semantics: the existing renderer treats the whole
-     * byte as `== 1` for "dimmed" (see `rebuild_buffers` ~line 584). Since we
-     * only use bit 0 here (values end up 0 or 1), this matches the renderer's
-     * current check. If additional bits are ever added to `visual_flags`, the
-     * renderer's `== 1` comparison must be upgraded to a `& 1` bit test.
      * @param {string | null} [id]
      */
     set_focus(id) {
-        let ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        let len0 = WASM_VECTOR_LEN;
+        var ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len0 = WASM_VECTOR_LEN;
         wasm.renderengine_set_focus(this.__wbg_ptr, ptr0, len0);
     }
     /**
@@ -283,8 +255,7 @@ export class RenderEngine {
     }
     /**
      * Subscribe to edge-data updates (for the Canvas2D EdgeLabelsOverlay).
-     * Callback invoked each frame with `{edgeData: Float32Array, focusIdx: number}`.
-     * Returns a subscriber index that can be passed to `unsubscribe_edges` for cleanup.
+     * Returns a subscriber index usable with `unsubscribe_edges`.
      * @param {Function} cb
      * @returns {number}
      */
@@ -294,14 +265,13 @@ export class RenderEngine {
     }
     /**
      * Subscribe to per-frame position+camera updates (for the Canvas2D label overlay).
-     * Callback invoked once per `frame()` tick with `{positions: Float32Array, vpMatrix: Float32Array}`.
+     * Callback invoked once per `frame()` tick with `{positions, vpMatrix}`.
      * @param {Function} cb
      */
     subscribe_frame(cb) {
         wasm.renderengine_subscribe_frame(this.__wbg_ptr, cb);
     }
     /**
-     * Unsubscribe a previously-registered edge subscriber by its index.
      * @param {number} idx
      */
     unsubscribe_edges(idx) {
@@ -347,7 +317,7 @@ function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
         __wbg_Error_2e59b1b37a9a34c3: function(arg0, arg1) {
-            const ret = new Error(getStringFromWasm0(arg0, arg1));
+            const ret = Error(getStringFromWasm0(arg0, arg1));
             return ret;
         },
         __wbg_Number_e6ffdb596c888833: function(arg0) {
@@ -407,13 +377,13 @@ function __wbg_get_imports() {
         __wbg___wbindgen_string_get_914df97fcfa788f2: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
-            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            let len1 = WASM_VECTOR_LEN;
+            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
         __wbg___wbindgen_throw_81fc77679af83bc6: function(arg0, arg1) {
-            throw new new Error(getStringFromWasm0(arg0, arg1));
+            throw new Error(getStringFromWasm0(arg0, arg1));
         },
         __wbg_activeTexture_55755e76627be758: function(arg0, arg1) {
             arg0.activeTexture(arg1 >>> 0);
@@ -520,8 +490,8 @@ function __wbg_get_imports() {
         }, arguments); },
         __wbg_getProgramInfoLog_b2d112da8cb8c5c5: function(arg0, arg1, arg2) {
             const ret = arg1.getProgramInfoLog(arg2);
-            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            let len1 = WASM_VECTOR_LEN;
+            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
@@ -531,8 +501,8 @@ function __wbg_get_imports() {
         },
         __wbg_getShaderInfoLog_57aaac3110ec22f3: function(arg0, arg1, arg2) {
             const ret = arg1.getShaderInfoLog(arg2);
-            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            let len1 = WASM_VECTOR_LEN;
+            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
@@ -704,15 +674,15 @@ function __wbg_get_imports() {
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_GLOBAL_f2e0f995a21329ff: function() {
-            const ret = typeof globalThis === 'undefined' ? null : globalThis;
+            const ret = typeof global === 'undefined' ? null : global;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_SELF_24f78b6d23f286ea: function() {
-            const ret = typeof globalThis === 'undefined' ? null : globalThis;
+            const ret = typeof self === 'undefined' ? null : self;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_WINDOW_59fd959c540fe405: function() {
-            const ret = typeof globalThis === 'undefined' ? null : globalThis;
+            const ret = typeof window === 'undefined' ? null : window;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_texImage2D_6a3521456a5f13ec: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
@@ -962,7 +932,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     let offset = 0;
 
     for (; offset < len; offset++) {
-        const code = arg.codePointAt(offset);
+        const code = arg.charCodeAt(offset);
         if (code > 0x7F) break;
         mem[ptr + offset] = code;
     }
