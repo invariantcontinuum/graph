@@ -1,11 +1,32 @@
 # @invariantcontinuum/graph
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=invariantcontinuum_graph&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph)
-[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph)
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=invariantcontinuum_graph)](https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph)
+<div style="display: flex; justify-content: space-between; width: 100%;">
+  <a href="https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph">
+    <img src="https://sonarcloud.io/api/project_badges/measure?project=invariantcontinuum_graph&metric=alert_status"
+         style="height: 30px;" />
+  </a>
+  <a href="https://github.com/invariantcontinuum/graph/actions">
+    <img src="https://github.com/invariantcontinuum/graph/actions/workflows/ci.yml/badge.svg"
+         style="height: 30px;" />
+  </a>
+  <a href="https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph">
+    <img src="https://sonarcloud.io/images/project_badges/sonarcloud-light.svg"
+         style="height: 30px;" />
+  </a>
+  <a href="https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph">
+    <img src="https://sonarcloud.io/api/project_badges/quality_gate?project=invariantcontinuum_graph"
+         style="height: 70px; width: 150px;" />
+  </a>
+</div>
+
+<img width="1554" height="900" alt="image" src="https://github.com/user-attachments/assets/98231041-fa59-4608-add2-6bfad96371f9" />
+
+
 
 WASM + WebGL2 graph renderer for large knowledge graphs, with layout work offloaded to a Web Worker and a React surface that ranges from a low-level `<Graph>` canvas bridge to a full `<GraphScene>` with overlays and theme wiring.
-<img width="1327" height="677" alt="image" src="https://github.com/user-attachments/assets/fd29f11e-4e25-41cb-890e-828109b4382e" />
+
+
+<img width="666" height="493" alt="image" src="https://github.com/user-attachments/assets/406a9613-e42b-439f-b1dd-df9040991921" />
 
 ## Installation
 
