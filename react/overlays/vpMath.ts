@@ -34,8 +34,10 @@ const _f32 = new Float32Array(_u32.buffer);
  *  at the bit level. Collision-free because f32 values round-trip byte-
  *  identical across the worker boundary (Float32Array preserves bits).
  *  JavaScript Numbers are f64 — safe to pack two u32s into the mantissa. */
+const TWO_POW_32 = 2 ** 32;
+
 export function bitKey(x: number, y: number): number {
   _f32[0] = x;
   _f32[1] = y;
-  return _u32[0] * 0x1_0000_0000 + _u32[1];
+  return _u32[0] * TWO_POW_32 + _u32[1];
 }

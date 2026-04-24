@@ -3,3 +3,6 @@
 node_modules/
 .DS_Store
 .worktrees
+
+# vitest coverage output — regenerated on every `npm test`
+coverage/
