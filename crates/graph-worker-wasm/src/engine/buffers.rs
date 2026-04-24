@@ -33,13 +33,13 @@ impl WorkerEngine {
         &self.visual_flags
     }
 
-    pub fn get_stats(&self) -> (usize, usize, usize) {
-        let violations = self
-            .store
-            .nodes()
-            .filter(|n| n.status == "violation")
-            .count();
-        (self.store.node_count(), self.store.edge_count(), violations)
+    /// Returns `(node_count, edge_count)` — used by the snapshot-loaded
+    /// notification so the host can display totals without calling multiple
+    /// accessors. Deliberately domain-agnostic; a prior version counted
+    /// `status == "violation"` nodes, but that was substrate-specific
+    /// hardcoding that never reached the JS surface and has been removed.
+    pub fn get_stats(&self) -> (usize, usize) {
+        (self.store.node_count(), self.store.edge_count())
     }
 
     pub fn edge_type_keys(&self) -> &[String] {

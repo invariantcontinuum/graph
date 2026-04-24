@@ -2,6 +2,24 @@
 
 All notable changes to `@invariantcontinuum/graph` will be documented in this file.
 
+## [0.2.3] - 2026-04-24
+
+### Changed
+- **Rust decomposition:** The four oversized modules (`graph-main-wasm/engine.rs` 1389 LOC, `graph-worker-wasm/engine.rs` 631 LOC, `graph-layout/force.rs` 646 LOC, `graph-render/theme.rs` 468 LOC) are split along single-responsibility seams. Public Rust and WASM API is unchanged.
+- **Shared force-integration path:** `ForceLayout::step_with_pins` and `ForceLayout::tick` now share a single `integrate_step` helper instead of duplicating the quadtree build + attractive-force + velocity loop.
+- **`WorkerEngine::get_stats` signature:** drops the third `violation_count` element — the returned tuple is now `(node_count, edge_count)`. This value was already discarded by the only caller (`lib.rs`) and was substrate-specific hardcoding.
+
+### Fixed
+- **SonarCloud exclusions:** `sonar-project.properties` now excludes `site/`, `coverage/`, and wasm-bindgen-generated `*_wasm.js` / `*_wasm_bg.js` files. This removes a standing BLOCKER false positive (`new Function(...)` in bindgen glue) plus ~21,000 no-op HTML issues from the Next.js static export.
+- **Six actionable TypeScript issues:** `LabelOverlay.tsx` render loop refactored into focused helpers (cognitive complexity 18 → ≤ 10); `void` operator replaced; `fitLabel.ts` parameter list collapsed to an options object, `wrapIntoLines` split, `normalizeLabel` uses `replaceAll`; `vpMath.ts` numeric grouping uses a named `TWO_POW_32` constant.
+- **GitHub Actions permissions:** `deploy.yml` moves `pages: write` / `id-token: write` from workflow to job scope (`githubactions:S8233`, `S8264`).
+
+### Added
+- **`react/README.md`:** generic-usage walkthrough covering `themeOverrides`, `onLegendChange`, and the imperative `GraphHandle` API.
+
+### Chore
+- **`coverage/` now gitignored:** vitest HTML reports are regenerated on every test run and were previously committed inadvertently.
+
 ## [0.2.2] - 2026-04-24
 
 ### Added

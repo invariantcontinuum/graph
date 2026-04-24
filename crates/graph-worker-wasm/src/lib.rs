@@ -33,7 +33,7 @@ pub fn handle_message(msg_js: &JsValue) -> Result<(), JsValue> {
                 let core_edges = edges.into_iter().map(convert_edge).collect();
                 engine.load_snapshot(core_nodes, core_edges);
 
-                let (nc, ec, _vc) = engine.get_stats();
+                let (nc, ec) = engine.get_stats();
                 post_json(&OutMessage::SnapshotLoaded {
                     node_count: nc,
                     edge_count: ec,
