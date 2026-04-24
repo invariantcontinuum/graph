@@ -87,6 +87,7 @@ export default function Showcase() {
             showCommunities={showCommunities}
             onLegendChange={setLegend}
             onStatsChange={setStats}
+            onReady={() => console.log("Graph engine ready")}
             onNodeClick={(node) => {
               console.log("Clicked:", node);
               setSelectedNode(node.id);

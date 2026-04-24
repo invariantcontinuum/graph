@@ -130,7 +130,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (!canvas) return;
 
       const mainWasm = await import("../graph_main_wasm.js");
-      await mainWasm.default();
+      // Explicitly point to the public path for WASM on GitHub Pages
+      await mainWasm.default("/graph/graph_main_wasm_bg.wasm");
       if (cancelled) return;
 
       const engine = new mainWasm.RenderEngine(canvas);
