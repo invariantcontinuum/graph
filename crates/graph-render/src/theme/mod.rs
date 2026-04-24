@@ -1,9 +1,26 @@
+//! Theme data model + JSON deserialization.
+//!
+//! The theme surface is split across submodules for clarity:
+//! - `color` — `parse_css_color` and friends (CSS color strings → floats).
+//! - `shapes` — `shape_index` (shape name → shader index).
+//! - `defaults` — `#[serde(default = ...)]` value providers.
+//!
+//! Everything below stays under `graph_render::theme::*` via public re-exports
+//! so existing consumers (e.g. `graph_main_wasm::engine`) keep working.
+
+mod color;
+mod defaults;
+mod shapes;
+
+pub use color::parse_css_color;
+pub use shapes::shape_index;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeConfig {
-    #[serde(default = "default_background")]
+    #[serde(default = "defaults::background")]
     pub background: String,
     pub nodes: NodeTheme,
     pub edges: EdgeTheme,
@@ -24,9 +41,9 @@ pub struct NodeTheme {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeStyle {
-    #[serde(default = "default_shape")]
+    #[serde(default = "defaults::shape")]
     pub shape: String,
-    #[serde(default = "default_node_size")]
+    #[serde(default = "defaults::node_size")]
     pub size: f32,
     #[serde(rename = "halfWidth", default)]
     pub half_width: Option<f32>,
@@ -34,11 +51,11 @@ pub struct NodeStyle {
     pub half_height: Option<f32>,
     #[serde(rename = "cornerRadius", default)]
     pub corner_radius: Option<f32>,
-    #[serde(default = "default_color")]
+    #[serde(default = "defaults::node_color")]
     pub color: String,
-    #[serde(rename = "borderWidth", default = "default_border_width")]
+    #[serde(rename = "borderWidth", default = "defaults::border_width")]
     pub border_width: f32,
-    #[serde(rename = "borderColor", default = "default_border_color")]
+    #[serde(rename = "borderColor", default = "defaults::border_color")]
     pub border_color: String,
     #[serde(default)]
     pub label: Option<LabelStyle>,
@@ -47,9 +64,9 @@ pub struct NodeStyle {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabelStyle {
     pub field: String,
-    #[serde(default = "default_label_color")]
+    #[serde(default = "defaults::label_color")]
     pub color: String,
-    #[serde(default = "default_label_size")]
+    #[serde(default = "defaults::label_size")]
     pub size: f32,
 }
 
@@ -91,11 +108,11 @@ pub struct EdgeTheme {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeStyle {
-    #[serde(default = "default_edge_color")]
+    #[serde(default = "defaults::edge_color")]
     pub color: String,
-    #[serde(default = "default_edge_width")]
+    #[serde(default = "defaults::edge_width")]
     pub width: f32,
-    #[serde(default = "default_arrow")]
+    #[serde(default = "defaults::arrow")]
     pub arrow: String,
 }
 
@@ -112,9 +129,9 @@ pub struct EdgeStyleOverride {
 pub struct CommunityTheme {
     #[serde(default)]
     pub hull: bool,
-    #[serde(rename = "hullOpacity", default = "default_hull_opacity")]
+    #[serde(rename = "hullOpacity", default = "defaults::hull_opacity")]
     pub hull_opacity: f32,
-    #[serde(default = "default_palette")]
+    #[serde(default = "defaults::palette")]
     pub palette: String,
 }
 
@@ -122,8 +139,8 @@ impl Default for CommunityTheme {
     fn default() -> Self {
         Self {
             hull: false,
-            hull_opacity: default_hull_opacity(),
-            palette: default_palette(),
+            hull_opacity: defaults::hull_opacity(),
+            palette: defaults::palette(),
         }
     }
 }
@@ -140,29 +157,29 @@ pub struct InteractionTheme {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HoverStyle {
-    #[serde(default = "default_hover_scale")]
+    #[serde(default = "defaults::hover_scale")]
     pub scale: f32,
     #[serde(rename = "highlightNeighbors", default)]
     pub highlight_neighbors: bool,
-    #[serde(rename = "dimOthers", default = "default_dim")]
+    #[serde(rename = "dimOthers", default = "defaults::dim")]
     pub dim_others: f32,
 }
 
 impl Default for HoverStyle {
     fn default() -> Self {
         Self {
-            scale: 1.3,
+            scale: defaults::hover_scale(),
             highlight_neighbors: true,
-            dim_others: 0.15,
+            dim_others: defaults::dim(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelectStyle {
-    #[serde(rename = "borderColor", default = "default_select_border")]
+    #[serde(rename = "borderColor", default = "defaults::select_border")]
     pub border_color: String,
-    #[serde(rename = "borderWidth", default = "default_select_width")]
+    #[serde(rename = "borderWidth", default = "defaults::select_width")]
     pub border_width: f32,
     #[serde(rename = "expandLabel", default)]
     pub expand_label: bool,
@@ -171,8 +188,8 @@ pub struct SelectStyle {
 impl Default for SelectStyle {
     fn default() -> Self {
         Self {
-            border_color: "#ffffff".into(),
-            border_width: 3.0,
+            border_color: defaults::select_border(),
+            border_width: defaults::select_width(),
             expand_label: true,
         }
     }
@@ -180,155 +197,19 @@ impl Default for SelectStyle {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotlightStyle {
-    #[serde(rename = "dimOpacity", default = "default_spotlight_dim")]
+    #[serde(rename = "dimOpacity", default = "defaults::spotlight_dim")]
     pub dim_opacity: f32,
-    #[serde(rename = "transitionMs", default = "default_transition")]
+    #[serde(rename = "transitionMs", default = "defaults::transition")]
     pub transition_ms: u32,
 }
 
 impl Default for SpotlightStyle {
     fn default() -> Self {
         Self {
-            dim_opacity: 0.05,
-            transition_ms: 300,
+            dim_opacity: defaults::spotlight_dim(),
+            transition_ms: defaults::transition(),
         }
     }
-}
-
-/// Parse a CSS-style color string into `(r, g, b, a)` floats in [0, 1].
-/// Accepts `#RRGGBB`, `#RRGGBBAA`, `rgb(r, g, b)`, and `rgba(r, g, b, a)`.
-/// Returns `(0.5, 0.5, 0.5, 1.0)` on parse failure as a safe fallback.
-pub fn parse_css_color(s: &str) -> (f32, f32, f32, f32) {
-    let trimmed = s.trim();
-    if trimmed.starts_with('#') {
-        return parse_hex_internal(trimmed);
-    }
-    if trimmed.starts_with("rgba(") && trimmed.ends_with(')') {
-        return parse_rgba(&trimmed[5..trimmed.len() - 1]);
-    }
-    if trimmed.starts_with("rgb(") && trimmed.ends_with(')') {
-        let (r, g, b, _) = parse_rgba(&trimmed[4..trimmed.len() - 1]);
-        return (r, g, b, 1.0);
-    }
-    (0.5, 0.5, 0.5, 1.0)
-}
-
-fn parse_hex_internal(hex: &str) -> (f32, f32, f32, f32) {
-    let h = hex.trim_start_matches('#');
-    if h.len() != 6 && h.len() != 8 {
-        return (0.5, 0.5, 0.5, 1.0);
-    }
-    let r = u8::from_str_radix(&h[0..2], 16);
-    let g = u8::from_str_radix(&h[2..4], 16);
-    let b = u8::from_str_radix(&h[4..6], 16);
-    let a = if h.len() == 8 {
-        u8::from_str_radix(&h[6..8], 16)
-            .map(|v| v as f32 / 255.0)
-            .unwrap_or(1.0)
-    } else {
-        1.0
-    };
-    match (r, g, b) {
-        (Ok(r), Ok(g), Ok(b)) => (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, a),
-        _ => (0.5, 0.5, 0.5, 1.0),
-    }
-}
-
-fn parse_rgba(inside: &str) -> (f32, f32, f32, f32) {
-    let parts: Vec<&str> = inside.split(',').map(|p| p.trim()).collect();
-    if parts.len() < 3 || parts.len() > 4 {
-        return (0.5, 0.5, 0.5, 1.0);
-    }
-    let r: Result<u32, _> = parts[0].parse();
-    let g: Result<u32, _> = parts[1].parse();
-    let b: Result<u32, _> = parts[2].parse();
-    let a_val: f32 = if parts.len() == 4 {
-        match parts[3].parse::<f32>() {
-            Ok(v) if (0.0..=1.0).contains(&v) => v,
-            _ => return (0.5, 0.5, 0.5, 1.0),
-        }
-    } else {
-        1.0
-    };
-    match (r, g, b) {
-        (Ok(r), Ok(g), Ok(b)) if r <= 255 && g <= 255 && b <= 255 => {
-            (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, a_val)
-        }
-        _ => (0.5, 0.5, 0.5, 1.0),
-    }
-}
-
-/// Map a shape name to its shader index.
-pub fn shape_index(shape: &str) -> f32 {
-    match shape {
-        "circle" => 0.0,
-        "diamond" => 1.0,
-        "square" => 2.0,
-        "hexagon" => 3.0,
-        "triangle" => 4.0,
-        "octagon" => 5.0,
-        "roundrectangle" => 6.0,
-        "barrel" => 7.0,
-        _ => 0.0,
-    }
-}
-
-fn default_background() -> String {
-    "#0d1117".into()
-}
-fn default_shape() -> String {
-    "circle".into()
-}
-fn default_node_size() -> f32 {
-    12.0
-}
-fn default_color() -> String {
-    "#8b949e".into()
-}
-fn default_border_width() -> f32 {
-    1.5
-}
-fn default_border_color() -> String {
-    "#30363d".into()
-}
-fn default_label_color() -> String {
-    "#c9d1d9".into()
-}
-fn default_label_size() -> f32 {
-    11.0
-}
-fn default_edge_color() -> String {
-    "#21262d".into()
-}
-fn default_edge_width() -> f32 {
-    1.0
-}
-fn default_arrow() -> String {
-    "target".into()
-}
-fn default_hull_opacity() -> f32 {
-    0.06
-}
-fn default_palette() -> String {
-    "categorical-12".into()
-}
-fn default_hover_scale() -> f32 {
-    1.3
-}
-fn default_dim() -> f32 {
-    0.15
-}
-fn default_select_border() -> String {
-    "#ffffff".into()
-}
-fn default_select_width() -> f32 {
-    3.0
-}
-fn default_spotlight_dim() -> f32 {
-    0.05
-}
-fn default_transition() -> u32 {
-    300
 }
 
 #[cfg(test)]
@@ -344,15 +225,6 @@ mod tests {
             Some("#58a6ff")
         );
         assert!(theme.nodes.by_status["violation"].pulse);
-    }
-
-    #[test]
-    fn css_color_hex_parsing() {
-        let (r, g, b, a) = parse_css_color("#ff0000");
-        assert!((r - 1.0).abs() < 0.01);
-        assert!(g < 0.01);
-        assert!(b < 0.01);
-        assert!((a - 1.0).abs() < 0.01);
     }
 
     #[test]
@@ -392,7 +264,7 @@ mod tests {
 
     #[test]
     fn default_theme_json_parses() {
-        let json = include_str!("../../graph-main-wasm/src/default_theme.json");
+        let json = include_str!("../../../graph-main-wasm/src/default_theme.json");
         let theme: ThemeConfig = serde_json::from_str(json).expect("default_theme.json must parse");
         assert_eq!(theme.nodes.default.shape, "roundrectangle");
         assert_eq!(theme.nodes.default.half_width, Some(55.0));
