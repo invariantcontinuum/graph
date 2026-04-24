@@ -141,7 +141,9 @@ impl SpatialGrid {
                     let dy = world_y - ny;
                     let dist = (dx * dx + dy * dy).sqrt();
                     let hit_dist = dist - nr;
-                    if hit_dist < max_distance && (best.map_or(true, |(_, best_dist)| dist < best_dist)) {
+                    if hit_dist < max_distance
+                        && (best.is_none_or(|(_, best_dist)| dist < best_dist))
+                    {
                         best = Some((node_idx, dist));
                     }
                 }

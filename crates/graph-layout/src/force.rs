@@ -323,8 +323,7 @@ impl ForceLayout {
         }
 
         let mut max_velocity_sq: f32 = 0.0;
-        for i in 0..n {
-            let (fx, fy) = forces[i];
+        for (i, (fx, fy)) in forces.iter().enumerate().take(n) {
             let vel = &mut self.velocities_vec[i];
             vel.0 = (vel.0 + fx) * DAMPING;
             vel.1 = (vel.1 + fy) * DAMPING;
@@ -437,9 +436,10 @@ impl LayoutEngine for ForceLayout {
 
         // Compute attractive forces from edges
         for edge in graph.edges() {
-            if let (Some(&src_idx), Some(&tgt_idx)) =
-                (id_to_idx.get(edge.source.as_str()), id_to_idx.get(edge.target.as_str()))
-            {
+            if let (Some(&src_idx), Some(&tgt_idx)) = (
+                id_to_idx.get(edge.source.as_str()),
+                id_to_idx.get(edge.target.as_str()),
+            ) {
                 let (sx, sy) = self.positions_vec[src_idx];
                 let (tx, ty) = self.positions_vec[tgt_idx];
                 let dx = tx - sx;
@@ -458,8 +458,7 @@ impl LayoutEngine for ForceLayout {
 
         // Apply forces to velocities and positions
         let mut max_velocity_sq: f32 = 0.0;
-        for i in 0..n {
-            let (fx, fy) = forces[i];
+        for (i, (fx, fy)) in forces.iter().enumerate().take(n) {
             let vel = &mut self.velocities_vec[i];
             vel.0 = (vel.0 + fx) * DAMPING;
             vel.1 = (vel.1 + fy) * DAMPING;
@@ -478,12 +477,18 @@ impl LayoutEngine for ForceLayout {
         let mut buckets: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
         for i in 0..n {
             let (x, y) = self.positions_vec[i];
-            let key = ((x / bucket_size).floor() as i32, (y / bucket_size).floor() as i32);
+            let key = (
+                (x / bucket_size).floor() as i32,
+                (y / bucket_size).floor() as i32,
+            );
             buckets.entry(key).or_default().push(i);
         }
         for i in 0..n {
             let (x, y) = self.positions_vec[i];
-            let key = ((x / bucket_size).floor() as i32, (y / bucket_size).floor() as i32);
+            let key = (
+                (x / bucket_size).floor() as i32,
+                (y / bucket_size).floor() as i32,
+            );
             let mut push_dx = 0.0_f32;
             let mut push_dy = 0.0_f32;
             for dx in -1..=1 {

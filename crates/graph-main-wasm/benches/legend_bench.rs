@@ -1,10 +1,9 @@
-use criterion::{criterion_group, criterion_main, Criterion, black_box};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use std::collections::HashMap;
 
 // A simple structure to simulate NodeMeta
 struct NodeMeta {
     node_type: String,
-    status: String,
 }
 
 fn bench_get_legend(c: &mut Criterion) {
@@ -17,7 +16,6 @@ fn bench_get_legend(c: &mut Criterion) {
             format!("node_{}", i),
             NodeMeta {
                 node_type: format!("type_{}", i % 20),
-                status: "healthy".to_string(),
             },
         );
     }
@@ -55,7 +53,6 @@ fn bench_get_legend_ref(c: &mut Criterion) {
             format!("node_{}", i),
             NodeMeta {
                 node_type: format!("type_{}", i % 20),
-                status: "healthy".to_string(),
             },
         );
     }

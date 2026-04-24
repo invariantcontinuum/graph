@@ -14,15 +14,15 @@ fn test_update_edges() {
     canvas.set_height(600);
 
     let mut engine = RenderEngine::create(canvas).expect("Failed to create engine");
-    
+
     // Mock edge data: [x1, y1, x2, y2, type_idx, x1, y1, x2, y2, type_idx, ...]
-    // The exact layout depends on what EdgeRenderer expects, 
+    // The exact layout depends on what EdgeRenderer expects,
     // but update_edges just stores the vec and count.
     let mock_data = vec![0.0, 0.0, 100.0, 100.0, 1.0];
     let count = 1;
-    
+
     engine.update_edges(&mock_data, count);
-    
+
     // We can't easily check private fields, but we can check if it doesn't crash
     // and if get_legend works (which uses edge_metadata but not edge_data directly).
     // The best we can do in an integration test is verify it accepts the data.

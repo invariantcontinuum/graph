@@ -34,7 +34,7 @@ pub fn tessellate_quadratic(
     let dy = p1.1 - p0.1;
     let chord_len = (dx * dx + dy * dy).sqrt().max(1e-5);
     let nx = -dy / chord_len;
-    let ny =  dx / chord_len;
+    let ny = dx / chord_len;
     let off = chord_len * bend_ratio;
     let cx = (p0.0 + p1.0) * 0.5 + nx * off;
     let cy = (p0.1 + p1.1) * 0.5 + ny * off;
@@ -47,7 +47,11 @@ pub fn tessellate_quadratic(
         let one_minus = 1.0 - t;
         let bx = p0.0 * one_minus * one_minus + cx * 2.0 * one_minus * t + p1.0 * t * t;
         let by = p0.1 * one_minus * one_minus + cy * 2.0 * one_minus * t + p1.1 * t * t;
-        let seg = Segment { from: prev, to: (bx, by), arc_start: arc };
+        let seg = Segment {
+            from: prev,
+            to: (bx, by),
+            arc_start: arc,
+        };
         let sx = bx - prev.0;
         let sy = by - prev.1;
         arc += (sx * sx + sy * sy).sqrt();
@@ -73,8 +77,8 @@ mod tests {
 
     #[test]
     fn segment_count_clamped() {
-        assert_eq!(tessellate_quadratic((0.,0.), (1.,0.), 0., 1).len(), 2);
-        assert_eq!(tessellate_quadratic((0.,0.), (1.,0.), 0., 99).len(), 16);
+        assert_eq!(tessellate_quadratic((0., 0.), (1., 0.), 0., 1).len(), 2);
+        assert_eq!(tessellate_quadratic((0., 0.), (1., 0.), 0., 99).len(), 16);
     }
 
     #[test]

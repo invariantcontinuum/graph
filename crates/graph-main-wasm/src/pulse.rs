@@ -13,7 +13,10 @@ pub struct PulseState {
 
 impl PulseState {
     pub fn new(start_time_ms: f64) -> Self {
-        Self { pulse_indices: Vec::new(), start_time_ms }
+        Self {
+            pulse_indices: Vec::new(),
+            start_time_ms,
+        }
     }
 
     /// Recompute `pulse_indices` from node statuses + theme byStatus.pulse map.

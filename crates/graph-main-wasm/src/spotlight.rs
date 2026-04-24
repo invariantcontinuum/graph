@@ -36,11 +36,15 @@ pub fn neighborhood_indices(
         let ty = chunk[3].to_bits();
         let s = coord_to_idx.get(&(sx, sy)).copied();
         let t = coord_to_idx.get(&(tx, ty)).copied();
-        if s == Some(focus_idx) {
-            if let Some(ti) = t { keep.insert(ti); }
+        if s == Some(focus_idx)
+            && let Some(ti) = t
+        {
+            keep.insert(ti);
         }
-        if t == Some(focus_idx) {
-            if let Some(si) = s { keep.insert(si); }
+        if t == Some(focus_idx)
+            && let Some(si) = s
+        {
+            keep.insert(si);
         }
     }
     keep
@@ -92,9 +96,8 @@ mod tests {
         let pos = mk_positions(&[(0.0, 0.0), (10.0, 0.0), (20.0, 0.0), (30.0, 0.0)]);
         let idx = build_coord_index(&pos);
         let edges = vec![
-            0.0, 0.0, 10.0, 0.0, 0.0, 1.0,
-            10.0, 0.0, 20.0, 0.0, 0.0, 1.0,
-            20.0, 0.0, 30.0, 0.0, 0.0, 1.0,
+            0.0, 0.0, 10.0, 0.0, 0.0, 1.0, 10.0, 0.0, 20.0, 0.0, 0.0, 1.0, 20.0, 0.0, 30.0, 0.0,
+            0.0, 1.0,
         ];
         let n = neighborhood_indices(1, &edges, &idx);
         assert_eq!(n.len(), 3);

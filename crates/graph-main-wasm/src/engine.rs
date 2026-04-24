@@ -257,19 +257,8 @@ impl RenderEngine {
             *edge_counts.entry(etype).or_insert(0) += 1;
         }
 
-        let node_counts_owned: HashMap<String, usize> = node_counts
-            .into_iter()
-            .map(|(k, v)| (k.to_string(), v))
-            .collect();
-        let edge_counts_owned: HashMap<String, usize> = edge_counts
-            .into_iter()
-            .map(|(k, v)| (k.to_string(), v))
-            .collect();
-
-        let mut summary = graph_core::graph::GraphStore::legend_summary_from_counts(
-            &node_counts_owned,
-            &edge_counts_owned,
-        );
+        let mut summary =
+            graph_core::graph::GraphStore::legend_summary_from_counts(&node_counts, &edge_counts);
 
         // Populate node style fields from theme.
         for entry in &mut summary.node_types {
@@ -548,7 +537,11 @@ impl RenderEngine {
             unsafe { js_sys::Float32Array::view(&self.edge_data) }
         };
         let _ = js_sys::Reflect::set(&obj, &"edgeData".into(), &edge_f32);
-        let _ = js_sys::Reflect::set(&obj, &"focusIdx".into(), &wasm_bindgen::JsValue::from(focus));
+        let _ = js_sys::Reflect::set(
+            &obj,
+            &"focusIdx".into(),
+            &wasm_bindgen::JsValue::from(focus),
+        );
         let obj_val: wasm_bindgen::JsValue = obj.into();
         for cb in &self.edge_subscribers {
             let _ = cb.call1(&wasm_bindgen::JsValue::NULL, &obj_val);
@@ -692,7 +685,9 @@ impl RenderEngine {
     /// current check. If additional bits are ever added to `visual_flags`, the
     /// renderer's `== 1` comparison must be upgraded to a `& 1` bit test.
     pub fn set_focus(&mut self, id: Option<String>) {
-        use crate::spotlight::{build_coord_index, neighborhood_indices, apply_dim_bits, clear_dim_bits};
+        use crate::spotlight::{
+            apply_dim_bits, build_coord_index, clear_dim_bits, neighborhood_indices,
+        };
 
         let Some(id) = id else {
             self.selected_idx = None;
@@ -744,8 +739,7 @@ impl RenderEngine {
             return;
         }
         let elapsed = (now_ms - self.dim_anim_start_ms).max(0.0);
-        let t = (elapsed / self.dim_anim_duration_ms.max(1.0))
-            .clamp(0.0, 1.0) as f32;
+        let t = (elapsed / self.dim_anim_duration_ms.max(1.0)).clamp(0.0, 1.0) as f32;
         // Ease-out cubic — matches camera_anim's easing so both tweens feel like
         // the same motion language.
         let eased = 1.0 - (1.0 - t).powi(3);
@@ -835,10 +829,18 @@ impl RenderEngine {
             let x = self.positions[off];
             let y = self.positions[off + 1];
             let r = self.positions[off + 2];
-            if x - r < min_x { min_x = x - r; }
-            if x + r > max_x { max_x = x + r; }
-            if y - r < min_y { min_y = y - r; }
-            if y + r > max_y { max_y = y + r; }
+            if x - r < min_x {
+                min_x = x - r;
+            }
+            if x + r > max_x {
+                max_x = x + r;
+            }
+            if y - r < min_y {
+                min_y = y - r;
+            }
+            if y + r > max_y {
+                max_y = y + r;
+            }
         }
         if !min_x.is_finite() {
             return None;
@@ -862,7 +864,8 @@ impl RenderEngine {
             return Vec::new();
         };
         let coord_to_idx = crate::spotlight::build_coord_index(&self.positions);
-        let keep = crate::spotlight::neighborhood_indices(focus_idx, &self.edge_data, &coord_to_idx);
+        let keep =
+            crate::spotlight::neighborhood_indices(focus_idx, &self.edge_data, &coord_to_idx);
         keep.into_iter().collect()
     }
 
@@ -943,9 +946,21 @@ impl RenderEngine {
     pub fn debug_focus_state(&self) -> JsValue {
         let dimmed_count = self.visual_flags.iter().filter(|&&v| v == 1).count();
         let obj = js_sys::Object::new();
-        let _ = js_sys::Reflect::set(&obj, &"progress".into(), &JsValue::from(self.dim_progress as f64));
-        let _ = js_sys::Reflect::set(&obj, &"target".into(), &JsValue::from(self.dim_progress_target as f64));
-        let _ = js_sys::Reflect::set(&obj, &"start".into(), &JsValue::from(self.dim_progress_start as f64));
+        let _ = js_sys::Reflect::set(
+            &obj,
+            &"progress".into(),
+            &JsValue::from(self.dim_progress as f64),
+        );
+        let _ = js_sys::Reflect::set(
+            &obj,
+            &"target".into(),
+            &JsValue::from(self.dim_progress_target as f64),
+        );
+        let _ = js_sys::Reflect::set(
+            &obj,
+            &"start".into(),
+            &JsValue::from(self.dim_progress_start as f64),
+        );
         let _ = js_sys::Reflect::set(
             &obj,
             &"dimOpacity".into(),
@@ -1218,7 +1233,7 @@ impl RenderEngine {
         // --- Edge buffer ---
         // Each logical edge is tessellated into DEFAULT_SEGMENTS quadratic-bezier
         // sub-segments; the GPU sees N×logical_edges instances.
-        use crate::bezier::{tessellate_quadratic, DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS};
+        use crate::bezier::{DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS, tessellate_quadratic};
         let logical_edge_count = self.edge_count;
         let mut edge_buf =
             Vec::with_capacity(logical_edge_count * DEFAULT_SEGMENTS * EDGE_INSTANCE_FLOATS);
@@ -1302,8 +1317,7 @@ impl RenderEngine {
                     // theme's selection color at near-full alpha — this is
                     // what makes the radial fan of highlights read clearly.
                     rendered_width = ewidth * 2.2;
-                    focus_color_override =
-                        Some(self.theme.interaction.select.border_color.clone());
+                    focus_color_override = Some(self.theme.interaction.select.border_color.clone());
                 } else {
                     rendered_width = (ewidth * 0.75).max(0.5);
                     alpha_scale = spotlight_dim_opacity;
@@ -1314,7 +1328,11 @@ impl RenderEngine {
             let (er, eg, eb, ea0) = parse_css_color(resolved_color);
             // Focus edges: force high alpha so the selection tint isn't scaled
             // down by the per-type color's translucency.
-            let base_alpha = if focus_color_override.is_some() { 0.95 } else { ea0 };
+            let base_alpha = if focus_color_override.is_some() {
+                0.95
+            } else {
+                ea0
+            };
             let ea = (base_alpha * alpha_scale).clamp(0.0, 1.0);
 
             // Tessellate the logical edge into DEFAULT_SEGMENTS quadratic-bezier
@@ -1328,11 +1346,16 @@ impl RenderEngine {
             let segs = tessellate_quadratic(p0, p1, DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS);
             for s in &segs {
                 edge_buf.extend_from_slice(&[
-                    s.from.0, s.from.1,
-                    s.to.0,   s.to.1,
+                    s.from.0,
+                    s.from.1,
+                    s.to.0,
+                    s.to.1,
                     rendered_width,
-                    er, eg, eb, ea,
-                    dash,    // period/mode — Task 21 will replace with s.arc_start for continuity
+                    er,
+                    eg,
+                    eb,
+                    ea,
+                    dash, // period/mode — Task 21 will replace with s.arc_start for continuity
                     animate,
                 ]);
             }
