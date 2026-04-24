@@ -5,9 +5,9 @@ import { screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface GridOverlayProps {
-  engineRef: React.RefObject<GraphHandle | null>;
-  theme: GraphTheme;
-  ready: boolean;
+  readonly engineRef: React.RefObject<GraphHandle | null>;
+  readonly theme: GraphTheme;
+  readonly ready: boolean;
 }
 
 export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {

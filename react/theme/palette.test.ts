@@ -3,8 +3,8 @@ import { LIGHT, DARK, type Palette, NODE_TYPES, EDGE_TYPES } from "./palette";
 
 describe("palette", () => {
   test("light and dark have identical top-level keys", () => {
-    const lk = Object.keys(LIGHT).sort();
-    const dk = Object.keys(DARK).sort();
+    const lk = Object.keys(LIGHT).sort((a, b) => a.localeCompare(b));
+    const dk = Object.keys(DARK).sort((a, b) => a.localeCompare(b));
     expect(lk).toEqual(dk);
   });
 

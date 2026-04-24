@@ -49,7 +49,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
       byType: byTypeNodes,
       byStatus: {
         violation: { borderColor: "#e6706b", borderWidth: 2.6, pulse: true },
-        drift:     { borderColor: "#e8aa99", borderWidth: 2.0, pulse: true },
+        drift:     { borderColor: "#e8aa99", borderWidth: 2, pulse: true },
       },
     },
     edges: {
@@ -58,7 +58,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
     },
     communities: { hull: false, hullOpacity: 0.15 },
     interaction: {
-      select: { borderColor: t.selectionBorder, borderWidth: 3.0 },
+      select: { borderColor: t.selectionBorder, borderWidth: 3 },
       spotlight: { dimOpacity: t.dimOpacity, transitionMs: 400 },
     },
   };

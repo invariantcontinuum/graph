@@ -138,8 +138,8 @@ function toSnapshot(value: unknown): GraphSnapshot {
 
 function typesFromSnapshot(snapshot: GraphSnapshot) {
   return {
-    nodes: [...new Set(snapshot.nodes.map((node) => node.type))].sort(),
-    edges: [...new Set(snapshot.edges.map((edge) => edge.type))].sort(),
+    nodes: [...new Set(snapshot.nodes.map((node) => node.type))].sort((a, b) => a.localeCompare(b)),
+    edges: [...new Set(snapshot.edges.map((edge) => edge.type))].sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -152,7 +152,7 @@ function buildLegendDesign(snapshot: GraphSnapshot, mode: ThemeMode): LegendDesi
   for (const type of types.nodes) {
     const style = base.nodeTypes[type] ?? base.defaultNodeStyle;
     nodes[type] = {
-      label: type.replace(/_/g, " "),
+      label: type.replaceAll("_", " "),
       shape: style.shape,
       color: style.color,
       borderColor: style.borderColor,
@@ -167,7 +167,7 @@ function buildLegendDesign(snapshot: GraphSnapshot, mode: ThemeMode): LegendDesi
   for (const type of types.edges) {
     const style = base.edgeTypes[type] ?? base.defaultEdgeStyle;
     edges[type] = {
-      label: type.replace(/_/g, " "),
+      label: type.replaceAll("_", " "),
       color: style.color,
       width: style.width,
       style: style.style,
@@ -199,7 +199,7 @@ function toLegendDesign(value: unknown, snapshot: GraphSnapshot, mode: ThemeMode
     const node = asRecord(raw);
     const shape = stringValue(node.shape, "roundrectangle");
     next.nodes[type] = {
-      label: stringValue(node.label, type.replace(/_/g, " ")),
+      label: stringValue(node.label, type.replaceAll("_", " ")),
       shape: SHAPES.includes(shape as Shape) ? (shape as Shape) : "roundrectangle",
       color: stringValue(node.color, "#ffffff"),
       borderColor: stringValue(node.borderColor, "#6fb5a7"),
@@ -215,7 +215,7 @@ function toLegendDesign(value: unknown, snapshot: GraphSnapshot, mode: ThemeMode
     const edge = asRecord(raw);
     const style = stringValue(edge.style, "solid");
     next.edges[type] = {
-      label: stringValue(edge.label, type.replace(/_/g, " ")),
+      label: stringValue(edge.label, type.replaceAll("_", " ")),
       color: stringValue(edge.color, "#6fb5a7"),
       width: clamp(numberValue(edge.width, 1.7), 0.4, 8),
       style: EDGE_STYLES.includes(style as EdgeLineStyle) ? (style as EdgeLineStyle) : "solid",
@@ -255,7 +255,7 @@ function buildThemeOverrides(config: LegendDesignConfig): GraphThemeOverrides {
 }
 
 function labelForType(type: string, label?: string): string {
-  return label?.trim() || type.replace(/_/g, " ");
+  return label?.trim() || type.replaceAll("_", " ");
 }
 
 function countByType<T>(items: T[], getType: (item: T) => string): Record<string, number> {

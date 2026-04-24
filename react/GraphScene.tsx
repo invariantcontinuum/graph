@@ -193,7 +193,7 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
         labels={labels}
         nodeTypes={nodeTypes}
         ready={ready}
-        minZoomToShowLabels={0.0}
+        minZoomToShowLabels={0}
         focusIds={focusIds}
       />
       {/* EdgeLabelsOverlay intentionally omitted — the "depends" type pills

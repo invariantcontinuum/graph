@@ -5,9 +5,9 @@ import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface EdgeLabelsOverlayProps {
-  engineRef: React.RefObject<GraphHandle | null>;
-  theme: GraphTheme;
-  ready: boolean;
+  readonly engineRef: React.RefObject<GraphHandle | null>;
+  readonly theme: GraphTheme;
+  readonly ready: boolean;
 }
 
 export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlayProps) {
@@ -68,7 +68,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
         if (sKey !== focusKey && tKey !== focusKey) continue;
 
         const typeIdx = Math.floor(edgeData[i + 4]);
-        const label = edgeTypeKeys[typeIdx]?.replace(/_/g, " ") ?? "";
+        const label = edgeTypeKeys[typeIdx]?.replaceAll("_", " ") ?? "";
         if (!label) continue;
 
         const mx = (sx + tx) / 2;

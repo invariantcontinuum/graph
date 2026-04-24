@@ -29,7 +29,7 @@ function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
         __wbg_Error_2e59b1b37a9a34c3: function(arg0, arg1) {
-            const ret = Error(getStringFromWasm0(arg0, arg1));
+            const ret = new Error(getStringFromWasm0(arg0, arg1));
             return ret;
         },
         __wbg_String_8564e559799eccda: function(arg0, arg1) {
@@ -95,13 +95,13 @@ function __wbg_get_imports() {
         __wbg___wbindgen_string_get_914df97fcfa788f2: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
-            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            var len1 = WASM_VECTOR_LEN;
+            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            let len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
         __wbg___wbindgen_throw_81fc77679af83bc6: function(arg0, arg1) {
-            throw new Error(getStringFromWasm0(arg0, arg1));
+            throw new new Error(getStringFromWasm0(arg0, arg1));
         },
         __wbg_buffer_a77cc90da4bdb503: function(arg0) {
             const ret = arg0.buffer;
@@ -263,15 +263,15 @@ function __wbg_get_imports() {
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_GLOBAL_f2e0f995a21329ff: function() {
-            const ret = typeof global === 'undefined' ? null : global;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_SELF_24f78b6d23f286ea: function() {
-            const ret = typeof self === 'undefined' ? null : self;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_WINDOW_59fd959c540fe405: function() {
-            const ret = typeof window === 'undefined' ? null : window;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_value_7f6052747ccf940f: function(arg0) {
@@ -457,7 +457,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     let offset = 0;
 
     for (; offset < len; offset++) {
-        const code = arg.charCodeAt(offset);
+        const code = arg.codePointAt(offset);
         if (code > 0x7F) break;
         mem[ptr + offset] = code;
     }

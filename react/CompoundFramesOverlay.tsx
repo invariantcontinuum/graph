@@ -6,13 +6,13 @@ import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface CompoundFramesOverlayProps {
-  engineRef: React.RefObject<GraphHandle | null>;
-  theme: GraphTheme;
-  ready: boolean;
-  nodeIds: string[];
-  nodeSourceIds: Record<string, string | null>;
-  nodeTypes: Record<string, string>;
-  sourceLabels: Record<string, string>;
+  readonly engineRef: React.RefObject<GraphHandle | null>;
+  readonly theme: GraphTheme;
+  readonly ready: boolean;
+  readonly nodeIds: string[];
+  readonly nodeSourceIds: Record<string, string | null>;
+  readonly nodeTypes: Record<string, string>;
+  readonly sourceLabels: Record<string, string>;
 }
 
 interface AABB { minX: number; minY: number; maxX: number; maxY: number; }

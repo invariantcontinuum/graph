@@ -61,8 +61,8 @@ export class RenderEngine {
      * @param {number} padding_px
      */
     focus_fit(id, padding_px) {
-        var ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        var len0 = WASM_VECTOR_LEN;
+        let ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        let len0 = WASM_VECTOR_LEN;
         wasm.renderengine_focus_fit(this.__wbg_ptr, ptr0, len0, padding_px);
     }
     /**
@@ -249,8 +249,8 @@ export class RenderEngine {
      * @param {string | null} [id]
      */
     set_focus(id) {
-        var ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        var len0 = WASM_VECTOR_LEN;
+        let ptr0 = isLikeNone(id) ? 0 : passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        let len0 = WASM_VECTOR_LEN;
         wasm.renderengine_set_focus(this.__wbg_ptr, ptr0, len0);
     }
     /**
@@ -347,7 +347,7 @@ function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
         __wbg_Error_2e59b1b37a9a34c3: function(arg0, arg1) {
-            const ret = Error(getStringFromWasm0(arg0, arg1));
+            const ret = new Error(getStringFromWasm0(arg0, arg1));
             return ret;
         },
         __wbg_Number_e6ffdb596c888833: function(arg0) {
@@ -407,13 +407,13 @@ function __wbg_get_imports() {
         __wbg___wbindgen_string_get_914df97fcfa788f2: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
-            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            var len1 = WASM_VECTOR_LEN;
+            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            let len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
         __wbg___wbindgen_throw_81fc77679af83bc6: function(arg0, arg1) {
-            throw new Error(getStringFromWasm0(arg0, arg1));
+            throw new new Error(getStringFromWasm0(arg0, arg1));
         },
         __wbg_activeTexture_55755e76627be758: function(arg0, arg1) {
             arg0.activeTexture(arg1 >>> 0);
@@ -520,8 +520,8 @@ function __wbg_get_imports() {
         }, arguments); },
         __wbg_getProgramInfoLog_b2d112da8cb8c5c5: function(arg0, arg1, arg2) {
             const ret = arg1.getProgramInfoLog(arg2);
-            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            var len1 = WASM_VECTOR_LEN;
+            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            let len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
@@ -531,8 +531,8 @@ function __wbg_get_imports() {
         },
         __wbg_getShaderInfoLog_57aaac3110ec22f3: function(arg0, arg1, arg2) {
             const ret = arg1.getShaderInfoLog(arg2);
-            var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            var len1 = WASM_VECTOR_LEN;
+            let ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            let len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
@@ -704,15 +704,15 @@ function __wbg_get_imports() {
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_GLOBAL_f2e0f995a21329ff: function() {
-            const ret = typeof global === 'undefined' ? null : global;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_SELF_24f78b6d23f286ea: function() {
-            const ret = typeof self === 'undefined' ? null : self;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_static_accessor_WINDOW_59fd959c540fe405: function() {
-            const ret = typeof window === 'undefined' ? null : window;
+            const ret = typeof globalThis === 'undefined' ? null : globalThis;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
         __wbg_texImage2D_6a3521456a5f13ec: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
@@ -962,7 +962,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     let offset = 0;
 
     for (; offset < len; offset++) {
-        const code = arg.charCodeAt(offset);
+        const code = arg.codePointAt(offset);
         if (code > 0x7F) break;
         mem[ptr + offset] = code;
     }

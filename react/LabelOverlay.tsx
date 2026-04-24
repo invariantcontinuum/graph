@@ -6,21 +6,21 @@ import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface LabelOverlayProps {
-  engineRef: React.RefObject<GraphHandle | null>;
-  theme: GraphTheme;
+  readonly engineRef: React.RefObject<GraphHandle | null>;
+  readonly theme: GraphTheme;
   /** Ordered list of node ids matching the engine's internal positions buffer order.
    *  MUST match the order of `snapshot.nodes` passed to `<Graph>`. */
-  nodeIds: string[];
+  readonly nodeIds: string[];
   /** Map nodeId -> label text (e.g., node.name). */
-  labels: Record<string, string>;
+  readonly labels: Record<string, string>;
   /** Map nodeId -> type (drives per-type font/size/color). */
-  nodeTypes: Record<string, string>;
+  readonly nodeTypes: Record<string, string>;
   /** Below this zoom (from vpMatrix scale), labels are hidden to preserve FPS. */
-  minZoomToShowLabels?: number;
+  readonly minZoomToShowLabels?: number;
   /** True once the `<Graph>` component signalled `onReady` — before this the
    *  engine ref's `subscribeFrame` is not yet wired up and subscribing will
    *  silently no-op, so we must gate the subscription on it. */
-  ready: boolean;
+  readonly ready: boolean;
   /** When set, nodes NOT in this set are rendered with reduced label alpha so
    *  they don't visually compete with the focused 1-hop neighborhood. The
    *  WASM shader already dims the node fills via `u_dim_opacity` when the
@@ -29,7 +29,7 @@ export interface LabelOverlayProps {
    *  legible labels sitting on top, which makes the whole spotlight feature
    *  read as "weak" compared to legacy Cytoscape. Pass `null` or empty set
    *  to keep the pre-spotlight uniform brightness. */
-  focusIds?: Set<string> | null;
+  readonly focusIds?: Set<string> | null;
 }
 
 interface FrameState {

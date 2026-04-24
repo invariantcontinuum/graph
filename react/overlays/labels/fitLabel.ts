@@ -71,9 +71,9 @@ function wrapIntoLines(
   if (start < chars.length) {
     const remaining = chars.slice(start).join("").trim();
     const tail = remaining
-      ? `${lines[lines.length - 1]} ${remaining}`
-      : lines[lines.length - 1];
-    lines[lines.length - 1] = ellipsize(ctx, tail, maxWidth);
+      ? `${lines.at(-1)} ${remaining}`
+      : lines.at(-1);
+    lines[lines.length - 1] = ellipsize(ctx, tail ?? "", maxWidth);
   }
   return lines;
 }

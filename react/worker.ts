@@ -4,10 +4,8 @@ let initPromise: Promise<void> | null = null;
 let layoutRunning = false;
 let tickScheduled = false;
 
-self.onmessage = async (e: MessageEvent) => {
-  if (!initPromise) {
-    initPromise = init("/graph/graph_worker_wasm_bg.wasm").then(() => undefined);
-  }
+globalThis.onmessage = async (e: MessageEvent) => {
+  initPromise ??= init("/graph/graph_worker_wasm_bg.wasm").then(() => undefined);
   await initPromise;
 
   handle_message(e.data);
