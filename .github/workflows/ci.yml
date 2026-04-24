@@ -90,21 +90,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo bench -p graph-layout
 
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    needs: [test-native, test-wasm]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install dependencies
-        run: npm install
-      - name: Run tests with coverage
-        run: npm test
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  # SonarCloud analysis is handled by the project's Automatic Analysis (it
+  # reads `sonar-project.properties` on every push to main and for every PR).
+  # A duplicate CI-based scan here would fail with:
+  #   "ERROR You are running CI analysis while Automatic Analysis is enabled."
+  # If Automatic Analysis is ever turned off on the SonarCloud project, wire
+  # `SonarSource/sonarcloud-github-action` back into this workflow — but not
+  # both simultaneously.
 
