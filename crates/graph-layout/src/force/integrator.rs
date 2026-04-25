@@ -34,9 +34,7 @@ pub(super) fn integrate_step(
     // significantly improving layout speed.
     let mut stack = Vec::with_capacity(128);
     let mut forces: Vec<(f32, f32)> = (0..n)
-        .map(|i| {
-            root.compute_force(positions[i * 2], positions[i * 2 + 1], &mut stack)
-        })
+        .map(|i| root.compute_force(positions[i * 2], positions[i * 2 + 1], &mut stack))
         .collect();
 
     apply_attractive_edges(positions, edges, &mut forces);
