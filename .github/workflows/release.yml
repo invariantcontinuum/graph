@@ -25,56 +25,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: invariantcontinuum/actions-library/release@v1
         with:
-          node-version: 22
-
-      - name: Bump version
-        id: bump
-        run: |
-          CURRENT=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          case "${{ inputs.bump }}" in
-            major)
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              ;;
-            minor)
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              ;;
-            patch)
-              PATCH=$((PATCH + 1))
-              ;;
-          esac
-          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); p.version='$NEW_VERSION'; fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n');"
-          sed -i "/^\[workspace\.package\]/,/^\[/{s/^version = \"$CURRENT\"/version = \"$NEW_VERSION\"/}" Cargo.toml
-
-      - name: Create release branch and tag
-        id: branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          BRANCH="release-v${{ steps.bump.outputs.version }}"
-          git checkout -b "$BRANCH"
-          git add package.json Cargo.toml
-          git commit -m "chore(release): v${{ steps.bump.outputs.version }}"
-          git push origin "$BRANCH"
-          git tag "v${{ steps.bump.outputs.version }}"
-          git push origin "v${{ steps.bump.outputs.version }}"
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.bump.outputs.version }}
-          name: Release v${{ steps.bump.outputs.version }}
-          target_commitish: ${{ steps.branch.outputs.branch }}
-          generate_release_notes: true
+          type: node-js
+          bump: ${{ inputs.bump }}
           token: ${{ secrets.GH_PAT }}
