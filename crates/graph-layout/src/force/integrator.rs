@@ -29,9 +29,11 @@ pub(super) fn integrate_step(
     let bounds = bounding_box(positions, TREE_BOUNDS_PAD);
     let root = build_tree(positions, bounds);
 
-    let mut forces: Vec<(f32, f32)> = (0..n)
-        .map(|i| root.compute_force(positions[i * 2], positions[i * 2 + 1]))
-        .collect();
+    let mut stack = Vec::with_capacity(64);
+    let mut forces = Vec::with_capacity(n);
+    for i in 0..n {
+        forces.push(root.compute_force(positions[i * 2], positions[i * 2 + 1], &mut stack));
+    }
 
     apply_attractive_edges(positions, edges, &mut forces);
 
