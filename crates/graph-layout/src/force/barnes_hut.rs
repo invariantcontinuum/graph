@@ -106,6 +106,7 @@ impl QuadNode {
             }
         }
 
+        stack.clear();
         (fx, fy)
     }
 
