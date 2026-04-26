@@ -67,10 +67,18 @@ impl QuadNode {
         }
     }
 
-    pub(super) fn compute_force(&self, x: f32, y: f32) -> (f32, f32) {
+    /// Computes the repulsive force exerted by this tree on a given point.
+    /// To avoid allocating a new `Vec` for the traversal stack on every query,
+    /// the caller must provide a mutable buffer, which will be reused across calls.
+    pub(super) fn compute_force<'a>(
+        &'a self,
+        x: f32,
+        y: f32,
+        stack: &mut Vec<&'a QuadNode>,
+    ) -> (f32, f32) {
         let mut fx = 0.0_f32;
         let mut fy = 0.0_f32;
-        let mut stack: Vec<&QuadNode> = vec![self];
+        stack.push(self);
 
         while let Some(node) = stack.pop() {
             if node.mass == 0.0 {
