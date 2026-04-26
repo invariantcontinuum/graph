@@ -108,6 +108,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     <canvas
       ref={canvasRef}
       className="graph-edge-labels-overlay"
+      aria-hidden={true}
       style={{ position: "absolute", inset: 0, zIndex: 5, pointerEvents: "none", width: "100%", height: "100%" }}
     />
   );

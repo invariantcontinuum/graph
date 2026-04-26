@@ -112,6 +112,7 @@ export function CompoundFramesOverlay({
     <canvas
       ref={canvasRef}
       className="graph-compound-frames-overlay"
+      aria-hidden={true}
       style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", width: "100%", height: "100%" }}
     />
   );
