@@ -81,6 +81,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     className,
     style,
     authToken,
+    "aria-label": ariaLabel,
   },
   ref,
 ) {
@@ -494,9 +495,20 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     };
 
     const onMove = (e: PointerEvent) => {
-      const existing = active.get(e.pointerId);
-      if (!existing) return;
       const local = toLocal(e.clientX, e.clientY);
+      const existing = active.get(e.pointerId);
+
+      if (!existing) {
+        // Hovering without a button pressed
+        const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+        if (hoveredId !== undefined) {
+          canvas.style.cursor = hoveredId ? "pointer" : "default";
+          callbacksRef.current.onNodeHover?.({ id: hoveredId } as NodeData);
+        }
+        requestRender();
+        return;
+      }
+
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
@@ -508,6 +520,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           // Hover updates only while panning (or hovering without a button).
           const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
           if (hoveredId !== undefined) {
+            canvas.style.cursor = hoveredId ? "pointer" : "default";
             callbacksRef.current.onNodeHover?.({ id: hoveredId } as NodeData);
           }
         }
@@ -692,7 +705,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     <canvas
       ref={canvasRef}
       className={className}
-      aria-label={props["aria-label"] ?? "Interactive graph visualization"}
+      aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="application"
       tabIndex={0}
       style={{ width: "100%", height: "100%", display: "block", touchAction: "none", ...style }}
