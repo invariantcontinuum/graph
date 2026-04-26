@@ -124,7 +124,7 @@ export function LabelOverlay({
     <canvas
       ref={canvasRef}
       className="graph-label-overlay"
-      aria-hidden="true"
+      aria-hidden={true}
       // The WASM shader dims non-focus fills via u_dim_opacity, so labels stay
       // at uniform brightness. We surface the focus-set size as a data
       // attribute so app CSS / devtools can read it without an extra render
