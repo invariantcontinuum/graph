@@ -100,8 +100,18 @@ impl QuadNode {
             }
 
             if let Some(ref children) = node.children {
-                for c in children.iter().flatten() {
-                    stack.push(c);
+                let c = &**children;
+                if let Some(c3) = c[3].as_ref() {
+                    stack.push(c3);
+                }
+                if let Some(c2) = c[2].as_ref() {
+                    stack.push(c2);
+                }
+                if let Some(c1) = c[1].as_ref() {
+                    stack.push(c1);
+                }
+                if let Some(c0) = c[0].as_ref() {
+                    stack.push(c0);
                 }
             }
         }
