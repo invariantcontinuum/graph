@@ -7,3 +7,6 @@
 ## 2025-04-26 - [Unroll Iterators in Hot Loops]
 **Learning:** Using `flatten()` on iterators over small arrays (like quad-tree children) inside extremely hot traversal loops adds measurable overhead. Manually unrolling the loop (`c[3]`, `c[2]`, `c[1]`, `c[0]`) in `BarnesHut::compute_force` yielded a ~5-9% performance improvement in benchmark ticks by eliminating iterator setup and bounds checking overhead.
 **Action:** Identify extremely hot paths (like O(N log N) tree traversals executed per tick) and replace complex iterator chains on fixed-size arrays with manual, explicit unrolled accesses.
+## 2025-04-27 - [Eliminate Per-Tick Vec Allocations in Force Layout]
+**Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was still calling `Vec::with_capacity` via `flatten_positions` and allocating `let mut forces: Vec<(f32, f32)>` using `.collect()` in `integrate_step` on every frame. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times and GC pressure on the WASM environment.
+**Action:** Lift intermediate buffers (`positions_flat` and `forces_vec`) into the `ForceLayout` struct state. Clear and extend/mutate these pre-allocated vectors on every tick. This avoids N heap allocations per tick and substantially improves integration speed.
