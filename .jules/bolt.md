@@ -7,3 +7,6 @@
 ## 2025-04-26 - [Unroll Iterators in Hot Loops]
 **Learning:** Using `flatten()` on iterators over small arrays (like quad-tree children) inside extremely hot traversal loops adds measurable overhead. Manually unrolling the loop (`c[3]`, `c[2]`, `c[1]`, `c[0]`) in `BarnesHut::compute_force` yielded a ~5-9% performance improvement in benchmark ticks by eliminating iterator setup and bounds checking overhead.
 **Action:** Identify extremely hot paths (like O(N log N) tree traversals executed per tick) and replace complex iterator chains on fixed-size arrays with manual, explicit unrolled accesses.
+## 2024-04-27 - [Optimize Layout Flattening]
+**Learning:** ForceLayout::tick previously allocated a new Vec on every tick to flatten positions. By introducing self.positions_flat and passing it as a mutable reference to flatten_positions, we avoid O(N) heap allocations per tick during the hot loop of the force integration.
+**Action:** Re-use memory structures using pre-allocated buffers.
