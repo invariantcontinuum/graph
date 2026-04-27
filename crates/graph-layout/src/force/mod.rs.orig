@@ -30,7 +30,6 @@ pub struct ForceLayout {
     edge_count_cache: usize,
     converged: bool,
     iteration: usize,
-    positions_flat: Vec<f32>,
 }
 
 impl ForceLayout {
@@ -44,7 +43,6 @@ impl ForceLayout {
             edge_count_cache: 0,
             converged: false,
             iteration: 0,
-            positions_flat: Vec::new(),
         }
     }
 
@@ -169,15 +167,15 @@ impl LayoutEngine for ForceLayout {
             return false;
         }
 
-        flatten_positions(&self.positions_vec, &mut self.positions_flat);
+        let mut positions_flat = flatten_positions(&self.positions_vec);
         let empty_pinned: HashSet<usize> = HashSet::new();
         let max_velocity_sq = integrate_step(
-            &mut self.positions_flat,
+            &mut positions_flat,
             &self.edges_indexed,
             &mut self.velocities_vec,
             &empty_pinned,
         );
-        unflatten_positions(&self.positions_flat, &mut self.positions_vec);
+        unflatten_positions(&positions_flat, &mut self.positions_vec);
 
         resolve_overlaps(&mut self.positions_vec);
 
@@ -209,12 +207,13 @@ fn index_edges(graph: &GraphStore, node_ids: &[String]) -> Vec<(usize, usize)> {
         .collect()
 }
 
-fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
-    flat.clear();
+fn flatten_positions(positions: &[(f32, f32)]) -> Vec<f32> {
+    let mut flat = Vec::with_capacity(positions.len() * 2);
     for &(x, y) in positions {
         flat.push(x);
         flat.push(y);
     }
+    flat
 }
 
 fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {
