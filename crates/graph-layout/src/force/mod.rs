@@ -27,6 +27,8 @@ pub struct ForceLayout {
     positions_vec: Vec<(f32, f32)>,
     velocities_vec: Vec<(f32, f32)>,
     edges_indexed: Vec<(usize, usize)>,
+    positions_flat: Vec<f32>,
+    forces_vec: Vec<(f32, f32)>,
     edge_count_cache: usize,
     converged: bool,
     iteration: usize,
@@ -40,6 +42,8 @@ impl ForceLayout {
             positions_vec: Vec::new(),
             velocities_vec: Vec::new(),
             edges_indexed: Vec::new(),
+            positions_flat: Vec::new(),
+            forces_vec: Vec::new(),
             edge_count_cache: 0,
             converged: false,
             iteration: 0,
@@ -99,7 +103,16 @@ impl ForceLayout {
         if self.velocities_vec.len() < n {
             self.velocities_vec.resize(n, (0.0, 0.0));
         }
-        let max_velocity_sq = integrate_step(positions, edges, &mut self.velocities_vec, pinned);
+        if self.forces_vec.len() < n {
+            self.forces_vec.resize(n, (0.0, 0.0));
+        }
+        let max_velocity_sq = integrate_step(
+            positions,
+            edges,
+            &mut self.velocities_vec,
+            &mut self.forces_vec,
+            pinned,
+        );
         max_velocity_sq >= MIN_VELOCITY * MIN_VELOCITY
     }
 
@@ -167,15 +180,20 @@ impl LayoutEngine for ForceLayout {
             return false;
         }
 
-        let mut positions_flat = flatten_positions(&self.positions_vec);
+        flatten_positions(&self.positions_vec, &mut self.positions_flat);
+        if self.forces_vec.len() < n {
+            self.forces_vec.resize(n, (0.0, 0.0));
+        }
+
         let empty_pinned: HashSet<usize> = HashSet::new();
         let max_velocity_sq = integrate_step(
-            &mut positions_flat,
+            &mut self.positions_flat,
             &self.edges_indexed,
             &mut self.velocities_vec,
+            &mut self.forces_vec,
             &empty_pinned,
         );
-        unflatten_positions(&positions_flat, &mut self.positions_vec);
+        unflatten_positions(&self.positions_flat, &mut self.positions_vec);
 
         resolve_overlaps(&mut self.positions_vec);
 
@@ -207,13 +225,12 @@ fn index_edges(graph: &GraphStore, node_ids: &[String]) -> Vec<(usize, usize)> {
         .collect()
 }
 
-fn flatten_positions(positions: &[(f32, f32)]) -> Vec<f32> {
-    let mut flat = Vec::with_capacity(positions.len() * 2);
+fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
+    flat.clear();
     for &(x, y) in positions {
         flat.push(x);
         flat.push(y);
     }
-    flat
 }
 
 fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {

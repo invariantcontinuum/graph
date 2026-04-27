@@ -17,6 +17,7 @@ pub(super) fn integrate_step(
     positions: &mut [f32],
     edges: &[(usize, usize)],
     velocities: &mut [(f32, f32)],
+    forces: &mut [(f32, f32)],
     pinned: &std::collections::HashSet<usize>,
 ) -> f32 {
     let n = positions.len() / 2;
@@ -33,13 +34,13 @@ pub(super) fn integrate_step(
     // Reusing this across all node queries eliminates O(n) heap allocations per step,
     // significantly improving layout speed.
     let mut stack = Vec::with_capacity(128);
-    let mut forces: Vec<(f32, f32)> = (0..n)
-        .map(|i| root.compute_force(positions[i * 2], positions[i * 2 + 1], &mut stack))
-        .collect();
+    for i in 0..n {
+        forces[i] = root.compute_force(positions[i * 2], positions[i * 2 + 1], &mut stack);
+    }
 
-    apply_attractive_edges(positions, edges, &mut forces);
+    apply_attractive_edges(positions, edges, forces);
 
-    let max_vel_sq = integrate_positions(positions, velocities, &forces);
+    let max_vel_sq = integrate_positions(positions, velocities, forces);
 
     restore_pinned(positions, &saved);
 
