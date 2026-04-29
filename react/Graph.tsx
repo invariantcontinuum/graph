@@ -709,6 +709,20 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       role="application"
       tabIndex={0}
       style={{ width: "100%", height: "100%", display: "block", touchAction: "none", ...style }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          callbacksRef.current.onBackgroundClick?.();
+        }
+      }}
+      onFocus={(e) => {
+        if (e.currentTarget.matches(":focus-visible")) {
+          e.currentTarget.style.outline = "2px solid #3b82f6";
+          e.currentTarget.style.outlineOffset = "-2px";
+        }
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.outline = "";
+      }}
     />
   );
 });
