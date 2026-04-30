@@ -7,3 +7,7 @@
 ## 2025-04-26 - [Unroll Iterators in Hot Loops]
 **Learning:** Using `flatten()` on iterators over small arrays (like quad-tree children) inside extremely hot traversal loops adds measurable overhead. Manually unrolling the loop (`c[3]`, `c[2]`, `c[1]`, `c[0]`) in `BarnesHut::compute_force` yielded a ~5-9% performance improvement in benchmark ticks by eliminating iterator setup and bounds checking overhead.
 **Action:** Identify extremely hot paths (like O(N log N) tree traversals executed per tick) and replace complex iterator chains on fixed-size arrays with manual, explicit unrolled accesses.
+
+## 2026-04-30 - Replace division with multiplication in Barnes-Hut hot path
+**Learning:** Floating-point division operations are significantly slower than multiplication operations, particularly when executing millions of times inside the inner loop of the Barnes-Hut force approximation step.
+**Action:** Identify hot paths containing mathematical expressions like `(a * a) / b < c * c`, and refactor them using pre-calculated squares to avoid the division operation (`a * a < b * (c_sq)`).
