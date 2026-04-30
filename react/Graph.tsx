@@ -612,18 +612,43 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       requestRender();
     };
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept shortcuts like Ctrl+C or Cmd+R
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      let handled = false;
+      if (e.key === "Escape") {
+        callbacksRef.current.onBackgroundClick?.();
+        handled = true;
+      } else if (e.key === "+" || e.key === "=") {
+        engineRef.current?.zoom_in();
+        requestRender();
+        handled = true;
+      } else if (e.key === "-" || e.key === "_") {
+        engineRef.current?.zoom_out();
+        requestRender();
+        handled = true;
+      }
+
+      if (handled) {
+        e.preventDefault();
+      }
+    };
+
     canvas.style.touchAction = "none";
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
     canvas.addEventListener("pointercancel", onUp);
     canvas.addEventListener("click", onClick);
+    canvas.addEventListener("keydown", onKeyDown);
     return () => {
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("click", onClick);
+      canvas.removeEventListener("keydown", onKeyDown);
     };
   }, [pumpWorkerMessages, requestRender]);
 
@@ -708,7 +733,24 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="application"
       tabIndex={0}
-      style={{ width: "100%", height: "100%", display: "block", touchAction: "none", ...style }}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+        touchAction: "none",
+        outline: "none", // Prevent default browser outline
+        ...style
+      }}
+      onFocus={(e) => {
+        // Add focus-visible style polyfill for accessibility
+        if (e.target.matches(":focus-visible")) {
+          e.target.style.outline = "2px solid #3b82f6";
+          e.target.style.outlineOffset = "-2px";
+        }
+      }}
+      onBlur={(e) => {
+        e.target.style.outline = "none";
+      }}
     />
   );
 });
