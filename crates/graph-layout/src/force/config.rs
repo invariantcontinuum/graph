@@ -6,6 +6,7 @@
 //! other without overlap while still letting 1-hop neighbors visibly cluster.
 
 pub(super) const THETA: f32 = 0.9;
+pub(super) const THETA_SQ: f32 = THETA * THETA;
 pub(super) const REPULSION: f32 = 20_000.0;
 pub(super) const MAX_QUAD_DEPTH: usize = 40;
 pub(super) const ATTRACTION: f32 = 0.005;

@@ -10,3 +10,6 @@
 ## 2025-04-27 - [Eliminate Per-Tick Vec Allocations in Force Layout]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was still calling `Vec::with_capacity` via `flatten_positions` and allocating `let mut forces: Vec<(f32, f32)>` using `.collect()` in `integrate_step` on every frame. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times and GC pressure on the WASM environment.
 **Action:** Lift intermediate buffers (`positions_flat` and `forces_vec`) into the `ForceLayout` struct state. Clear and extend/mutate these pre-allocated vectors on every tick. This avoids N heap allocations per tick and substantially improves integration speed.
+## 2024-05-01 - Avoid division in Barnes-Hut hot loop
+**Learning:** In the Barnes-Hut approximation step `can_approximate`, a floating point division `(width * width) / dist_sq < THETA * THETA` is computed for every visited node in the tree per query. Replacing this division with a multiplication against a pre-computed squared threshold (`(width * width) < dist_sq * THETA_SQ`) yields measurable benchmark performance improvements.
+**Action:** When a calculation occurs inside a tight O(N log N) traversal like quadtree force accumulation, re-arrange algebraic checks to avoid floating point division.

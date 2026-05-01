@@ -7,7 +7,7 @@
 //! descend. Far-away clusters are therefore folded into a single force term,
 //! giving log depth instead of linear traversal per query.
 
-use super::config::{MAX_QUAD_DEPTH, REPULSION, THETA};
+use super::config::{MAX_QUAD_DEPTH, REPULSION, THETA_SQ};
 
 type Bounds = (f32, f32, f32, f32);
 
@@ -161,7 +161,7 @@ impl QuadNode {
     fn can_approximate(&self, dist_sq: f32) -> bool {
         let (x_min, _y_min, x_max, _y_max) = self.bounds;
         let width = x_max - x_min;
-        (width * width) / dist_sq < THETA * THETA || self.children.is_none()
+        (width * width) < dist_sq * THETA_SQ || self.children.is_none()
     }
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
