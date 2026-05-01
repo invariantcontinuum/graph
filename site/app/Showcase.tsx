@@ -230,6 +230,8 @@ export default function Showcase() {
                 className="press-btn"
                 data-active={editorOpen}
                 onClick={() => setEditorOpen((v) => !v)}
+                aria-expanded={editorOpen}
+                aria-controls="source-drawer"
               >
                 {editorOpen ? "Hide source" : "Show source"}
               </button>
@@ -267,11 +269,11 @@ export default function Showcase() {
           </p>
 
           {/* Source drawer */}
-          <div className="source-drawer mt-6" data-open={editorOpen}>
+          <div className="source-drawer mt-6" id="source-drawer" data-open={editorOpen}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="eyebrow">snapshot.json</span>
+                  <label htmlFor="snapshot-textarea" className="eyebrow">snapshot.json</label>
                   <button
                     type="button"
                     className="press-btn"
@@ -281,6 +283,7 @@ export default function Showcase() {
                   </button>
                 </div>
                 <textarea
+                  id="snapshot-textarea"
                   className="source-pad block w-full h-64"
                   spellCheck={false}
                   value={snapshotJson}
@@ -294,10 +297,11 @@ export default function Showcase() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="eyebrow">themeOverrides.json</span>
+                  <label htmlFor="overrides-textarea" className="eyebrow">themeOverrides.json</label>
                   <span className="eyebrow">live</span>
                 </div>
                 <textarea
+                  id="overrides-textarea"
                   className="source-pad block w-full h-64"
                   spellCheck={false}
                   value={overridesJson}
