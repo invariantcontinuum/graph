@@ -32,7 +32,6 @@ pub struct ForceLayout {
     edge_count_cache: usize,
     converged: bool,
     iteration: usize,
-    positions_flat: Vec<f32>,
 }
 
 impl ForceLayout {
@@ -48,7 +47,6 @@ impl ForceLayout {
             edge_count_cache: 0,
             converged: false,
             iteration: 0,
-            positions_flat: Vec::new(),
         }
     }
 
