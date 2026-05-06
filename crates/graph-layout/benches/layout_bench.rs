@@ -1,8 +1,8 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use graph_core::graph::GraphStore;
 use graph_core::types::{EdgeData, NodeData};
-use graph_layout::force::ForceLayout;
 use graph_layout::LayoutEngine;
+use graph_layout::force::ForceLayout;
 
 fn generate_graph(nodes: usize, edges_per_node: usize) -> GraphStore {
     let mut graph = GraphStore::new();
