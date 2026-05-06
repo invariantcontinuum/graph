@@ -25,8 +25,35 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - uses: invariantcontinuum/actions-library/release@v1
+      - uses: actions/setup-node@v4
         with:
-          type: node-js
-          bump: ${{ inputs.bump }}
-          token: ${{ secrets.GH_PAT }}
+          node-version: 22
+
+      - name: Configure git identity
+        run: |
+          git config user.name "invariantcontinuum-release"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Bump package version
+        id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          npm version "$BUMP" -m "chore(release): v%s"
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Push version commit and tag
+        run: |
+          git push origin main
+          git push origin "${{ steps.bump.outputs.tag }}"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh release create "${{ steps.bump.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Release ${{ steps.bump.outputs.tag }}" \
+            --generate-notes
