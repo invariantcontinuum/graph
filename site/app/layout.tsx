@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { Fraunces, Newsreader, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  axes: ["SOFT", "opsz"],
-});
-
-const newsreader = Newsreader({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
-  axes: ["opsz"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -20,9 +13,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Graph Workbench - @invariantcontinuum/graph",
+  title: "Graph Scenario Lab - @invariantcontinuum/graph",
   description:
-    "A GitHub Pages workbench for configuring and inspecting the @invariantcontinuum/graph WASM + WebGL2 renderer.",
+    "A GitHub Pages scenario lab for configuring practical @invariantcontinuum/graph WASM + WebGL2 graphs.",
 };
 
 export default function RootLayout({
@@ -31,7 +24,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${newsreader.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

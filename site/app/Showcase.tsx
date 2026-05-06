@@ -27,63 +27,94 @@ type ThemeProfile = {
 
 const THEME_PROFILES: ThemeProfile[] = [
   {
-    id: "signal",
-    label: "Signal",
+    id: "midnight",
+    label: "Midnight Ops",
     overrides: {
-      canvasBg: "#f7f8f5",
-      gridLineColor: "#dce5dc",
-      labelHalo: "#f7f8f5",
-      selectionBorder: "#1f7a5f",
-      selectionFill: "rgba(31, 122, 95, 0.18)",
+      canvasBg: "#060912",
+      gridLineColor: "#141b2f",
+      labelHalo: "#060912",
+      selectionBorder: "#22d3ee",
+      selectionFill: "rgba(34, 211, 238, 0.18)",
+      hullFill: "rgba(34, 211, 238, 0.05)",
+      hullStroke: "rgba(34, 211, 238, 0.24)",
+      dimOpacity: 0.1,
       defaultNodeStyle: {
-        color: "#ffffff",
-        borderColor: "#1f7a5f",
-        labelColor: "#17211c",
+        color: "#101827",
+        borderColor: "#38bdf8",
+        labelColor: "#eef8ff",
       },
       defaultEdgeStyle: {
-        color: "#65736d",
+        color: "#64748b",
+        width: 1.35,
+      },
+    },
+  },
+  {
+    id: "daylight",
+    label: "Daylight Grid",
+    overrides: {
+      canvasBg: "#f7f9fc",
+      gridLineColor: "#dde5f0",
+      labelHalo: "#f7f9fc",
+      selectionBorder: "#2563eb",
+      selectionFill: "rgba(37, 99, 235, 0.14)",
+      hullFill: "rgba(37, 99, 235, 0.05)",
+      hullStroke: "rgba(37, 99, 235, 0.2)",
+      dimOpacity: 0.15,
+      defaultNodeStyle: {
+        color: "#ffffff",
+        borderColor: "#2563eb",
+        labelColor: "#111827",
+      },
+      defaultEdgeStyle: {
+        color: "#667085",
+        width: 1.25,
+      },
+    },
+  },
+  {
+    id: "aurora",
+    label: "Aurora Dark",
+    overrides: {
+      canvasBg: "#090a1a",
+      gridLineColor: "#1d1b39",
+      labelHalo: "#090a1a",
+      selectionBorder: "#a78bfa",
+      selectionFill: "rgba(167, 139, 250, 0.2)",
+      hullFill: "rgba(167, 139, 250, 0.06)",
+      hullStroke: "rgba(167, 139, 250, 0.25)",
+      dimOpacity: 0.1,
+      defaultNodeStyle: {
+        color: "#15132b",
+        borderColor: "#a78bfa",
+        labelColor: "#f8fafc",
+      },
+      defaultEdgeStyle: {
+        color: "#8b93b8",
         width: 1.4,
       },
     },
   },
   {
-    id: "contrast",
-    label: "Contrast",
-    overrides: {
-      canvasBg: "#10140f",
-      gridLineColor: "#263126",
-      labelHalo: "#10140f",
-      selectionBorder: "#f0b84f",
-      selectionFill: "rgba(240, 184, 79, 0.22)",
-      dimOpacity: 0.12,
-      defaultNodeStyle: {
-        color: "#18211a",
-        borderColor: "#f0b84f",
-        labelColor: "#f7f8f5",
-      },
-      defaultEdgeStyle: {
-        color: "#9aab9f",
-        width: 1.5,
-      },
-    },
-  },
-  {
-    id: "paperless",
-    label: "Paperless",
+    id: "paper",
+    label: "Clean Paper",
     overrides: {
       canvasBg: "#ffffff",
-      gridLineColor: "#e2e7e2",
+      gridLineColor: "#e6edf5",
       labelHalo: "#ffffff",
-      selectionBorder: "#b7562d",
-      selectionFill: "rgba(183, 86, 45, 0.16)",
+      selectionBorder: "#0f766e",
+      selectionFill: "rgba(15, 118, 110, 0.14)",
+      hullFill: "rgba(15, 118, 110, 0.05)",
+      hullStroke: "rgba(15, 118, 110, 0.2)",
+      dimOpacity: 0.16,
       defaultNodeStyle: {
-        color: "#f9faf8",
-        borderColor: "#2e3a33",
-        labelColor: "#17211c",
+        color: "#ffffff",
+        borderColor: "#0f766e",
+        labelColor: "#0f172a",
       },
       defaultEdgeStyle: {
-        color: "#6f7b73",
-        width: 1.2,
+        color: "#6b7280",
+        width: 1.25,
       },
     },
   },
@@ -216,7 +247,7 @@ export default function Showcase() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSlug, setActiveSlug] = useState(PRESETS[0].slug);
   const [layout, setLayout] = useState<LayoutType>("force");
-  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [themeProfileId, setThemeProfileId] = useState("preset");
   const [snapshot, setSnapshot] = useState<GraphSnapshot>(PRESETS[0].snapshot);
   const [snapshotJson, setSnapshotJson] = useState(() => formatJson(PRESETS[0].snapshot));
@@ -434,8 +465,8 @@ export default function Showcase() {
       >
         <div className="panel-head">
           <div>
-            <p className="kicker">Graph Workbench</p>
-            <h1>@invariantcontinuum/graph</h1>
+            <p className="kicker">Graph Scenario Lab</p>
+            <h1>Graph Control Plane</h1>
           </div>
           <a
             className="repo-link"
@@ -449,7 +480,7 @@ export default function Showcase() {
 
         <section className="panel-section">
           <div className="section-title">
-            <span>Presets</span>
+            <span>Scenarios</span>
             <strong>{PRESETS.length}</strong>
           </div>
           <nav className="preset-list" aria-label="Graph presets">
@@ -507,7 +538,7 @@ export default function Showcase() {
             value={themeProfileId}
             onChange={(event) => applyThemeProfile(event.target.value)}
           >
-            <option value="preset">Preset theme</option>
+            <option value="preset">Scenario theme</option>
             <option value="custom">Custom JSON</option>
             {THEME_PROFILES.map((profile) => (
               <option key={profile.id} value={profile.id}>
@@ -545,7 +576,7 @@ export default function Showcase() {
               disabled={!selectedNode}
               onClick={addNeighbor}
             >
-              Add Edge
+              Add Neighbor
             </button>
             <button
               type="button"
@@ -672,8 +703,9 @@ export default function Showcase() {
       <section className="graph-workspace" aria-label="Graph canvas">
         <div className="graph-toolbar">
           <div>
-            <p>{preset.subtitle}</p>
+            <p className="scenario-eyebrow">{preset.subtitle}</p>
             <h2>{preset.title}</h2>
+            <p className="scenario-copy">{preset.essay}</p>
           </div>
           <div className="graph-stats" aria-label="Graph stats">
             <span>{stats?.nodeCount ?? snapshot.nodes.length} nodes</span>
@@ -691,6 +723,7 @@ export default function Showcase() {
             themeOverrides={themeOverrides}
             focusIds={focusIds}
             showCommunities
+            style={{ background: themeOverrides.canvasBg }}
             onNodeClick={(node) => setSelectedId(node.id)}
             onBackgroundClick={() => setSelectedId(null)}
             onLegendChange={setLegend}
