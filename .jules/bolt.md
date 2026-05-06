@@ -22,3 +22,7 @@
 ## 2025-04-28 - [Avoid Floating-Point Division in Hot Loops]
 **Learning:** In highly recursive or iterative geometric algorithms, such as the Barnes-Hut quadtree traversal in `crates/graph-layout/src/force/barnes_hut.rs`, floating-point division inside the innermost loop evaluates at significant cost. Transforming comparisons like `(width * width) / dist_sq < THETA * THETA` into purely multiplicative operations `(width * width) < dist_sq * THETA_SQ` (using a precomputed squared constant) yields immediate benchmark improvements, trimming milliseconds off the layout tick.
 **Action:** Always precompute squared threshold values and reorganize conditional checks in hot paths to rely solely on multiplication rather than division.
+
+## 2025-05-04 - [Replace Floating-Point Division with Multiplication in Hot Loops]
+**Learning:** In Barnes-Hut layout approximation, calculating angular width `w/d < THETA` requires determining if `(w*w) / dist_sq < THETA * THETA`. Because `can_approximate` is called thousands of times per tick (N log N scaling), floating-point division represents a measurable overhead.
+**Action:** Rearrange inequalities to replace division with multiplication. By precomputing `THETA_SQ` and rewriting the check as `(w*w) < dist_sq * THETA_SQ`, we save CPU cycles without compromising mathematical correctness.
