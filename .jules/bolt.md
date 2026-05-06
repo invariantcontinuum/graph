@@ -30,3 +30,7 @@
 ## 2026-05-05 - [Avoid Floating-Point Division in Hot Paths]
 **Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), floating-point division was used in the hot path (`can_approximate`) to evaluate `(width * width) / dist_sq < THETA * THETA`. Division operations are significantly more computationally expensive than multiplication.
 **Action:** Always pre-compute squared thresholds (e.g., `THETA_SQ = THETA * THETA`) and convert division into multiplication (`width * width < THETA_SQ * dist_sq`) when calculating bounding metrics within hot recursive tree traversals. This yields layout speedups without altering mathematical logic.
+
+## 2026-05-06 - [Bypass Redundant Math Operations]
+**Learning:** In the `apply_attractive_edges` method in `crates/graph-layout/src/force/integrator.rs`, the original code calculated distance using `(dx * dx + dy * dy).sqrt()`, multiplied it by an attraction constant, and then divided by the distance again. This resulted in unnecessary compute overhead in a hot loop (calculating per edge). The math could be simplified purely to multiplication against the delta (`ATTRACTION * dx`), bypassing the square root and divisions entirely.
+**Action:** When working on force layout integration loops (or similar mathematical formulas in hot paths), verify if intermediate distance/magnitude calculations can be algebraically simplified to avoid expensive operations like `.sqrt()` and divisions.
