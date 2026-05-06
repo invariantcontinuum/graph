@@ -26,3 +26,7 @@
 ## 2025-05-04 - [Replace Floating-Point Division with Multiplication in Hot Loops]
 **Learning:** In Barnes-Hut layout approximation, calculating angular width `w/d < THETA` requires determining if `(w*w) / dist_sq < THETA * THETA`. Because `can_approximate` is called thousands of times per tick (N log N scaling), floating-point division represents a measurable overhead.
 **Action:** Rearrange inequalities to replace division with multiplication. By precomputing `THETA_SQ` and rewriting the check as `(w*w) < dist_sq * THETA_SQ`, we save CPU cycles without compromising mathematical correctness.
+
+## 2026-05-05 - [Avoid Floating-Point Division in Hot Paths]
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), floating-point division was used in the hot path (`can_approximate`) to evaluate `(width * width) / dist_sq < THETA * THETA`. Division operations are significantly more computationally expensive than multiplication.
+**Action:** Always pre-compute squared thresholds (e.g., `THETA_SQ = THETA * THETA`) and convert division into multiplication (`width * width < THETA_SQ * dist_sq`) when calculating bounding metrics within hot recursive tree traversals. This yields layout speedups without altering mathematical logic.
