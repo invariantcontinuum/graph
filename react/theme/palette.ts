@@ -1,9 +1,6 @@
 // Graph theme color tokens. Two palettes, identical key shape, so TypeScript
 // and the runtime test enforce theme-inversion exhaustiveness.
 //
-// Color values come from the legacy Cytoscape stylesheet captured in
-// commit 14d17f5~1:apps/frontend/src/components/graph/GraphCanvas.tsx.
-
 export const NODE_TYPES = [
   "service", "source", "database", "cache", "data",
   "policy", "adr", "incident", "external",
@@ -35,79 +32,66 @@ export interface Palette {
   edgeAccents: Record<EdgeType, EdgeAccent>;
 }
 
-// Dark palette — tuned to match the legacy Cytoscape look.
-// Legacy renders near-opaque cream rectangles (not transparent glass): direct
-// pixel sampling of the legacy canvas shows fill alpha ≈ 0.9. The previous
-// 0.14 alpha made our nodes bleed into the dark background and the shape
-// read as faint outlines instead of solid cards.
-// Edge alphas are lowered from the old 0.58 because our engine tessellates
-// every logical edge into 8 quadratic-bezier segments — at the old alpha the
-// overdraw between adjacent segments accumulated into a bright smear across
-// the graph. 0.16 × 8 ≈ the visual density of a single legacy edge line.
 export const DARK: Palette = {
-  canvasBg:          "#101114",
-  gridLine:          "rgba(239, 230, 221, 0.06)",
-  nodeGlassFill:     "rgba(239, 230, 221, 0.92)",
-  nodeDefaultBorder: "rgba(35, 31, 32, 0.55)",
-  labelColor:        "#231f20",
-  labelHalo:         "rgba(239, 230, 221, 0.95)",
-  selection:         "#f3dfa2",
-  dimText:           "rgba(239, 230, 221, 0.70)",
-  edgeDefault:       "rgba(239, 230, 221, 0.10)",
-  edgeDefaultArrow:  "rgba(239, 230, 221, 0.26)",
-  hullFill:          "rgba(111, 181, 167, 0.08)",
-  hullStroke:        "rgba(111, 181, 167, 0.35)",
+  canvasBg:          "#070a12",
+  gridLine:          "rgba(148, 163, 184, 0.13)",
+  nodeGlassFill:     "rgba(15, 23, 42, 0.94)",
+  nodeDefaultBorder: "rgba(148, 163, 184, 0.72)",
+  labelColor:        "#f8fafc",
+  labelHalo:         "rgba(7, 10, 18, 0.96)",
+  selection:         "#22d3ee",
+  dimText:           "rgba(226, 232, 240, 0.68)",
+  edgeDefault:       "rgba(148, 163, 184, 0.48)",
+  edgeDefaultArrow:  "rgba(226, 232, 240, 0.72)",
+  hullFill:          "rgba(34, 211, 238, 0.07)",
+  hullStroke:        "rgba(34, 211, 238, 0.32)",
   typeBorders: {
-    service:  "#6fb5a7", source:   "#6fb5a7",
-    database: "#d88a73", cache:    "#e8aa99",
-    data:     "#d88a73", policy:   "#f3dfa2",
-    adr:      "#e6c866", incident: "#e6706b",
-    external: "#a19890", config:   "#c5b8a8",
-    script:   "#e6c866", doc:      "#d88a73",
-    asset:    "#a19890",
+    service:  "#22d3ee", source:   "#60a5fa",
+    database: "#f59e0b", cache:    "#a78bfa",
+    data:     "#38bdf8", policy:   "#facc15",
+    adr:      "#c084fc", incident: "#fb7185",
+    external: "#cbd5e1", config:   "#34d399",
+    script:   "#fbbf24", doc:      "#2dd4bf",
+    asset:    "#94a3b8",
   },
   edgeAccents: {
-    depends:    { line: "rgba(111, 181, 167, 0.16)", arrow: "rgba(111, 181, 167, 0.55)" },
-    depends_on: { line: "rgba(111, 181, 167, 0.16)", arrow: "rgba(111, 181, 167, 0.55)" },
-    violation:  { line: "rgba(230, 112, 107, 0.45)", arrow: "#e6706b" },
-    enforces:   { line: "rgba(216, 138, 115, 0.18)", arrow: "rgba(216, 138, 115, 0.60)" },
-    why:        { line: "rgba(243, 223, 162, 0.20)", arrow: "rgba(243, 223, 162, 0.62)" },
-    drift:      { line: "rgba(230, 112, 107, 0.15)", arrow: "rgba(230, 112, 107, 0.40)" },
+    depends:    { line: "rgba(34, 211, 238, 0.72)", arrow: "rgba(34, 211, 238, 0.95)" },
+    depends_on: { line: "rgba(34, 211, 238, 0.72)", arrow: "rgba(34, 211, 238, 0.95)" },
+    violation:  { line: "rgba(251, 113, 133, 0.88)", arrow: "#fb7185" },
+    enforces:   { line: "rgba(52, 211, 153, 0.76)", arrow: "rgba(52, 211, 153, 0.96)" },
+    why:        { line: "rgba(250, 204, 21, 0.78)", arrow: "rgba(250, 204, 21, 0.98)" },
+    drift:      { line: "rgba(244, 114, 182, 0.58)", arrow: "rgba(244, 114, 182, 0.84)" },
   },
 };
 
 export const LIGHT: Palette = {
-  canvasBg:          "#f7f2ea",
-  gridLine:          "rgba(35, 31, 32, 0.08)",
-  // Slightly more opaque fill so nodes lift off the cream canvas instead of
-  // disappearing into it. The prior 0.62 alpha produced near-invisible
-  // rectangles at fit zoom — borders did all the work and spotlight dim had
-  // nothing to fade. This also makes the halo behind labels read cleanly.
-  nodeGlassFill:     "rgba(255, 255, 255, 0.88)",
-  nodeDefaultBorder: "rgba(35, 31, 32, 0.42)",
-  labelColor:        "#231f20",
-  labelHalo:         "rgba(255, 253, 250, 0.92)",
-  selection:         "#1c554e",
-  dimText:           "rgba(35, 31, 32, 0.55)",
-  edgeDefault:       "rgba(35, 31, 32, 0.38)",
-  edgeDefaultArrow:  "rgba(35, 31, 32, 0.55)",
-  hullFill:          "rgba(28, 85, 78, 0.08)",
-  hullStroke:        "rgba(28, 85, 78, 0.38)",
+  canvasBg:          "#f8fafc",
+  gridLine:          "rgba(100, 116, 139, 0.16)",
+  nodeGlassFill:     "rgba(255, 255, 255, 0.96)",
+  nodeDefaultBorder: "rgba(71, 85, 105, 0.62)",
+  labelColor:        "#0f172a",
+  labelHalo:         "rgba(255, 255, 255, 0.96)",
+  selection:         "#2563eb",
+  dimText:           "rgba(51, 65, 85, 0.58)",
+  edgeDefault:       "rgba(51, 65, 85, 0.52)",
+  edgeDefaultArrow:  "rgba(51, 65, 85, 0.76)",
+  hullFill:          "rgba(37, 99, 235, 0.06)",
+  hullStroke:        "rgba(37, 99, 235, 0.28)",
   typeBorders: {
-    service:  "#1c554e", source:   "#1c554e",
-    database: "#a64a35", cache:    "#7a3728",
-    data:     "#a64a35", policy:   "#c59e3a",
-    adr:      "#b8882a", incident: "#a43b3b",
-    external: "#6b6866", config:   "#8a7f74",
-    script:   "#b8882a", doc:      "#7a3728",
-    asset:    "#6b6866",
+    service:  "#0891b2", source:   "#2563eb",
+    database: "#d97706", cache:    "#7c3aed",
+    data:     "#0284c7", policy:   "#ca8a04",
+    adr:      "#7c3aed", incident: "#e11d48",
+    external: "#475569", config:   "#059669",
+    script:   "#d97706", doc:      "#0f766e",
+    asset:    "#64748b",
   },
   edgeAccents: {
-    depends:    { line: "rgba(28, 85, 78, 0.55)",   arrow: "rgba(28, 85, 78, 0.72)" },
-    depends_on: { line: "rgba(28, 85, 78, 0.55)",   arrow: "rgba(28, 85, 78, 0.72)" },
-    violation:  { line: "#a43b3b",                   arrow: "#a43b3b" },
-    enforces:   { line: "rgba(116, 48, 31, 0.55)",  arrow: "rgba(116, 48, 31, 0.72)" },
-    why:        { line: "rgba(184, 136, 42, 0.60)", arrow: "rgba(184, 136, 42, 0.75)" },
-    drift:      { line: "rgba(164, 59, 59, 0.32)",  arrow: "rgba(164, 59, 59, 0.32)" },
+    depends:    { line: "rgba(8, 145, 178, 0.72)",   arrow: "rgba(8, 145, 178, 0.92)" },
+    depends_on: { line: "rgba(8, 145, 178, 0.72)",   arrow: "rgba(8, 145, 178, 0.92)" },
+    violation:  { line: "#e11d48",                   arrow: "#e11d48" },
+    enforces:   { line: "rgba(5, 150, 105, 0.74)",  arrow: "rgba(5, 150, 105, 0.92)" },
+    why:        { line: "rgba(202, 138, 4, 0.76)",  arrow: "rgba(202, 138, 4, 0.92)" },
+    drift:      { line: "rgba(219, 39, 119, 0.48)", arrow: "rgba(219, 39, 119, 0.72)" },
   },
 };

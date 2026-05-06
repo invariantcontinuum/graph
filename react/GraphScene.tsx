@@ -149,6 +149,7 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
         position: "relative",
         width: "100%",
         height: "100%",
+        background: graphTheme.canvasBg,
         ...style,
       }}
     >

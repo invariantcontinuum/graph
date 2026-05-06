@@ -1,6 +1,4 @@
 // Per-node-type shape + size table. Theme-independent — colors live in palette.ts.
-// Values come from legacy Cytoscape stylesheet (commit 14d17f5~1) converted to
-// half-dimensions (graph-ui uses halfWidth/halfHeight, legacy used width/height).
 
 import type { NodeType } from "./palette";
 
@@ -17,33 +15,44 @@ export interface TypeShape {
   labelSize: number;
 }
 
-// Shared defaults: most types are 110x38 rounded rectangles with 11px labels.
-const R_110_38: Omit<TypeShape, "shape"> = { halfWidth: 55, halfHeight: 19, cornerRadius: 8, borderWidth: 2, labelSize: 11 };
-const R_90_34:  Omit<TypeShape, "shape"> = { halfWidth: 45, halfHeight: 17, cornerRadius: 8, borderWidth: 2, labelSize: 10 };
+const R_LARGE: Omit<TypeShape, "shape"> = {
+  halfWidth: 66,
+  halfHeight: 24,
+  cornerRadius: 8,
+  borderWidth: 2.2,
+  labelSize: 12,
+};
+const R_COMPACT: Omit<TypeShape, "shape"> = {
+  halfWidth: 54,
+  halfHeight: 20,
+  cornerRadius: 8,
+  borderWidth: 2,
+  labelSize: 11,
+};
 
 export const TYPE_STYLES: Record<NodeType, TypeShape> = {
-  service:  { shape: "roundrectangle", ...R_110_38 },
-  source:   { shape: "roundrectangle", ...R_110_38 },
-  data:     { shape: "roundrectangle", ...R_110_38 },
-  config:   { shape: "roundrectangle", ...R_110_38 },
-  script:   { shape: "roundrectangle", ...R_110_38 },
-  doc:      { shape: "roundrectangle", ...R_110_38 },
-  asset:    { shape: "roundrectangle", ...R_110_38 },
-  database: { shape: "barrel",         ...R_110_38 },
-  cache:    { shape: "barrel",         ...R_110_38 },
-  policy:   { shape: "diamond",        halfWidth: 55, halfHeight: 24, cornerRadius: 8, borderWidth: 2.5, labelSize: 11 },
-  adr:      { shape: "roundrectangle", ...R_90_34 },
-  incident: { shape: "roundrectangle", halfWidth: 45, halfHeight: 17, cornerRadius: 8, borderWidth: 2.5, labelSize: 10 },
-  external: { shape: "roundrectangle", halfWidth: 50, halfHeight: 17, cornerRadius: 8, borderWidth: 2, labelSize: 10 },
+  service:  { shape: "roundrectangle", ...R_LARGE },
+  source:   { shape: "roundrectangle", ...R_LARGE },
+  data:     { shape: "roundrectangle", ...R_LARGE },
+  config:   { shape: "roundrectangle", ...R_LARGE },
+  script:   { shape: "roundrectangle", ...R_LARGE },
+  doc:      { shape: "roundrectangle", ...R_LARGE },
+  asset:    { shape: "roundrectangle", ...R_LARGE },
+  database: { shape: "barrel",         ...R_LARGE },
+  cache:    { shape: "barrel",         ...R_LARGE },
+  policy:   { shape: "diamond",        halfWidth: 64, halfHeight: 32, cornerRadius: 8, borderWidth: 2.6, labelSize: 12 },
+  adr:      { shape: "roundrectangle", ...R_COMPACT },
+  incident: { shape: "roundrectangle", halfWidth: 56, halfHeight: 22, cornerRadius: 8, borderWidth: 2.6, labelSize: 11 },
+  external: { shape: "roundrectangle", halfWidth: 58, halfHeight: 22, cornerRadius: 8, borderWidth: 2.1, labelSize: 11 },
 };
 
 export const DEFAULT_STYLE: TypeShape = {
   shape: "roundrectangle",
-  halfWidth: 55,
-  halfHeight: 19,
+  halfWidth: 66,
+  halfHeight: 24,
   cornerRadius: 8,
-  borderWidth: 1.8,
-  labelSize: 11,
+  borderWidth: 2,
+  labelSize: 12,
 };
 
 export function typeStyleFor(type: string | undefined | null): TypeShape {

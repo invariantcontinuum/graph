@@ -37,8 +37,8 @@ describe("buildGraphTheme", () => {
     }
   });
 
-  test("spotlight dim opacity is 0.08 (strong focus contrast)", () => {
-    expect(buildGraphTheme("dark").dimOpacity).toBeCloseTo(0.08);
+  test("spotlight dim opacity preserves context while highlighting focus", () => {
+    expect(buildGraphTheme("dark").dimOpacity).toBeCloseTo(0.14);
   });
 
   test("canvasBg flips on theme switch", () => {

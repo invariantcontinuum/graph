@@ -40,15 +40,15 @@ const MIN_NODE_HEIGHT_PX = 5;
 const MIN_BOX_WIDTH_PX = 6;
 const MIN_BOX_HEIGHT_PX = 4;
 const PAD_MAX_X_PX = 3;
-const PAD_MAX_Y_PX = 1;
+const PAD_MAX_Y_PX = 2;
 const PAD_AXIS_RATIO = 0.1;
-const MIN_LABEL_FONT_PX = 5;
+const MIN_LABEL_FONT_PX = 6;
 const MAX_LABEL_FONT_PX = 22;
-const DEFAULT_LABEL_FONT_PX = 11;
+const DEFAULT_LABEL_FONT_PX = 12;
 const DEFAULT_LABEL_FONT_FAMILY = "sans-serif";
-const DEFAULT_LABEL_FONT_WEIGHT = 700;
-const STROKE_WIDTH_FLOOR_PX = 2;
-const STROKE_WIDTH_RATIO = 0.26;
+const DEFAULT_LABEL_FONT_WEIGHT = 760;
+const STROKE_WIDTH_FLOOR_PX = 1.5;
+const STROKE_WIDTH_RATIO = 0.2;
 
 export function LabelOverlay({
   engineRef,

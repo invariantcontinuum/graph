@@ -6,16 +6,16 @@ import type { GraphTheme, NodeTypeStyle, EdgeTypeStyle } from "./types";
 import { LIGHT, DARK, NODE_TYPES, EDGE_TYPES, type EdgeType } from "./palette";
 import { TYPE_STYLES, DEFAULT_STYLE } from "./typeStyles";
 
-const LABEL_FONT = "'Manrope', -apple-system, BlinkMacSystemFont, sans-serif";
-const LABEL_WEIGHT = 700;
+const LABEL_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const LABEL_WEIGHT = 760;
 
 const EDGE_TYPE_LINE_WIDTH: Record<EdgeType, number> = {
-  depends:    1.7,
-  depends_on: 1.7,
-  violation:  2.6,
-  enforces:   1.9,
-  why:        1.9,
-  drift:      1.5,
+  depends:    2.1,
+  depends_on: 2.1,
+  violation:  2.9,
+  enforces:   2.2,
+  why:        2.2,
+  drift:      1.9,
 };
 
 const EDGE_TYPE_STYLE: Record<EdgeType, EdgeTypeStyle["style"]> = {
@@ -74,7 +74,7 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
 
   const defaultEdgeStyle: EdgeTypeStyle = {
     color: p.edgeDefault,
-    width: 1.3,
+    width: 1.6,
     style: "solid",
     arrow: "triangle",
   };
@@ -84,15 +84,11 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     gridLineColor: p.gridLine,
     selectionBorder: p.selection,
     selectionFill: mode === "dark"
-      ? "rgba(243, 223, 162, 0.24)"
-      : "rgba(28, 85, 78, 0.16)",
+      ? "rgba(34, 211, 238, 0.22)"
+      : "rgba(37, 99, 235, 0.16)",
     hullFill: p.hullFill,
     hullStroke: p.hullStroke,
-    // Aggressive dim to match legacy Cytoscape: non-neighbors fall to 0.08
-    // alpha so the 1-hop neighborhood strongly dominates. The graph's overall
-    // shape is still legible (dimmed nodes read as a pale ghost layer), but
-    // the focus group is unmistakably the subject.
-    dimOpacity: 0.08,
+    dimOpacity: 0.14,
     labelHalo: p.labelHalo,
     dimText: p.dimText,
     nodeTypes,
