@@ -229,9 +229,9 @@ export default function Showcase() {
                 type="button"
                 className="press-btn"
                 data-active={editorOpen}
+                onClick={() => setEditorOpen((v) => !v)}
                 aria-expanded={editorOpen}
                 aria-controls="source-drawer"
-                onClick={() => setEditorOpen((v) => !v)}
               >
                 {editorOpen ? "Hide source" : "Show source"}
               </button>

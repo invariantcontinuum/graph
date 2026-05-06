@@ -5,3 +5,7 @@
 ## 2024-04-27 - Canvas Focus Ring Accessibility
 **Learning:** For interactive `<canvas>` elements acting as a single application root, native browser `:focus-visible` styling is often masked or inconsistent. Keyboard interactivity (shortcuts) and focus states must be explicitly managed within the canvas component.
 **Action:** Use an explicit `onFocus`/`onBlur` listener checking for `matches(":focus-visible")` to emulate standard `outline` focus rings over custom rendered WebGL/Canvas controls.
+
+## 2024-06-18 - [Toggle Panels & Form Labels Accessibility]
+**Learning:** UI interactive layouts specifically using a source/code drawer benefit greatly from native ARIA `aria-expanded` and `aria-controls` bindings (associating the toggle button with the panel ID). Additionally, raw code `textarea` elements styled merely by adjacent visual elements (like `span` tags styled as "eyebrow") fail screen readers. They must be explicitly associated using a semantic `<label htmlFor="...">` matching the `id` of the `textarea`.
+**Action:** Always use `aria-expanded` tracking local state and map it with `aria-controls` to collapsible panels. Avoid visual-only hints; always replace standalone span text descriptions above textareas/inputs with semantic `label`s bound by `htmlFor` to the field `id`.
