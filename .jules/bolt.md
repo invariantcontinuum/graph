@@ -18,3 +18,7 @@
 ## 2024-05-01 - Avoid division in Barnes-Hut hot loop
 **Learning:** In the Barnes-Hut approximation step `can_approximate`, a floating point division `(width * width) / dist_sq < THETA * THETA` is computed for every visited node in the tree per query. Replacing this division with a multiplication against a pre-computed squared threshold (`(width * width) < dist_sq * THETA_SQ`) yields measurable benchmark performance improvements.
 **Action:** When a calculation occurs inside a tight O(N log N) traversal like quadtree force accumulation, re-arrange algebraic checks to avoid floating point division.
+
+## 2025-04-28 - [Avoid Floating-Point Division in Hot Loops]
+**Learning:** In highly recursive or iterative geometric algorithms, such as the Barnes-Hut quadtree traversal in `crates/graph-layout/src/force/barnes_hut.rs`, floating-point division inside the innermost loop evaluates at significant cost. Transforming comparisons like `(width * width) / dist_sq < THETA * THETA` into purely multiplicative operations `(width * width) < dist_sq * THETA_SQ` (using a precomputed squared constant) yields immediate benchmark improvements, trimming milliseconds off the layout tick.
+**Action:** Always precompute squared threshold values and reorganize conditional checks in hot paths to rely solely on multiplication rather than division.
