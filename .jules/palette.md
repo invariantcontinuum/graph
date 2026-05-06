@@ -13,3 +13,7 @@
 ## 2024-05-03 - Form Semantics and Toggle Button Accessibility
 **Learning:** UI interactive layouts must use `aria-expanded` and `aria-controls` on toggle buttons bound to the ID of collapsible panels. Form fields such as `<textarea>` must be explicitly associated with semantic `<label htmlFor="...">` elements rather than visual-only styling like `<span>` with classes.
 **Action:** Consistently enforce the pairing of labels to form inputs via IDs, and track interactive disclosure component state explicitly via `aria-expanded`/`aria-controls` for screen readers.
+
+## 2024-05-15 - Expandable Layouts and Form Labels Accessibility
+**Learning:** Interactive layouts containing drawers, collapsibles, or visually distinct input areas often forget screen reader linkage. Custom toggles omit `aria-expanded` and `aria-controls`, and visually grouped `<span className="eyebrow">` elements above `<textarea>` or `<input>` fields do not act as labels for screen readers.
+**Action:** Always add `aria-expanded` and `aria-controls` to custom toggle buttons, mapping to the ID of the collapsible panel. Convert visual-only `<span className="...">` labels above inputs to semantic `<label htmlFor="...">` to ensure form fields are properly described.
