@@ -490,6 +490,7 @@ export default function Showcase() {
                 type="button"
                 className="preset-button"
                 data-active={item.slug === activeSlug}
+                aria-pressed={item.slug === activeSlug}
                 onClick={() => applyPreset(item.slug)}
               >
                 <span>{item.folio}</span>
@@ -511,6 +512,7 @@ export default function Showcase() {
                 key={item}
                 type="button"
                 data-active={layout === item}
+                aria-pressed={layout === item}
                 onClick={() => setLayout(item)}
               >
                 {item}
@@ -523,6 +525,7 @@ export default function Showcase() {
                 key={item}
                 type="button"
                 data-active={themeMode === item}
+                aria-pressed={themeMode === item}
                 onClick={() => setThemeMode(item)}
               >
                 {item}
