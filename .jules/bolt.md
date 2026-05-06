@@ -14,3 +14,7 @@
 ## 2026-04-30 - Replace division with multiplication in Barnes-Hut hot path
 **Learning:** Floating-point division operations are significantly slower than multiplication operations, particularly when executing millions of times inside the inner loop of the Barnes-Hut force approximation step.
 **Action:** Identify hot paths containing mathematical expressions like `(a * a) / b < c * c`, and refactor them using pre-calculated squares to avoid the division operation (`a * a < b * (c_sq)`).
+
+## 2024-05-01 - Avoid division in Barnes-Hut hot loop
+**Learning:** In the Barnes-Hut approximation step `can_approximate`, a floating point division `(width * width) / dist_sq < THETA * THETA` is computed for every visited node in the tree per query. Replacing this division with a multiplication against a pre-computed squared threshold (`(width * width) < dist_sq * THETA_SQ`) yields measurable benchmark performance improvements.
+**Action:** When a calculation occurs inside a tight O(N log N) traversal like quadtree force accumulation, re-arrange algebraic checks to avoid floating point division.

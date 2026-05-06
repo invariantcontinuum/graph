@@ -161,7 +161,7 @@ impl QuadNode {
     fn can_approximate(&self, dist_sq: f32) -> bool {
         let (x_min, _y_min, x_max, _y_max) = self.bounds;
         let width = x_max - x_min;
-        width * width < dist_sq * THETA_SQ || self.children.is_none()
+        (width * width) < dist_sq * THETA_SQ || self.children.is_none()
     }
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
