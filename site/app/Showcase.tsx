@@ -229,6 +229,8 @@ export default function Showcase() {
                 type="button"
                 className="press-btn"
                 data-active={editorOpen}
+                aria-expanded={editorOpen}
+                aria-controls="source-drawer"
                 onClick={() => setEditorOpen((v) => !v)}
               >
                 {editorOpen ? "Hide source" : "Show source"}
@@ -267,11 +269,11 @@ export default function Showcase() {
           </p>
 
           {/* Source drawer */}
-          <div className="source-drawer mt-6" data-open={editorOpen}>
+          <div id="source-drawer" className="source-drawer mt-6" data-open={editorOpen}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="eyebrow">snapshot.json</span>
+                  <label htmlFor="snapshot-json-editor" className="eyebrow block">snapshot.json</label>
                   <button
                     type="button"
                     className="press-btn"
@@ -281,6 +283,7 @@ export default function Showcase() {
                   </button>
                 </div>
                 <textarea
+                  id="snapshot-json-editor"
                   className="source-pad block w-full h-64"
                   spellCheck={false}
                   value={snapshotJson}
@@ -294,10 +297,11 @@ export default function Showcase() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="eyebrow">themeOverrides.json</span>
+                  <label htmlFor="overrides-json-editor" className="eyebrow block">themeOverrides.json</label>
                   <span className="eyebrow">live</span>
                 </div>
                 <textarea
+                  id="overrides-json-editor"
                   className="source-pad block w-full h-64"
                   spellCheck={false}
                   value={overridesJson}
