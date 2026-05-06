@@ -20,9 +20,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "An Atlas of Graphs — @invariantcontinuum/graph",
+  title: "Graph Workbench - @invariantcontinuum/graph",
   description:
-    "Eight different worlds rendered by a single WASM + WebGL2 engine. A showcase of graph-shape universality.",
+    "A GitHub Pages workbench for configuring and inspecting the @invariantcontinuum/graph WASM + WebGL2 renderer.",
 };
 
 export default function RootLayout({

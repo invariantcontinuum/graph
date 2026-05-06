@@ -1,454 +1,705 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   GraphScene,
+  type EdgeData,
   type GraphHandle,
   type GraphSnapshot,
   type GraphStats,
+  type GraphThemeOverrides,
+  type LayoutType,
   type LegendSummary,
+  type NodeData,
+  type ThemeMode,
 } from "@invariantcontinuum/graph/react";
 import { PRESETS, presetBySlug, type Preset } from "./presets";
 
-const TODAY = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-}).format(new Date());
+type JsonResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
+
+type ThemeProfile = {
+  id: string;
+  label: string;
+  overrides: GraphThemeOverrides;
+};
+
+const THEME_PROFILES: ThemeProfile[] = [
+  {
+    id: "signal",
+    label: "Signal",
+    overrides: {
+      canvasBg: "#f7f8f5",
+      gridLineColor: "#dce5dc",
+      labelHalo: "#f7f8f5",
+      selectionBorder: "#1f7a5f",
+      selectionFill: "rgba(31, 122, 95, 0.18)",
+      defaultNodeStyle: {
+        color: "#ffffff",
+        borderColor: "#1f7a5f",
+        labelColor: "#17211c",
+      },
+      defaultEdgeStyle: {
+        color: "#65736d",
+        width: 1.4,
+      },
+    },
+  },
+  {
+    id: "contrast",
+    label: "Contrast",
+    overrides: {
+      canvasBg: "#10140f",
+      gridLineColor: "#263126",
+      labelHalo: "#10140f",
+      selectionBorder: "#f0b84f",
+      selectionFill: "rgba(240, 184, 79, 0.22)",
+      dimOpacity: 0.12,
+      defaultNodeStyle: {
+        color: "#18211a",
+        borderColor: "#f0b84f",
+        labelColor: "#f7f8f5",
+      },
+      defaultEdgeStyle: {
+        color: "#9aab9f",
+        width: 1.5,
+      },
+    },
+  },
+  {
+    id: "paperless",
+    label: "Paperless",
+    overrides: {
+      canvasBg: "#ffffff",
+      gridLineColor: "#e2e7e2",
+      labelHalo: "#ffffff",
+      selectionBorder: "#b7562d",
+      selectionFill: "rgba(183, 86, 45, 0.16)",
+      defaultNodeStyle: {
+        color: "#f9faf8",
+        borderColor: "#2e3a33",
+        labelColor: "#17211c",
+      },
+      defaultEdgeStyle: {
+        color: "#6f7b73",
+        width: 1.2,
+      },
+    },
+  },
+];
 
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-export default function Showcase() {
-  const [activeSlug, setActiveSlug] = useState<string>(PRESETS[0].slug);
-  const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-  const [snapshot, setSnapshot] = useState<GraphSnapshot>(preset.snapshot);
-  const [overridesJson, setOverridesJson] = useState(() =>
-    formatJson(preset.overrides),
+function parseJson<T>(raw: string, validate: (value: unknown) => T): JsonResult<T> {
+  try {
+    return { ok: true, value: validate(JSON.parse(raw)) };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+function requireString(value: unknown, path: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${path} must be a non-empty string`);
+  }
+  return value;
+}
+
+function requireText(value: unknown, path: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`${path} must be a string`);
+  }
+  return value;
+}
+
+function requireNumber(value: unknown, path: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${path} must be a finite number`);
+  }
+  return value;
+}
+
+function validateSnapshot(value: unknown): GraphSnapshot {
+  if (!isRecord(value)) throw new Error("snapshot must be an object");
+  if (!Array.isArray(value.nodes)) throw new Error("snapshot.nodes must be an array");
+  if (!Array.isArray(value.edges)) throw new Error("snapshot.edges must be an array");
+  if (!isRecord(value.meta)) throw new Error("snapshot.meta must be an object");
+
+  const nodes: NodeData[] = value.nodes.map((raw, index) => {
+    if (!isRecord(raw)) throw new Error(`nodes[${index}] must be an object`);
+    const meta = raw.meta;
+    if (!isRecord(meta)) throw new Error(`nodes[${index}].meta must be an object`);
+    return {
+      id: requireString(raw.id, `nodes[${index}].id`),
+      name: requireString(raw.name, `nodes[${index}].name`),
+      type: requireString(raw.type, `nodes[${index}].type`),
+      domain: requireString(raw.domain, `nodes[${index}].domain`),
+      status: requireString(raw.status, `nodes[${index}].status`),
+      community:
+        raw.community === undefined
+          ? undefined
+          : requireNumber(raw.community, `nodes[${index}].community`),
+      meta,
+    };
+  });
+
+  const edges: EdgeData[] = value.edges.map((raw, index) => {
+    if (!isRecord(raw)) throw new Error(`edges[${index}] must be an object`);
+    return {
+      id: requireString(raw.id, `edges[${index}].id`),
+      source: requireString(raw.source, `edges[${index}].source`),
+      target: requireString(raw.target, `edges[${index}].target`),
+      type: requireString(raw.type, `edges[${index}].type`),
+      label: requireText(raw.label, `edges[${index}].label`),
+      weight: requireNumber(raw.weight, `edges[${index}].weight`),
+    };
+  });
+
+  return {
+    nodes,
+    edges,
+    meta: {
+      node_count: requireNumber(value.meta.node_count, "meta.node_count"),
+      edge_count: requireNumber(value.meta.edge_count, "meta.edge_count"),
+      last_updated:
+        value.meta.last_updated === undefined
+          ? undefined
+          : requireString(value.meta.last_updated, "meta.last_updated"),
+    },
+  };
+}
+
+function validateThemeOverrides(value: unknown): GraphThemeOverrides {
+  if (!isRecord(value)) throw new Error("theme overrides must be an object");
+  return value as GraphThemeOverrides;
+}
+
+function nextId(prefix: string, existing: Set<string>): string {
+  let index = existing.size + 1;
+  let candidate = `${prefix}-${index}`;
+  while (existing.has(candidate)) {
+    index += 1;
+    candidate = `${prefix}-${index}`;
+  }
+  return candidate;
+}
+
+function withMeta(snapshot: GraphSnapshot): GraphSnapshot {
+  return {
+    ...snapshot,
+    meta: {
+      ...snapshot.meta,
+      node_count: snapshot.nodes.length,
+      edge_count: snapshot.edges.length,
+      last_updated: new Date().toISOString(),
+    },
+  };
+}
+
+function countBy(values: string[]): Array<{ key: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return Array.from(counts, ([key, count]) => ({ key, count })).sort((a, b) =>
+    a.key.localeCompare(b.key),
   );
-  const [snapshotJson, setSnapshotJson] = useState(() =>
-    formatJson(preset.snapshot),
+}
+
+export default function Showcase() {
+  const graphRef = useRef<GraphHandle>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeSlug, setActiveSlug] = useState(PRESETS[0].slug);
+  const [layout, setLayout] = useState<LayoutType>("force");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+  const [themeProfileId, setThemeProfileId] = useState("preset");
+  const [snapshot, setSnapshot] = useState<GraphSnapshot>(PRESETS[0].snapshot);
+  const [snapshotJson, setSnapshotJson] = useState(() => formatJson(PRESETS[0].snapshot));
+  const [themeOverrides, setThemeOverrides] = useState<GraphThemeOverrides>(
+    PRESETS[0].overrides,
   );
-  const [overridesErr, setOverridesErr] = useState<string | null>(null);
+  const [themeJson, setThemeJson] = useState(() => formatJson(PRESETS[0].overrides));
   const [snapshotErr, setSnapshotErr] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [themeErr, setThemeErr] = useState<string | null>(null);
   const [legend, setLegend] = useState<LegendSummary | null>(null);
   const [stats, setStats] = useState<GraphStats | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
-  const graphRef = useRef<GraphHandle>(null);
 
-  useEffect(() => {
-    setIsClient(true);
+  const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
+
+  const refit = useCallback((padding = 48) => {
+    requestAnimationFrame(() => graphRef.current?.focusFit(null, padding));
   }, []);
 
-  // Preset change → reset snapshot, overrides, selection, then schedule a
-  // refit once the worker has had a beat to produce settled positions for
-  // the new snapshot. Calling focusFit synchronously in this effect would
-  // frame the stale previous layout. 350ms matches the force-layout's
-  // typical convergence time on our preset sizes; `onPositionsReady` below
-  // is the authoritative fast path when it fires.
-  useEffect(() => {
-    setSnapshot(preset.snapshot);
-    setOverridesJson(formatJson(preset.overrides));
-    setSnapshotJson(formatJson(preset.snapshot));
-    setSelectedId(null);
-    setOverridesErr(null);
-    setSnapshotErr(null);
-    const timer = window.setTimeout(() => {
-      graphRef.current?.focusFit(null, 40);
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [preset]);
-
-  const handlePositionsReady = useCallback(() => {
-    requestAnimationFrame(() => graphRef.current?.focusFit(null, 40));
-  }, []);
-
-  const parsedOverrides = useMemo(() => {
-    try {
-      const parsed = JSON.parse(overridesJson);
-      setOverridesErr(null);
-      return parsed;
-    } catch (err) {
-      setOverridesErr(err instanceof Error ? err.message : String(err));
-      return preset.overrides;
-    }
-  }, [overridesJson, preset.overrides]);
-
-  const applySnapshotFromEditor = useCallback(() => {
-    try {
-      const parsed = JSON.parse(snapshotJson) as GraphSnapshot;
-      setSnapshot(parsed);
-      setSnapshotErr(null);
+  const applyPreset = useCallback(
+    (slug: string) => {
+      const nextPreset = presetBySlug(slug);
+      setActiveSlug(slug);
+      setSnapshot(nextPreset.snapshot);
+      setSnapshotJson(formatJson(nextPreset.snapshot));
+      setThemeProfileId("preset");
+      setThemeOverrides(nextPreset.overrides);
+      setThemeJson(formatJson(nextPreset.overrides));
       setSelectedId(null);
-      graphRef.current?.focusFit(null);
-    } catch (err) {
-      setSnapshotErr(err instanceof Error ? err.message : String(err));
+      setSnapshotErr(null);
+      setThemeErr(null);
+      refit();
+    },
+    [refit],
+  );
+
+  const commitSnapshot = useCallback(
+    (next: GraphSnapshot, nextSelectedId: string | null = selectedId) => {
+      const normalized = withMeta(next);
+      setSnapshot(normalized);
+      setSnapshotJson(formatJson(normalized));
+      setSelectedId(nextSelectedId);
+      setSnapshotErr(null);
+      refit();
+    },
+    [refit, selectedId],
+  );
+
+  const applySnapshotJson = useCallback(() => {
+    const parsed = parseJson(snapshotJson, validateSnapshot);
+    if (!parsed.ok) {
+      setSnapshotErr(parsed.error);
+      return;
     }
-  }, [snapshotJson]);
+    commitSnapshot(parsed.value, null);
+  }, [commitSnapshot, snapshotJson]);
+
+  const applyThemeJson = useCallback(() => {
+    const parsed = parseJson(themeJson, validateThemeOverrides);
+    if (!parsed.ok) {
+      setThemeErr(parsed.error);
+      return;
+    }
+    setThemeProfileId("custom");
+    setThemeOverrides(parsed.value);
+    setThemeErr(null);
+  }, [themeJson]);
+
+  const applyThemeProfile = useCallback(
+    (profileId: string) => {
+      setThemeProfileId(profileId);
+      const next =
+        profileId === "preset"
+          ? preset.overrides
+          : THEME_PROFILES.find((profile) => profile.id === profileId)?.overrides;
+      if (!next) return;
+      setThemeOverrides(next);
+      setThemeJson(formatJson(next));
+      setThemeErr(null);
+    },
+    [preset.overrides],
+  );
 
   const selectedNode = useMemo(
-    () => (selectedId ? snapshot.nodes.find((n) => n.id === selectedId) : null),
+    () => (selectedId ? snapshot.nodes.find((node) => node.id === selectedId) ?? null : null),
     [selectedId, snapshot.nodes],
   );
 
   const selectedEdges = useMemo(() => {
     if (!selectedId) return [];
     return snapshot.edges.filter(
-      (e) => e.source === selectedId || e.target === selectedId,
+      (edge) => edge.source === selectedId || edge.target === selectedId,
     );
   }, [selectedId, snapshot.edges]);
 
-  if (!isClient) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="eyebrow">loading atlas…</div>
-      </div>
+  const focusIds = useMemo(() => {
+    if (!selectedId) return null;
+    const ids = new Set<string>([selectedId]);
+    for (const edge of selectedEdges) {
+      ids.add(edge.source);
+      ids.add(edge.target);
+    }
+    return ids;
+  }, [selectedEdges, selectedId]);
+
+  const nodeTypes = useMemo(
+    () => countBy(snapshot.nodes.map((node) => node.type)),
+    [snapshot.nodes],
+  );
+  const edgeTypes = useMemo(
+    () => countBy(snapshot.edges.map((edge) => edge.type)),
+    [snapshot.edges],
+  );
+
+  const addNode = useCallback(() => {
+    const existing = new Set(snapshot.nodes.map((node) => node.id));
+    const id = nextId("node", existing);
+    const node: NodeData = {
+      id,
+      name: `Node ${snapshot.nodes.length + 1}`,
+      type: snapshot.nodes[0]?.type ?? "entity",
+      domain: "custom",
+      status: "healthy",
+      meta: { source: "showcase" },
+    };
+    commitSnapshot({ ...snapshot, nodes: [...snapshot.nodes, node] }, id);
+  }, [commitSnapshot, snapshot]);
+
+  const addNeighbor = useCallback(() => {
+    if (!selectedNode) return;
+    const nodeIds = new Set(snapshot.nodes.map((node) => node.id));
+    const edgeIds = new Set(snapshot.edges.map((edge) => edge.id));
+    const nodeId = nextId(`${selectedNode.id}-neighbor`, nodeIds);
+    const edgeId = nextId("edge", edgeIds);
+    const node: NodeData = {
+      id: nodeId,
+      name: `${selectedNode.name} neighbor`,
+      type: selectedNode.type,
+      domain: selectedNode.domain,
+      status: "healthy",
+      meta: { source: "showcase", parent: selectedNode.id },
+    };
+    const edge: EdgeData = {
+      id: edgeId,
+      source: selectedNode.id,
+      target: nodeId,
+      type: snapshot.edges[0]?.type ?? "depends",
+      label: "generated",
+      weight: 1,
+    };
+    commitSnapshot(
+      {
+        ...snapshot,
+        nodes: [...snapshot.nodes, node],
+        edges: [...snapshot.edges, edge],
+      },
+      nodeId,
     );
-  }
+  }, [commitSnapshot, selectedNode, snapshot]);
+
+  const removeSelected = useCallback(() => {
+    if (!selectedId) return;
+    commitSnapshot(
+      {
+        ...snapshot,
+        nodes: snapshot.nodes.filter((node) => node.id !== selectedId),
+        edges: snapshot.edges.filter(
+          (edge) => edge.source !== selectedId && edge.target !== selectedId,
+        ),
+      },
+      null,
+    );
+  }, [commitSnapshot, selectedId, snapshot]);
+
+  const frameSelected = useCallback(() => {
+    graphRef.current?.focusFit(selectedId, 64);
+  }, [selectedId]);
+
+  const handlePositionsReady = useCallback(() => {
+    refit(48);
+  }, [refit]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[color:var(--paper)]">
-      {/* ── Masthead ──────────────────────────────────────────────── */}
-      <header className="relative border-b border-[color:var(--rule)] px-6 pt-5 pb-4 md:px-10">
-        <div className="mx-auto flex max-w-[1500px] items-end justify-between gap-6">
-          <div className="flex items-baseline gap-6">
-            <span className="eyebrow enter delay-1">
-              No. {PRESETS.length} &nbsp;·&nbsp; Vol. 0.2.3 &nbsp;·&nbsp; {TODAY}
-            </span>
+    <main className="workbench-shell">
+      <div className="mobile-topbar">
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={sidebarOpen ? "Close controls" : "Open controls"}
+          aria-expanded={sidebarOpen}
+          aria-controls="graph-controls"
+          onClick={() => setSidebarOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <span className="brand-mark">@invariantcontinuum/graph</span>
+      </div>
+
+      {sidebarOpen ? (
+        <button
+          type="button"
+          className="drawer-backdrop"
+          aria-label="Close controls"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        id="graph-controls"
+        className="control-panel"
+        data-open={sidebarOpen}
+        aria-label="Graph controls"
+      >
+        <div className="panel-head">
+          <div>
+            <p className="kicker">Graph Workbench</p>
+            <h1>@invariantcontinuum/graph</h1>
           </div>
-          <div className="enter delay-1">
-            <a
-              className="underline-draw eyebrow text-[color:var(--ink)]"
-              href="https://github.com/invariantcontinuum/graph"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              github · invariantcontinuum/graph
-            </a>
-          </div>
+          <a
+            className="repo-link"
+            href="https://github.com/invariantcontinuum/graph"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            GitHub
+          </a>
         </div>
 
-        <div className="mx-auto mt-3 max-w-[1500px]">
-          <h1 className="display-serif enter delay-2 text-[clamp(2.75rem,7vw,5.25rem)] leading-[0.92] tracking-[-0.02em]">
-            An Atlas of <em className="italic text-[color:var(--accent)]">Graphs</em>
-          </h1>
-          <div className="mt-5 grid grid-cols-12 gap-6 items-end">
-            <p className="body-serif enter delay-3 col-span-12 md:col-span-7 text-[1.04rem] leading-[1.55] text-[color:var(--ink-soft)] max-w-[48rem] drop-cap">
-              Eight worlds — microservices, myth, chemistry, drama, philosophy,
-              tonality, transit, a loaf of bread — rendered by a single WASM +
-              WebGL2 engine. The surface area of the library is not a
-              taxonomy; node and edge types are plain strings, and the theme
-              is yours to compose.
-            </p>
-            <div className="enter delay-4 col-span-12 md:col-span-5 md:justify-self-end text-right">
-              <span className="eyebrow block">Presented by</span>
-              <div className="mt-1 font-mono text-[1.1rem] tracking-tight text-[color:var(--ink)]">
-                @invariantcontinuum/graph
-              </div>
-              <div className="eyebrow mt-2">
-                wasm · webgl2 · react · web-worker
-              </div>
-            </div>
+        <section className="panel-section">
+          <div className="section-title">
+            <span>Presets</span>
+            <strong>{PRESETS.length}</strong>
           </div>
-        </div>
-
-        <div className="enter-rule mt-6 rule mx-auto max-w-[1500px]" style={{ animationDelay: "0.55s" }} />
-      </header>
-
-      {/* ── Body: 3-column atlas ──────────────────────────────────── */}
-      <main className="mx-auto grid w-full max-w-[1500px] flex-1 grid-cols-12 gap-6 px-6 py-8 md:px-10">
-        {/* Left rail — preset index */}
-        <aside className="col-span-12 md:col-span-3 md:pr-6 md:border-r md:border-[color:var(--rule)]">
-          <div className="flex items-center justify-between mb-3">
-            <span className="eyebrow">The Plates</span>
-            <span className="folio text-xs">i–viii</span>
-          </div>
-          <nav className="scroll-thin enter delay-3" aria-label="Presets">
-            {PRESETS.map((p, i) => (
+          <nav className="preset-list" aria-label="Graph presets">
+            {PRESETS.map((item) => (
               <button
-                key={p.slug}
+                key={item.slug}
                 type="button"
-                className="preset-row w-full text-left"
-                data-active={p.slug === activeSlug}
-                onClick={() => setActiveSlug(p.slug)}
-                style={{ animationDelay: `${0.35 + i * 0.04}s` }}
+                className="preset-button"
+                data-active={item.slug === activeSlug}
+                onClick={() => applyPreset(item.slug)}
               >
-                <span className="preset-folio">{p.folio}.</span>
-                <span>
-                  <span className="preset-title block">{p.title}</span>
-                  <span className="preset-subtitle">{p.subtitle}</span>
-                </span>
+                <span>{item.folio}</span>
+                <strong>{item.title}</strong>
+                <small>{item.subtitle}</small>
               </button>
             ))}
           </nav>
+        </section>
 
-          <div className="mt-8 enter delay-7">
-            <span className="eyebrow">Footnotes</span>
-            <p className="body-serif mt-2 text-[0.82rem] italic leading-relaxed text-[color:var(--dust)]">
-              Every illustration here was painted by the same 6 400 lines of
-              Rust, cross-compiled to WebAssembly and instanced through
-              WebGL2. Node layout runs in a Web Worker; picking and camera
-              live on the main thread.
-            </p>
+        <section className="panel-section">
+          <div className="section-title">
+            <span>Render</span>
+            <strong>{layout}</strong>
           </div>
-        </aside>
-
-        {/* Center — canvas */}
-        <section className="col-span-12 md:col-span-6">
-          <div className="flex items-baseline justify-between">
-            <div>
-              <span className="eyebrow">Plate {preset.folio}</span>
-              <h2
-                key={preset.slug}
-                className="display-serif enter-fade text-[2rem] leading-[1] mt-1"
-                style={{ fontVariationSettings: '"SOFT" 100, "opsz" 96' }}
-              >
-                {preset.title}
-              </h2>
-              <p
-                key={`${preset.slug}-sub`}
-                className="enter-fade body-serif italic text-[color:var(--ink-soft)] text-[0.95rem] mt-1"
-                style={{ animationDelay: "0.08s" }}
-              >
-                {preset.subtitle}
-              </p>
-            </div>
-            <div className="flex gap-2">
+          <div className="segmented" aria-label="Layout">
+            {(["force", "hierarchical", "grid"] as LayoutType[]).map((item) => (
               <button
+                key={item}
                 type="button"
-                className="press-btn"
-                onClick={() => graphRef.current?.focusFit(null, 40)}
+                data-active={layout === item}
+                onClick={() => setLayout(item)}
               >
-                Refit
+                {item}
               </button>
+            ))}
+          </div>
+          <div className="segmented" aria-label="Theme mode">
+            {(["light", "dark"] as ThemeMode[]).map((item) => (
               <button
+                key={item}
                 type="button"
-                className="press-btn"
-                data-active={editorOpen}
-                onClick={() => setEditorOpen((v) => !v)}
-                aria-expanded={editorOpen}
-                aria-controls="source-drawer"
+                data-active={themeMode === item}
+                onClick={() => setThemeMode(item)}
               >
-                {editorOpen ? "Hide source" : "Show source"}
+                {item}
               </button>
-            </div>
+            ))}
           </div>
-
-          <div
-            key={preset.slug}
-            className="enter-graph canvas-frame mt-4 aspect-[4/3] w-full overflow-hidden"
+          <label className="field-label" htmlFor="theme-profile">
+            Theme profile
+          </label>
+          <select
+            id="theme-profile"
+            className="select-control"
+            value={themeProfileId}
+            onChange={(event) => applyThemeProfile(event.target.value)}
           >
-            <span className="canvas-corner tl" />
-            <span className="canvas-corner tr" />
-            <span className="canvas-corner bl" />
-            <span className="canvas-corner br" />
-            <GraphScene
-              ref={graphRef}
-              snapshot={snapshot}
-              themeMode="light"
-              layout="force"
-              themeOverrides={parsedOverrides}
-              onNodeClick={(node) => setSelectedId(node.id)}
-              onBackgroundClick={() => setSelectedId(null)}
-              onLegendChange={setLegend}
-              onStatsChange={setStats}
-              onPositionsReady={handlePositionsReady}
-            />
-          </div>
-
-          <p
-            key={`${preset.slug}-essay`}
-            className="enter-fade body-serif mt-5 max-w-[52ch] text-[0.96rem] leading-[1.6] text-[color:var(--ink-soft)]"
-            style={{ animationDelay: "0.2s" }}
-          >
-            {preset.essay}
-          </p>
-
-          {/* Source drawer */}
-          <div id="source-drawer" className="source-drawer mt-6" data-open={editorOpen}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="snapshot-json-editor" className="eyebrow block">snapshot.json</label>
-                  <button
-                    type="button"
-                    className="press-btn"
-                    onClick={applySnapshotFromEditor}
-                  >
-                    Apply
-                  </button>
-                </div>
-                <textarea
-                  id="snapshot-json-editor"
-                  className="source-pad block w-full h-64"
-                  spellCheck={false}
-                  value={snapshotJson}
-                  onChange={(e) => setSnapshotJson(e.target.value)}
-                />
-                {snapshotErr && (
-                  <div className="mt-2 eyebrow text-[color:var(--accent)]">
-                    {snapshotErr}
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="overrides-json-editor" className="eyebrow block">themeOverrides.json</label>
-                  <span className="eyebrow">live</span>
-                </div>
-                <textarea
-                  id="overrides-json-editor"
-                  className="source-pad block w-full h-64"
-                  spellCheck={false}
-                  value={overridesJson}
-                  onChange={(e) => setOverridesJson(e.target.value)}
-                />
-                {overridesErr && (
-                  <div className="mt-2 eyebrow text-[color:var(--accent)]">
-                    {overridesErr}
-                  </div>
-                )}
-              </div>
-            </div>
+            <option value="preset">Preset theme</option>
+            <option value="custom">Custom JSON</option>
+            {THEME_PROFILES.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.label}
+              </option>
+            ))}
+          </select>
+          <div className="button-row">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.fit(48)}>
+              Fit
+            </button>
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()}>
+              Zoom In
+            </button>
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()}>
+              Zoom Out
+            </button>
           </div>
         </section>
 
-        {/* Right rail — field notes */}
-        <aside className="col-span-12 md:col-span-3 md:pl-6 md:border-l md:border-[color:var(--rule)]">
-          <div className="flex items-center justify-between mb-3">
-            <span className="eyebrow">Field Notes</span>
-            <span className="folio text-xs">
-              {stats ? `${stats.nodeCount} · ${stats.edgeCount}` : "—"}
-            </span>
+        <section className="panel-section">
+          <div className="section-title">
+            <span>Graph</span>
+            <strong>
+              {snapshot.nodes.length} / {snapshot.edges.length}
+            </strong>
           </div>
+          <div className="button-row">
+            <button type="button" className="action-button" onClick={addNode}>
+              Add Node
+            </button>
+            <button
+              type="button"
+              className="action-button"
+              disabled={!selectedNode}
+              onClick={addNeighbor}
+            >
+              Add Edge
+            </button>
+            <button
+              type="button"
+              className="danger-button"
+              disabled={!selectedNode}
+              onClick={removeSelected}
+            >
+              Remove
+            </button>
+          </div>
+          <div className="type-cloud" aria-label="Node types">
+            {nodeTypes.map((item) => (
+              <span key={item.key}>
+                {item.key}
+                <b>{item.count}</b>
+              </span>
+            ))}
+          </div>
+          <div className="type-cloud" aria-label="Edge types">
+            {edgeTypes.map((item) => (
+              <span key={item.key}>
+                {item.key}
+                <b>{item.count}</b>
+              </span>
+            ))}
+          </div>
+        </section>
 
+        <section className="panel-section">
+          <div className="section-title">
+            <span>Selection</span>
+            <strong>{selectedNode ? selectedNode.id : "none"}</strong>
+          </div>
           {selectedNode ? (
-            <div className="enter-fade">
-              <div className="eyebrow">Selected</div>
-              <h3 className="display-serif text-[1.35rem] leading-[1.1] mt-1">
-                {selectedNode.name}
-              </h3>
-              <div className="body-serif italic text-[color:var(--ink-soft)] text-[0.88rem] mt-0.5">
-                {selectedNode.type} · {selectedNode.domain}
-              </div>
-              <div className="mt-3 font-mono text-[0.7rem] text-[color:var(--dust)]">
-                status={selectedNode.status}
-              </div>
-              {selectedEdges.length > 0 && (
-                <div className="mt-5">
-                  <span className="eyebrow">Incident edges</span>
-                  <ul className="mt-2 space-y-0.5">
-                    {selectedEdges.map((e) => (
-                      <li
-                        key={e.id}
-                        className="body-serif text-[0.85rem] leading-snug text-[color:var(--ink-soft)]"
-                      >
-                        <span className="font-mono text-[0.7rem] text-[color:var(--dust)] mr-1">
-                          {e.source === selectedId ? "→" : "←"}
-                        </span>
-                        <span className="italic">{e.type.replaceAll("_", " ")}</span>
-                        <span className="mx-1 text-[color:var(--dust)]">·</span>
-                        <span>
-                          {snapshot.nodes.find(
-                            (n) =>
-                              n.id ===
-                              (e.source === selectedId ? e.target : e.source),
-                          )?.name ?? "unknown"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="selection-box">
+              <h2>{selectedNode.name}</h2>
+              <dl>
+                <div>
+                  <dt>Type</dt>
+                  <dd>{selectedNode.type}</dd>
                 </div>
-              )}
-              <button
-                type="button"
-                className="press-btn press-btn--accent mt-5 w-full"
-                onClick={() => {
-                  graphRef.current?.focusFit(selectedId ?? null, 60);
-                }}
-              >
-                Frame neighbourhood
-              </button>
-            </div>
-          ) : (
-            <div className="body-serif italic text-[0.9rem] leading-relaxed text-[color:var(--dust)]">
-              Click any node for a close reading. Its type, its domain, its
-              adjacent edges — rendered as a sidebar without the engine
-              touching any of this prose.
-            </div>
-          )}
-
-          <div className="rule my-6" />
-
-          <div>
-            <span className="eyebrow">Legend</span>
-            <ul className="mt-3 space-y-1.5">
-              {(legend?.node_types ?? []).map((entry) => (
-                <li key={entry.type_key} className="flex items-center gap-2">
-                  <span
-                    className="inline-block h-2.5 w-2.5"
-                    style={{
-                      background: entry.color,
-                      border: `1px solid ${entry.border_color}`,
-                      borderRadius: entry.shape === "circle" ? "50%" : "2px",
-                    }}
-                  />
-                  <span className="body-serif text-[0.88rem]">
-                    {entry.type_key.replaceAll("_", " ")}
-                  </span>
-                  <span className="ml-auto font-mono text-[0.7rem] text-[color:var(--dust)]">
-                    ×{entry.count}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {(legend?.edge_types ?? []).length > 0 && (
-              <ul className="mt-3 space-y-1.5">
-                {legend!.edge_types.map((entry) => {
-                  const dash = entry.dash;
+                <div>
+                  <dt>Domain</dt>
+                  <dd>{selectedNode.domain}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>{selectedNode.status}</dd>
+                </div>
+              </dl>
+              <div className="button-row">
+                <button type="button" className="action-button" onClick={frameSelected}>
+                  Frame
+                </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => graphRef.current?.panToNode(selectedNode.id)}
+                >
+                  Center
+                </button>
+              </div>
+              <ul className="edge-list" aria-label="Incident edges">
+                {selectedEdges.map((edge) => {
+                  const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
+                  const neighbor =
+                    snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
                   return (
-                    <li key={entry.type_key} className="flex items-center gap-2">
-                      <span
-                        className="inline-block h-[2px] w-5"
-                        style={{
-                          borderTop:
-                            dash && dash !== "solid"
-                              ? `2px ${dash === "dotted" ? "dotted" : "dashed"} ${entry.color}`
-                              : undefined,
-                          backgroundColor:
-                            !dash || dash === "solid" ? entry.color : "transparent",
-                        }}
-                      />
-                      <span className="body-serif italic text-[0.82rem] text-[color:var(--ink-soft)]">
-                        {entry.type_key.replaceAll("_", " ")}
-                      </span>
-                      <span className="ml-auto font-mono text-[0.7rem] text-[color:var(--dust)]">
-                        ×{entry.count}
-                      </span>
+                    <li key={edge.id}>
+                      <span>{edge.type}</span>
+                      <button type="button" onClick={() => setSelectedId(neighborId)}>
+                        {neighbor}
+                      </button>
                     </li>
                   );
                 })}
               </ul>
-            )}
-          </div>
-        </aside>
-      </main>
+            </div>
+          ) : (
+            <p className="empty-state">No node selected.</p>
+          )}
+        </section>
 
-      {/* ── Colophon ──────────────────────────────────────────────── */}
-      <footer className="border-t border-[color:var(--rule)] px-6 py-6 md:px-10">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between">
-          <span className="eyebrow">
-            Set in Fraunces, Newsreader &amp; JetBrains Mono
-          </span>
-          <span className="eyebrow">
-            ©&nbsp;2026 &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; v0.2.3
-          </span>
+        <section className="panel-section json-section">
+          <div className="section-title">
+            <span>JSON</span>
+            <strong>{themeProfileId}</strong>
+          </div>
+          <label className="field-label" htmlFor="snapshot-json-editor">
+            snapshot.json
+          </label>
+          <textarea
+            id="snapshot-json-editor"
+            className="json-editor"
+            spellCheck={false}
+            value={snapshotJson}
+            onChange={(event) => setSnapshotJson(event.target.value)}
+          />
+          <div className="editor-actions">
+            <button type="button" className="action-button" onClick={applySnapshotJson}>
+              Apply Graph
+            </button>
+            {snapshotErr ? <span className="error-text">{snapshotErr}</span> : null}
+          </div>
+          <label className="field-label" htmlFor="theme-json-editor">
+            themeOverrides.json
+          </label>
+          <textarea
+            id="theme-json-editor"
+            className="json-editor"
+            spellCheck={false}
+            value={themeJson}
+            onChange={(event) => setThemeJson(event.target.value)}
+          />
+          <div className="editor-actions">
+            <button type="button" className="action-button" onClick={applyThemeJson}>
+              Apply Theme
+            </button>
+            {themeErr ? <span className="error-text">{themeErr}</span> : null}
+          </div>
+        </section>
+      </aside>
+
+      <section className="graph-workspace" aria-label="Graph canvas">
+        <div className="graph-toolbar">
+          <div>
+            <p>{preset.subtitle}</p>
+            <h2>{preset.title}</h2>
+          </div>
+          <div className="graph-stats" aria-label="Graph stats">
+            <span>{stats?.nodeCount ?? snapshot.nodes.length} nodes</span>
+            <span>{stats?.edgeCount ?? snapshot.edges.length} edges</span>
+            <span>{legend?.node_types.length ?? nodeTypes.length} types</span>
+          </div>
         </div>
-      </footer>
-    </div>
+
+        <div className="graph-stage">
+          <GraphScene
+            ref={graphRef}
+            snapshot={snapshot}
+            themeMode={themeMode}
+            layout={layout}
+            themeOverrides={themeOverrides}
+            focusIds={focusIds}
+            showCommunities
+            onNodeClick={(node) => setSelectedId(node.id)}
+            onBackgroundClick={() => setSelectedId(null)}
+            onLegendChange={setLegend}
+            onStatsChange={setStats}
+            onPositionsReady={handlePositionsReady}
+            aria-label={`${preset.title} graph`}
+          />
+        </div>
+      </section>
+    </main>
   );
 }
