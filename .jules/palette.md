@@ -17,3 +17,7 @@
 ## 2024-05-15 - Expandable Layouts and Form Labels Accessibility
 **Learning:** Interactive layouts containing drawers, collapsibles, or visually distinct input areas often forget screen reader linkage. Custom toggles omit `aria-expanded` and `aria-controls`, and visually grouped `<span className="eyebrow">` elements above `<textarea>` or `<input>` fields do not act as labels for screen readers.
 **Action:** Always add `aria-expanded` and `aria-controls` to custom toggle buttons, mapping to the ID of the collapsible panel. Convert visual-only `<span className="...">` labels above inputs to semantic `<label htmlFor="...">` to ensure form fields are properly described.
+
+## 2024-05-05 - Semantic Association of Code Areas
+**Learning:** Found `<textarea>` blocks labeled using visual `<span>` tags rather than semantic `<label>` elements connected via `htmlFor`. A "source view" button toggled code blocks visually but lacked ARIA properties connecting the toggle button state (`aria-expanded`) and relationship (`aria-controls`) to the code container.
+**Action:** Always link form elements with descriptive `<label>`s via IDs and correctly reflect toggle state and relationship of layout blocks using `aria-expanded` and `aria-controls`.
