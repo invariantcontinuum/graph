@@ -24,6 +24,12 @@ npm run build
 
 The static export is emitted to `site/out`.
 
+## Release Alignment
+
+The showcase must match the latest released package state. Renderer and React wrapper visual fixes land in `@invariantcontinuum/graph` first, then a package release is cut and published, and only after the Release and Publish workflows are successful should `site/package.json` and `site/package-lock.json` move to that version.
+
+Current showcase package target: `@invariantcontinuum/graph@^0.2.4`.
+
 ## Stack
 
 - Next.js App Router static export

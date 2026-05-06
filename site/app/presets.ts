@@ -63,7 +63,7 @@ const gitRepository: Preset = {
       { id: "tests", name: "graph.test.ts", type: "test", domain: "quality", status: "passing", community: 3 },
       { id: "lint", name: "lint", type: "check", domain: "quality", status: "passing", community: 3 },
       { id: "build", name: "build", type: "check", domain: "quality", status: "passing", community: 3 },
-      { id: "release", name: "v0.2.3", type: "release", domain: "delivery", status: "published", community: 4 },
+      { id: "release", name: "v0.2.4", type: "release", domain: "delivery", status: "published", community: 4 },
     ],
     [
       { source: "main", target: "c1", type: "points_to", label: "history" },

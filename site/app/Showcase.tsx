@@ -723,7 +723,6 @@ export default function Showcase() {
             themeOverrides={themeOverrides}
             focusIds={focusIds}
             showCommunities
-            style={{ background: themeOverrides.canvasBg }}
             onNodeClick={(node) => setSelectedId(node.id)}
             onBackgroundClick={() => setSelectedId(null)}
             onLegendChange={setLegend}
