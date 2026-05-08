@@ -25,3 +25,6 @@
 ## 2024-05-18 - Segmented Controls and Active State Announcements
 **Learning:** For custom segmented controls or lists of buttons representing a single selection state (like theme mode or layout type), relying solely on `data-active` attributes only provides visual updates via CSS. Screen readers fail to announce when a button becomes the active or selected option, leaving keyboard users unaware of their current configuration.
 **Action:** Always complement visual state attributes like `data-active` with `aria-pressed` or `aria-current` dynamically tied to the selected state to ensure screen readers correctly announce the active button.
+## 2024-06-25 - Form Validation and Disabled States Learnings
+**Learning:** React components outputting dynamic validation errors without `role="alert"` or `aria-live="assertive"` cause critical accessibility issues, failing to notify screen reader users when invalid JSON is entered. Additionally, interactive buttons left disabled without explaining why cause severe UX friction for all users (not just assistive tech users) who don't know the required precursor state (e.g., selecting a node).
+**Action:** Always wrap dynamic inline error messages in `role="alert"` or `aria-live` containers. Pair `disabled={true}` states with a `title` (or tooltip wrapper) explaining the missing prerequisites to re-enable the control.

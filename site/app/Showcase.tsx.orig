@@ -553,10 +553,10 @@ export default function Showcase() {
             <button type="button" className="action-button" onClick={() => graphRef.current?.fit(48)}>
               Fit
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()} title="Keyboard shortcut: + or =">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()}>
               Zoom In
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()} title="Keyboard shortcut: - or _">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()}>
               Zoom Out
             </button>
           </div>
@@ -577,7 +577,6 @@ export default function Showcase() {
               type="button"
               className="action-button"
               disabled={!selectedNode}
-              title={!selectedNode ? "Select a node first to add a neighbor" : undefined}
               onClick={addNeighbor}
             >
               Add Neighbor
@@ -586,7 +585,6 @@ export default function Showcase() {
               type="button"
               className="danger-button"
               disabled={!selectedNode}
-              title={!selectedNode ? "Select a node first to remove it" : undefined}
               onClick={removeSelected}
             >
               Remove
@@ -684,7 +682,7 @@ export default function Showcase() {
             <button type="button" className="action-button" onClick={applySnapshotJson}>
               Apply Graph
             </button>
-            {snapshotErr ? <span className="error-text" role="alert" aria-live="assertive">{snapshotErr}</span> : null}
+            {snapshotErr ? <span className="error-text">{snapshotErr}</span> : null}
           </div>
           <label className="field-label" htmlFor="theme-json-editor">
             themeOverrides.json
@@ -700,7 +698,7 @@ export default function Showcase() {
             <button type="button" className="action-button" onClick={applyThemeJson}>
               Apply Theme
             </button>
-            {themeErr ? <span className="error-text" role="alert" aria-live="assertive">{themeErr}</span> : null}
+            {themeErr ? <span className="error-text">{themeErr}</span> : null}
           </div>
         </section>
       </aside>
