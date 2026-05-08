@@ -490,7 +490,7 @@ export default function Showcase() {
                 type="button"
                 className="preset-button"
                 data-active={item.slug === activeSlug}
-                aria-pressed={item.slug === activeSlug}
+                aria-current={item.slug === activeSlug ? "true" : undefined}
                 onClick={() => applyPreset(item.slug)}
               >
                 <span>{item.folio}</span>
