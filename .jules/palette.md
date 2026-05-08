@@ -21,3 +21,7 @@
 ## 2024-05-05 - Semantic Association of Code Areas
 **Learning:** Found `<textarea>` blocks labeled using visual `<span>` tags rather than semantic `<label>` elements connected via `htmlFor`. A "source view" button toggled code blocks visually but lacked ARIA properties connecting the toggle button state (`aria-expanded`) and relationship (`aria-controls`) to the code container.
 **Action:** Always link form elements with descriptive `<label>`s via IDs and correctly reflect toggle state and relationship of layout blocks using `aria-expanded` and `aria-controls`.
+
+## 2024-05-18 - Segmented Controls and Active State Announcements
+**Learning:** For custom segmented controls or lists of buttons representing a single selection state (like theme mode or layout type), relying solely on `data-active` attributes only provides visual updates via CSS. Screen readers fail to announce when a button becomes the active or selected option, leaving keyboard users unaware of their current configuration.
+**Action:** Always complement visual state attributes like `data-active` with `aria-pressed` or `aria-current` dynamically tied to the selected state to ensure screen readers correctly announce the active button.
