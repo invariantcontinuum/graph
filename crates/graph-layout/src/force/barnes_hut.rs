@@ -81,9 +81,6 @@ impl QuadNode {
         stack.push(self);
 
         while let Some(node) = stack.pop() {
-            if node.mass == 0.0 {
-                continue;
-            }
             let dx = node.cx - x;
             let dy = node.cy - y;
             let dist_sq = dx * dx + dy * dy;
@@ -100,17 +97,32 @@ impl QuadNode {
 
             if let Some(ref children) = node.children {
                 let c = &**children;
+                // ⚡ Bolt: Only push nodes with mass > 0.0 to the stack.
+                // This avoids pushing empty nodes, which saves us from having to pop them
+                // off the stack and check `if node.mass == 0.0` in the next iteration.
+                #[allow(clippy::collapsible_if)]
                 if let Some(c3) = c[3].as_ref() {
-                    stack.push(c3);
+                    if c3.mass > 0.0 {
+                        stack.push(c3);
+                    }
                 }
+                #[allow(clippy::collapsible_if)]
                 if let Some(c2) = c[2].as_ref() {
-                    stack.push(c2);
+                    if c2.mass > 0.0 {
+                        stack.push(c2);
+                    }
                 }
+                #[allow(clippy::collapsible_if)]
                 if let Some(c1) = c[1].as_ref() {
-                    stack.push(c1);
+                    if c1.mass > 0.0 {
+                        stack.push(c1);
+                    }
                 }
+                #[allow(clippy::collapsible_if)]
                 if let Some(c0) = c[0].as_ref() {
-                    stack.push(c0);
+                    if c0.mass > 0.0 {
+                        stack.push(c0);
+                    }
                 }
             }
         }
