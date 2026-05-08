@@ -82,13 +82,10 @@ fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &
         let ty = positions[tgt * 2 + 1];
         let dx = tx - sx;
         let dy = ty - sy;
-
-        // Optimization: since `force = ATTRACTION * dist` and `fx = force * dx / dist`,
-        // the math simplifies entirely to `fx = ATTRACTION * dx`, bypassing an expensive
-        // `.sqrt()` and two floating point divisions.
+        // Mathematically simplify distance calculations (fx = ATTRACTION * dx)
+        // to completely bypass expensive .sqrt() and floating-point division operations
         let fx = ATTRACTION * dx;
         let fy = ATTRACTION * dy;
-
         forces[src].0 += fx;
         forces[src].1 += fy;
         forces[tgt].0 -= fx;
