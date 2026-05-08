@@ -92,10 +92,9 @@ impl QuadNode {
             }
 
             if node.can_approximate(dist_sq) {
-                let dist = dist_sq.sqrt();
-                let force = -REPULSION * node.mass / dist_sq;
-                fx += force * dx / dist;
-                fy += force * dy / dist;
+                let force_over_dist = -REPULSION * node.mass / (dist_sq * dist_sq.sqrt());
+                fx += force_over_dist * dx;
+                fy += force_over_dist * dy;
                 continue;
             }
 
@@ -161,7 +160,7 @@ impl QuadNode {
     fn can_approximate(&self, dist_sq: f32) -> bool {
         let (x_min, _y_min, x_max, _y_max) = self.bounds;
         let width = x_max - x_min;
-        (width * width) < THETA_SQ * dist_sq || self.children.is_none()
+        self.children.is_none() || (width * width) < THETA_SQ * dist_sq
     }
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
