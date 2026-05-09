@@ -651,8 +651,13 @@ export default function Showcase() {
                     snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
                   return (
                     <li key={edge.id}>
-                      <span>{edge.type}</span>
-                      <button type="button" onClick={() => setSelectedId(neighborId)}>
+                      <span title={edge.type}>{edge.type}</span>
+                      <button
+                        type="button"
+                        title={neighbor}
+                        aria-label={`Select neighbor ${neighbor}`}
+                        onClick={() => setSelectedId(neighborId)}
+                      >
                         {neighbor}
                       </button>
                     </li>
@@ -661,7 +666,7 @@ export default function Showcase() {
               </ul>
             </div>
           ) : (
-            <p className="empty-state">No node selected.</p>
+            <p className="empty-state">No node selected. Click a node on the canvas to inspect it.</p>
           )}
         </section>
 
