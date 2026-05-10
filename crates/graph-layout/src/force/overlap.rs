@@ -8,21 +8,23 @@
 use super::config::MIN_NODE_GAP;
 use std::collections::HashMap;
 
-pub(super) fn resolve_overlaps(positions: &mut [(f32, f32)]) {
+pub(super) fn resolve_overlaps(
+    positions: &mut [(f32, f32)],
+    buckets: &mut HashMap<(i32, i32), Vec<usize>>,
+) {
     let n = positions.len();
     if n == 0 {
         return;
     }
-    let buckets = bucket_positions(positions);
-    apply_pushes(positions, &buckets);
-}
 
-fn bucket_positions(positions: &[(f32, f32)]) -> HashMap<(i32, i32), Vec<usize>> {
-    let mut buckets: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
+    // Clear the map but keep capacity.
+    buckets.clear();
+
     for (i, &(x, y)) in positions.iter().enumerate() {
         buckets.entry(bucket_key(x, y)).or_default().push(i);
     }
-    buckets
+
+    apply_pushes(positions, buckets);
 }
 
 fn bucket_key(x: f32, y: f32) -> (i32, i32) {
