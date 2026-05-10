@@ -29,6 +29,8 @@ pub struct ForceLayout {
     edges_indexed: Vec<(usize, usize)>,
     positions_flat: Vec<f32>,
     forces_vec: Vec<(f32, f32)>,
+    overlap_buckets: HashMap<(i32, i32), Vec<usize>>,
+
     edge_count_cache: usize,
     converged: bool,
     iteration: usize,
@@ -44,6 +46,8 @@ impl ForceLayout {
             edges_indexed: Vec::new(),
             positions_flat: Vec::new(),
             forces_vec: Vec::new(),
+            overlap_buckets: HashMap::new(),
+
             edge_count_cache: 0,
             converged: false,
             iteration: 0,
@@ -195,7 +199,7 @@ impl LayoutEngine for ForceLayout {
         );
         unflatten_positions(&self.positions_flat, &mut self.positions_vec);
 
-        resolve_overlaps(&mut self.positions_vec);
+        resolve_overlaps(&mut self.positions_vec, &mut self.overlap_buckets);
 
         if max_velocity_sq < MIN_VELOCITY * MIN_VELOCITY {
             self.converged = true;
