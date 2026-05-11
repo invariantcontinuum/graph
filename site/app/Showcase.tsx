@@ -643,6 +643,15 @@ export default function Showcase() {
                 >
                   Center
                 </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  title="Keyboard shortcut: Escape"
+                  aria-keyshortcuts="Escape"
+                  onClick={() => setSelectedId(null)}
+                >
+                  Clear
+                </button>
               </div>
               <ul className="edge-list" aria-label="Incident edges">
                 {selectedEdges.map((edge) => {

@@ -28,3 +28,7 @@
 ## 2024-06-25 - Form Validation and Disabled States Learnings
 **Learning:** React components outputting dynamic validation errors without `role="alert"` or `aria-live="assertive"` cause critical accessibility issues, failing to notify screen reader users when invalid JSON is entered. Additionally, interactive buttons left disabled without explaining why cause severe UX friction for all users (not just assistive tech users) who don't know the required precursor state (e.g., selecting a node).
 **Action:** Always wrap dynamic inline error messages in `role="alert"` or `aria-live` containers. Pair `disabled={true}` states with a `title` (or tooltip wrapper) explaining the missing prerequisites to re-enable the control.
+
+## 2024-05-11 - Add Discoverable Clear Selection Button
+**Learning:** While power users and keyboard navigators can use 'Escape' or click the background to clear a selection in the WebGL canvas, relying solely on invisible interactions hurts discoverability. Adding an explicit "Clear" button to the active selection panel not only provides a clear visual escape hatch but also serves as a natural place to advertise the 'Escape' keyboard shortcut via the `title` and `aria-keyshortcuts` attributes.
+**Action:** Always pair global canvas click-to-clear or escape-to-clear behaviors with an explicit, visually apparent button in the active state UI, and use that button to advertise the shortcut.
