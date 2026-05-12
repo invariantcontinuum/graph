@@ -553,10 +553,10 @@ export default function Showcase() {
             <button type="button" className="action-button" onClick={() => graphRef.current?.fit(48)}>
               Fit
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()} title="Keyboard shortcut: + or =">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()} title="Keyboard shortcut: + or =" aria-keyshortcuts="+">
               Zoom In
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()} title="Keyboard shortcut: - or _">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()} title="Keyboard shortcut: - or _" aria-keyshortcuts="-">
               Zoom Out
             </button>
           </div>
@@ -642,6 +642,15 @@ export default function Showcase() {
                   onClick={() => graphRef.current?.panToNode(selectedNode.id)}
                 >
                   Center
+                </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => setSelectedId(null)}
+                  title="Keyboard shortcut: Escape"
+                  aria-keyshortcuts="Escape"
+                >
+                  Clear
                 </button>
               </div>
               <ul className="edge-list" aria-label="Incident edges">
