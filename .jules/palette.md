@@ -28,3 +28,7 @@
 ## 2024-06-25 - Form Validation and Disabled States Learnings
 **Learning:** React components outputting dynamic validation errors without `role="alert"` or `aria-live="assertive"` cause critical accessibility issues, failing to notify screen reader users when invalid JSON is entered. Additionally, interactive buttons left disabled without explaining why cause severe UX friction for all users (not just assistive tech users) who don't know the required precursor state (e.g., selecting a node).
 **Action:** Always wrap dynamic inline error messages in `role="alert"` or `aria-live` containers. Pair `disabled={true}` states with a `title` (or tooltip wrapper) explaining the missing prerequisites to re-enable the control.
+
+## 2024-07-28 - Implicit Keyboard Actions and Discoverability
+**Learning:** Invisible interactions, such as pressing 'Escape' or clicking the canvas background to clear a selection, are poorly discoverable and rely solely on user intuition or prior tool knowledge. Keyboard-only and screen reader users may not realize these escape hatches exist.
+**Action:** Pair invisible interactions (like 'Escape' to clear) with explicit, visually apparent buttons in the active UI state. Advertize the keyboard shortcut using `title` and `aria-keyshortcuts` attributes on these buttons to improve discoverability and provide a fallback.
