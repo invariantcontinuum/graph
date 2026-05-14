@@ -553,10 +553,10 @@ export default function Showcase() {
             <button type="button" className="action-button" onClick={() => graphRef.current?.fit(48)}>
               Fit
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()} title="Keyboard shortcut: + or =">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomIn()} title="Keyboard shortcut: + or =" aria-keyshortcuts="+ =">
               Zoom In
             </button>
-            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()} title="Keyboard shortcut: - or _">
+            <button type="button" className="action-button" onClick={() => graphRef.current?.zoomOut()} title="Keyboard shortcut: - or _" aria-keyshortcuts="- _">
               Zoom Out
             </button>
           </div>
