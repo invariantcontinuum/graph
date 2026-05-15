@@ -32,3 +32,6 @@
 ## 2024-05-11 - Add Discoverable Clear Selection Button
 **Learning:** While power users and keyboard navigators can use 'Escape' or click the background to clear a selection in the WebGL canvas, relying solely on invisible interactions hurts discoverability. Adding an explicit "Clear" button to the active selection panel not only provides a clear visual escape hatch but also serves as a natural place to advertise the 'Escape' keyboard shortcut via the `title` and `aria-keyshortcuts` attributes.
 **Action:** Always pair global canvas click-to-clear or escape-to-clear behaviors with an explicit, visually apparent button in the active state UI, and use that button to advertise the shortcut.
+## 2026-05-14 - Keyboard Shortcut Accessibility for Zoom Buttons
+**Learning:** When advertising keyboard shortcuts in visual tooltips (`title` attributes), adding the `aria-keyshortcuts` attribute ensures that screen readers also correctly announce these shortcuts, improving discoverability for keyboard-only or visually impaired users.
+**Action:** Always complement `title="Keyboard shortcut: ..."` on buttons with the corresponding `aria-keyshortcuts="..."` attribute to maintain equal accessibility.
