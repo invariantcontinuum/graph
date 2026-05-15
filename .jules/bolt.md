@@ -37,3 +37,7 @@
 ## 2026-05-10 - [Avoid HashMap allocations in Hot Loops]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was creating a new `HashMap` on every layout tick inside `resolve_overlaps`. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times.
 **Action:** Lift the `HashMap` into the `ForceLayout` struct state. Clear the buckets on every tick (`buckets.clear()`) instead of instantiating a new `HashMap`. This avoids N heap allocations per tick and measurably improves benchmark execution speed (~9% faster layout_bench).
+
+## 2026-05-15 - [Use Bulk Iterators for Buffer Mapping in Hot Paths]
+**Learning:** In Rust hot loops, such as per-tick vector flattening operations in ForceLayout (`flatten_positions` and `unflatten_positions`), iterating elements and manually calling `.push()` incurs a measurable overhead due to capacity and bounds checking.
+**Action:** Always replace manual loops with slice iterators (`chunks_exact` or `flat_map`) coupled with bulk operations (`.extend()`). This pattern allows the Rust compiler to pre-allocate correctly and fully optimize or elide the inner loop bounds checks.
