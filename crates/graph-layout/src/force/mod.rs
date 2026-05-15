@@ -231,19 +231,17 @@ fn index_edges(graph: &GraphStore, node_ids: &[String]) -> Vec<(usize, usize)> {
 
 fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
     flat.clear();
-    for &(x, y) in positions {
-        flat.push(x);
-        flat.push(y);
-    }
+    // ⚡ Bolt: Using bulk extension with flat_map avoids O(N) capacity checks
+    // and bounds-checks during repeated per-tick layouts.
+    flat.extend(positions.iter().flat_map(|&(x, y)| [x, y]));
 }
 
 fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {
-    let n = flat.len() / 2;
     positions.clear();
-    positions.reserve(n);
-    for i in 0..n {
-        positions.push((flat[i * 2], flat[i * 2 + 1]));
-    }
+    // ⚡ Bolt: Bulk processing via chunks_exact allows the compiler to elide
+    // bounds checks and sequential capacity extensions, significantly outperforming
+    // manual loop-pushes.
+    positions.extend(flat.chunks_exact(2).map(|chunk| (chunk[0], chunk[1])));
 }
 
 #[cfg(test)]

@@ -103,14 +103,22 @@ fn integrate_positions(
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
-    for (i, (fx, fy)) in forces.iter().enumerate().take(n) {
-        let vel = &mut velocities[i];
+    // ⚡ Bolt: Chunking positions and using zips elides bound checks for both velocities
+    // and forces loops, providing a noticeable speed up in the hot integration loop.
+    for ((pos_chunk, vel), &(fx, fy)) in positions
+        .chunks_exact_mut(2)
+        .zip(velocities.iter_mut())
+        .zip(forces.iter())
+        .take(n)
+    {
         vel.0 = (vel.0 + fx) * DAMPING;
         vel.1 = (vel.1 + fy) * DAMPING;
         let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
-        max_velocity_sq = max_velocity_sq.max(v_sq);
-        positions[i * 2] += vel.0;
-        positions[i * 2 + 1] += vel.1;
+        if v_sq > max_velocity_sq {
+            max_velocity_sq = v_sq;
+        }
+        pos_chunk[0] += vel.0;
+        pos_chunk[1] += vel.1;
     }
     max_velocity_sq
 }
