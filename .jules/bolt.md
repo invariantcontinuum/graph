@@ -37,3 +37,7 @@
 ## 2026-05-10 - [Avoid HashMap allocations in Hot Loops]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was creating a new `HashMap` on every layout tick inside `resolve_overlaps`. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times.
 **Action:** Lift the `HashMap` into the `ForceLayout` struct state. Clear the buckets on every tick (`buckets.clear()`) instead of instantiating a new `HashMap`. This avoids N heap allocations per tick and measurably improves benchmark execution speed (~9% faster layout_bench).
+
+## 2026-05-16 - [Unroll Iterators for Fixed Arrays in Tree Insertions]
+**Learning:** In `crates/graph-layout/src/force/barnes_hut.rs`, iterating through a loop to allocate an array of fixed size quadtree children added significant execution overhead because it occurred heavily during tree insertion in hot loops (`ensure_children`). Unrolling the loop and generating children directly saved CPU cycles.
+**Action:** When working on array generation inside frequently hit hot paths, such as tree traversal setup or child initialization, use unrolled, static instantiation instead of iterations. Also replace division by floating points with multiplication of their reciprocals (e.g. replacing `/ 2.0` with `* 0.5`).
