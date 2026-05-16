@@ -409,7 +409,10 @@ export default function Showcase() {
   }, [commitSnapshot, selectedNode, snapshot]);
 
   const removeSelected = useCallback(() => {
-    if (!selectedId) return;
+    if (!selectedId || !selectedNode) return;
+    if (!window.confirm(`Are you sure you want to remove node "${selectedNode.name}" and its connected edges?`)) {
+      return;
+    }
     commitSnapshot(
       {
         ...snapshot,
@@ -420,7 +423,7 @@ export default function Showcase() {
       },
       null,
     );
-  }, [commitSnapshot, selectedId, snapshot]);
+  }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
   const frameSelected = useCallback(() => {
     graphRef.current?.focusFit(selectedId, 64);
