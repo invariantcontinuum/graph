@@ -231,19 +231,19 @@ fn index_edges(graph: &GraphStore, node_ids: &[String]) -> Vec<(usize, usize)> {
 
 fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
     flat.clear();
-    for &(x, y) in positions {
-        flat.push(x);
-        flat.push(y);
-    }
+    // ⚡ Bolt: Bulk slice transformation using extend and flat_map
+    // outperforms manual loop-pushes by minimizing bounds checks in this hot path.
+    flat.reserve(positions.len() * 2);
+    flat.extend(positions.iter().flat_map(|&(x, y)| [x, y]));
 }
 
 fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {
     let n = flat.len() / 2;
     positions.clear();
+    // ⚡ Bolt: Using chunk iteration with extend elides bounds checks
+    // compared to index-based iteration during this repeated per-tick operation.
     positions.reserve(n);
-    for i in 0..n {
-        positions.push((flat[i * 2], flat[i * 2 + 1]));
-    }
+    positions.extend(flat.chunks_exact(2).map(|chunk| (chunk[0], chunk[1])));
 }
 
 #[cfg(test)]
