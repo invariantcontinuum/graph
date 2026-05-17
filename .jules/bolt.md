@@ -37,3 +37,6 @@
 ## 2026-05-10 - [Avoid HashMap allocations in Hot Loops]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was creating a new `HashMap` on every layout tick inside `resolve_overlaps`. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times.
 **Action:** Lift the `HashMap` into the `ForceLayout` struct state. Clear the buckets on every tick (`buckets.clear()`) instead of instantiating a new `HashMap`. This avoids N heap allocations per tick and measurably improves benchmark execution speed (~9% faster layout_bench).
+## 2026-05-17 - Avoid creating intermediate variables and small closures when unrolling loops
+**Learning:** In the `ensure_children` and `quadrant` methods of `barnes_hut.rs`, there were helper functions and small unrolled iterations that can be done simpler. Removing the `child_bounds` closure and manually unrolling the instantiation of the 4 `QuadNode` objects in the `ensure_children` method of the `Barnes-Hut` approximation step resulted in performance improvements for the force layouts benchmark.
+**Action:** Unroll fixed length 4x loops in `ensure_children` and `quadrant` in `barnes_hut.rs` to inline constants and manually calculate coordinates.
