@@ -37,3 +37,6 @@
 ## 2026-05-10 - [Avoid HashMap allocations in Hot Loops]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was creating a new `HashMap` on every layout tick inside `resolve_overlaps`. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times.
 **Action:** Lift the `HashMap` into the `ForceLayout` struct state. Clear the buckets on every tick (`buckets.clear()`) instead of instantiating a new `HashMap`. This avoids N heap allocations per tick and measurably improves benchmark execution speed (~9% faster layout_bench).
+## 2026-05-17 - [Optimize QuadNode child initialization]
+**Learning:** In Rust hot paths such as quadtree node insertion, manually unrolling fixed-size array initializations (e.g., explicitly instantiating children instead of iterating to populate an array) and replacing float division (`/ 2.0`) with multiplication (`* 0.5`) prevents unnecessary loop overhead and saves CPU cycles, improving layout performance.
+**Action:** Always replace `/ 2.0` with `* 0.5` for floats in math heavy loop processing and prefer unrolling loops for fixed small bounds rather than iterating arrays.
