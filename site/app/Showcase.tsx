@@ -410,6 +410,15 @@ export default function Showcase() {
 
   const removeSelected = useCallback(() => {
     if (!selectedId) return;
+
+    // Find the node to display its label or ID in the confirmation
+    const nodeToRemove = snapshot.nodes.find((n) => n.id === selectedId);
+    const nodeName = nodeToRemove?.label || selectedId;
+
+    if (!window.confirm(`Are you sure you want to remove the node "${nodeName}"?`)) {
+      return;
+    }
+
     commitSnapshot(
       {
         ...snapshot,
