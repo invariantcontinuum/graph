@@ -410,16 +410,19 @@ export default function Showcase() {
 
   const removeSelected = useCallback(() => {
     if (!selectedId) return;
-    commitSnapshot(
-      {
-        ...snapshot,
-        nodes: snapshot.nodes.filter((node) => node.id !== selectedId),
-        edges: snapshot.edges.filter(
-          (edge) => edge.source !== selectedId && edge.target !== selectedId,
-        ),
-      },
-      null,
-    );
+    const nodeName = snapshot.nodes.find(n => n.id === selectedId)?.name || 'this node';
+    if (window.confirm(`Are you sure you want to remove "${nodeName}" and all its connections?`)) {
+      commitSnapshot(
+        {
+          ...snapshot,
+          nodes: snapshot.nodes.filter((node) => node.id !== selectedId),
+          edges: snapshot.edges.filter(
+            (edge) => edge.source !== selectedId && edge.target !== selectedId,
+          ),
+        },
+        null,
+      );
+    }
   }, [commitSnapshot, selectedId, snapshot]);
 
   const frameSelected = useCallback(() => {
