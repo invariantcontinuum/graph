@@ -190,7 +190,6 @@ impl QuadNode {
             3
         }
     }
-
 }
 
 /// Compute axis-aligned bounding box over a flat positions buffer
