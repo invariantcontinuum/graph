@@ -409,18 +409,20 @@ export default function Showcase() {
   }, [commitSnapshot, selectedNode, snapshot]);
 
   const removeSelected = useCallback(() => {
-    if (!selectedId) return;
-    commitSnapshot(
-      {
-        ...snapshot,
-        nodes: snapshot.nodes.filter((node) => node.id !== selectedId),
-        edges: snapshot.edges.filter(
-          (edge) => edge.source !== selectedId && edge.target !== selectedId,
-        ),
-      },
-      null,
-    );
-  }, [commitSnapshot, selectedId, snapshot]);
+    if (!selectedId || !selectedNode) return;
+    if (window.confirm(`Are you sure you want to remove node "${selectedNode.name}"?`)) {
+      commitSnapshot(
+        {
+          ...snapshot,
+          nodes: snapshot.nodes.filter((node) => node.id !== selectedId),
+          edges: snapshot.edges.filter(
+            (edge) => edge.source !== selectedId && edge.target !== selectedId,
+          ),
+        },
+        null,
+      );
+    }
+  }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
   const frameSelected = useCallback(() => {
     graphRef.current?.focusFit(selectedId, 64);
