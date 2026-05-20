@@ -37,3 +37,6 @@
 ## 2026-05-10 - [Avoid HashMap allocations in Hot Loops]
 **Learning:** `ForceLayout::tick` in `crates/graph-layout/src/force/mod.rs` was creating a new `HashMap` on every layout tick inside `resolve_overlaps`. These per-tick heap allocations create meaningful overhead inside hot simulation loops, leading to higher benchmark times.
 **Action:** Lift the `HashMap` into the `ForceLayout` struct state. Clear the buckets on every tick (`buckets.clear()`) instead of instantiating a new `HashMap`. This avoids N heap allocations per tick and measurably improves benchmark execution speed (~9% faster layout_bench).
+## 2026-05-20 - [Optimize QuadTree Construction (Barnes-Hut)]
+**Learning:** In hot loops such as Barnes-Hut `ensure_children` for quadtree construction, unrolling fixed-size array initialization, removing intermediate function calls like `child_bounds`, and replacing floating-point division (`/ 2.0`) with multiplication (`* 0.5`) saves CPU cycles without compromising logic.
+**Action:** Optimize calculations involving repetitive instantiation and spatial splitting by manually unrolling initialization and converting divisions to multiplications to reduce overhead.
