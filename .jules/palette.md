@@ -35,3 +35,6 @@
 ## 2026-05-14 - Keyboard Shortcut Accessibility for Zoom Buttons
 **Learning:** When advertising keyboard shortcuts in visual tooltips (`title` attributes), adding the `aria-keyshortcuts` attribute ensures that screen readers also correctly announce these shortcuts, improving discoverability for keyboard-only or visually impaired users.
 **Action:** Always complement `title="Keyboard shortcut: ..."` on buttons with the corresponding `aria-keyshortcuts="..."` attribute to maintain equal accessibility.
+## 2024-05-20 - Guard Destructive Actions
+**Learning:** Destructive actions without warning can easily cause data loss. In custom application graphs or canvas workspaces where elements can be deleted without easy undo features, always include a confirmation step.
+**Action:** Use window.confirm with the specific element's name to guarantee users know exactly what they are removing before executing the destructive function.

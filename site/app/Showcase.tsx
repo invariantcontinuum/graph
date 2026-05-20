@@ -410,6 +410,15 @@ export default function Showcase() {
 
   const removeSelected = useCallback(() => {
     if (!selectedId) return;
+
+    if (
+      !window.confirm(
+        `Are you sure you want to remove "${selectedNode?.name ?? selectedId}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
     commitSnapshot(
       {
         ...snapshot,
@@ -420,7 +429,7 @@ export default function Showcase() {
       },
       null,
     );
-  }, [commitSnapshot, selectedId, snapshot]);
+  }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
   const frameSelected = useCallback(() => {
     graphRef.current?.focusFit(selectedId, 64);
