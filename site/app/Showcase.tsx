@@ -409,7 +409,8 @@ export default function Showcase() {
   }, [commitSnapshot, selectedNode, snapshot]);
 
   const removeSelected = useCallback(() => {
-    if (!selectedId) return;
+    if (!selectedId || !selectedNode) return;
+    if (!window.confirm(`Are you sure you want to remove "${selectedNode.name}"?`)) return;
     commitSnapshot(
       {
         ...snapshot,
@@ -420,7 +421,7 @@ export default function Showcase() {
       },
       null,
     );
-  }, [commitSnapshot, selectedId, snapshot]);
+  }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
   const frameSelected = useCallback(() => {
     graphRef.current?.focusFit(selectedId, 64);
@@ -445,7 +446,7 @@ export default function Showcase() {
           <span />
           <span />
         </button>
-        <span className="brand-mark">@invariantcontinuum/graph</span>
+        <span className="brand-mark" title="@invariantcontinuum/graph">@invariantcontinuum/graph</span>
       </div>
 
       {sidebarOpen ? (
@@ -494,8 +495,8 @@ export default function Showcase() {
                 onClick={() => applyPreset(item.slug)}
               >
                 <span>{item.folio}</span>
-                <strong>{item.title}</strong>
-                <small>{item.subtitle}</small>
+                <strong title={item.title}>{item.title}</strong>
+                <small title={item.subtitle}>{item.subtitle}</small>
               </button>
             ))}
           </nav>

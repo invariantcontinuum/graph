@@ -35,3 +35,6 @@
 ## 2026-05-14 - Keyboard Shortcut Accessibility for Zoom Buttons
 **Learning:** When advertising keyboard shortcuts in visual tooltips (`title` attributes), adding the `aria-keyshortcuts` attribute ensures that screen readers also correctly announce these shortcuts, improving discoverability for keyboard-only or visually impaired users.
 **Action:** Always complement `title="Keyboard shortcut: ..."` on buttons with the corresponding `aria-keyshortcuts="..."` attribute to maintain equal accessibility.
+## 2024-05-22 - Add confirmation dialog for delete action
+**Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss. Furthermore, truncated text elements must include `title` attributes to ensure content is accessible.
+**Action:** Always wrap delete/remove callbacks with a `window.confirm` dialog, specifically including the name of the entity being deleted. Always add `title` to text elements truncated with `text-overflow: ellipsis`.
