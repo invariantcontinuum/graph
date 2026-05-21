@@ -177,8 +177,8 @@ impl QuadNode {
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
         let (x_min, y_min, x_max, y_max) = self.bounds;
-        let mx = (x_min + x_max) / 2.0;
-        let my = (y_min + y_max) / 2.0;
+        let mx = (x_min + x_max) * 0.5;
+        let my = (y_min + y_max) * 0.5;
         if x < mx {
             if y < my { 0 } else { 2 }
         } else if y < my {
@@ -190,8 +190,8 @@ impl QuadNode {
 
     fn child_bounds(&self, q: usize) -> Bounds {
         let (x_min, y_min, x_max, y_max) = self.bounds;
-        let mx = (x_min + x_max) / 2.0;
-        let my = (y_min + y_max) / 2.0;
+        let mx = (x_min + x_max) * 0.5;
+        let my = (y_min + y_max) * 0.5;
         match q {
             0 => (x_min, y_min, mx, my),
             1 => (mx, y_min, x_max, my),
