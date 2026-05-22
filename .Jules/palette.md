@@ -9,3 +9,7 @@
 ## 2024-05-15 - Accessibility for Segmented Controls and Navigation Lists
 **Learning:** Custom UI components like segmented toggle buttons or navigation lists that rely on `data-active` attributes for visual styling must be paired with `aria-pressed` (for toggles) or `aria-current="true"` (for navigation) to ensure screen readers correctly announce the active state.
 **Action:** Always add semantic `aria-pressed` or `aria-current` attributes to interactive elements where `data-active` or similar custom styling states are used to convey state visually.
+
+## 2024-05-17 - Destructive Action Guard
+**Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss.
+**Action:** When implementing destructive operations, always ensure a descriptive confirmation prompt is presented to the user beforehand.
