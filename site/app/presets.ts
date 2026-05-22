@@ -25,6 +25,24 @@ type RawEdge = Omit<GraphSnapshot["edges"][number], "id" | "label" | "weight"> &
 const LABEL_FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
 const MONO_FONT = "JetBrains Mono, ui-monospace, monospace";
 
+type NodeTypeOverrides = NonNullable<GraphThemeOverrides["nodeTypes"]>;
+
+function cardNodeTypes(nodeTypes: NodeTypeOverrides): NodeTypeOverrides {
+  return Object.fromEntries(
+    Object.entries(nodeTypes).map(([type, style]) => [
+      type,
+      {
+        ...style,
+        shape: "roundrectangle",
+        halfWidth: Math.max(style.halfWidth ?? 68, 64),
+        halfHeight: 24,
+        cornerRadius: 10,
+        borderWidth: 1.25,
+      },
+    ]),
+  );
+}
+
 function snap(nodes: RawNode[], edges: RawEdge[]): GraphSnapshot {
   return {
     nodes: nodes.map((node) => ({ ...node, meta: node.meta ?? {} })),
@@ -100,15 +118,15 @@ const gitRepository: Preset = {
       labelWeight: 700,
     },
     defaultEdgeStyle: { color: "#5c7c88", width: 1.3, arrow: "triangle" },
-    nodeTypes: {
-      branch: { shape: "hexagon", color: "#102c36", borderColor: "#38f5b6", halfWidth: 54, halfHeight: 28 },
-      commit: { shape: "circle", color: "#111c26", borderColor: "#64a8ff", halfWidth: 33, halfHeight: 33, labelFont: MONO_FONT, labelSize: 10 },
+    nodeTypes: cardNodeTypes({
+      branch: { shape: "roundrectangle", color: "#102c36", borderColor: "#38f5b6", halfWidth: 54, halfHeight: 28 },
+      commit: { shape: "roundrectangle", color: "#111c26", borderColor: "#64a8ff", halfWidth: 33, halfHeight: 33, labelFont: MONO_FONT, labelSize: 10 },
       manifest: { shape: "roundrectangle", color: "#241b33", borderColor: "#b98cff", halfWidth: 58, halfHeight: 22 },
       source: { shape: "roundrectangle", color: "#122238", borderColor: "#64a8ff", halfWidth: 66, halfHeight: 22 },
-      test: { shape: "diamond", color: "#24220f", borderColor: "#ffd166", halfWidth: 58, halfHeight: 30 },
-      check: { shape: "square", color: "#13271d", borderColor: "#38f5b6", halfWidth: 42, halfHeight: 24 },
-      release: { shape: "octagon", color: "#31121f", borderColor: "#ff4d8d", halfWidth: 58, halfHeight: 28 },
-    },
+      test: { shape: "roundrectangle", color: "#24220f", borderColor: "#ffd166", halfWidth: 58, halfHeight: 30 },
+      check: { shape: "roundrectangle", color: "#13271d", borderColor: "#38f5b6", halfWidth: 42, halfHeight: 24 },
+      release: { shape: "roundrectangle", color: "#31121f", borderColor: "#ff4d8d", halfWidth: 58, halfHeight: 28 },
+    }),
     edgeTypes: {
       points_to: { color: "#38f5b6", width: 2.2 },
       parent: { color: "#4f6b75", width: 1.4, style: "solid" },
@@ -180,15 +198,15 @@ const slackThread: Preset = {
       labelWeight: 750,
     },
     defaultEdgeStyle: { color: "#7a8199", width: 1.25, arrow: "triangle" },
-    nodeTypes: {
-      channel: { shape: "hexagon", color: "#eef1ff", borderColor: "#5b5df7", halfWidth: 72, halfHeight: 28 },
-      person: { shape: "circle", color: "#ffffff", borderColor: "#10a37f", halfWidth: 34, halfHeight: 34 },
-      bot: { shape: "octagon", color: "#fff7e6", borderColor: "#f4a62a", halfWidth: 54, halfHeight: 26 },
+    nodeTypes: cardNodeTypes({
+      channel: { shape: "roundrectangle", color: "#eef1ff", borderColor: "#5b5df7", halfWidth: 72, halfHeight: 28 },
+      person: { shape: "roundrectangle", color: "#ffffff", borderColor: "#10a37f", halfWidth: 34, halfHeight: 34 },
+      bot: { shape: "roundrectangle", color: "#fff7e6", borderColor: "#f4a62a", halfWidth: 54, halfHeight: 26 },
       message: { shape: "roundrectangle", color: "#ffffff", borderColor: "#7a8199", halfWidth: 70, halfHeight: 24, labelSize: 10 },
-      decision: { shape: "diamond", color: "#f0fff9", borderColor: "#10a37f", halfWidth: 64, halfHeight: 32 },
-      link: { shape: "barrel", color: "#f8f4ff", borderColor: "#9a63ff", halfWidth: 70, halfHeight: 24 },
-      event: { shape: "triangle", color: "#fff0f4", borderColor: "#ff4d8d", halfWidth: 48, halfHeight: 32 },
-    },
+      decision: { shape: "roundrectangle", color: "#f0fff9", borderColor: "#10a37f", halfWidth: 64, halfHeight: 32 },
+      link: { shape: "roundrectangle", color: "#f8f4ff", borderColor: "#9a63ff", halfWidth: 70, halfHeight: 24 },
+      event: { shape: "roundrectangle", color: "#fff0f4", borderColor: "#ff4d8d", halfWidth: 48, halfHeight: 32 },
+    }),
     edgeTypes: {
       posted: { color: "#10a37f", width: 1.7 },
       contains: { color: "#5b5df7", width: 1.7 },
@@ -259,15 +277,15 @@ const confluenceDocs: Preset = {
       labelWeight: 750,
     },
     defaultEdgeStyle: { color: "#74839b", width: 1.3, arrow: "triangle" },
-    nodeTypes: {
-      space: { shape: "hexagon", color: "#e8efff", borderColor: "#246bfe", halfWidth: 70, halfHeight: 30 },
+    nodeTypes: cardNodeTypes({
+      space: { shape: "roundrectangle", color: "#e8efff", borderColor: "#246bfe", halfWidth: 70, halfHeight: 30 },
       page: { shape: "roundrectangle", color: "#ffffff", borderColor: "#9aa8c2", halfWidth: 70, halfHeight: 24 },
-      adr: { shape: "diamond", color: "#f1f0ff", borderColor: "#725cff", halfWidth: 58, halfHeight: 32 },
-      spec: { shape: "square", color: "#ecfeff", borderColor: "#0891b2", halfWidth: 54, halfHeight: 26 },
-      runbook: { shape: "octagon", color: "#f0fdf4", borderColor: "#16a34a", halfWidth: 66, halfHeight: 28 },
-      retro: { shape: "triangle", color: "#fff7ed", borderColor: "#f97316", halfWidth: 58, halfHeight: 34 },
-      owner: { shape: "circle", color: "#ffffff", borderColor: "#111827", halfWidth: 34, halfHeight: 34 },
-    },
+      adr: { shape: "roundrectangle", color: "#f1f0ff", borderColor: "#725cff", halfWidth: 58, halfHeight: 32 },
+      spec: { shape: "roundrectangle", color: "#ecfeff", borderColor: "#0891b2", halfWidth: 54, halfHeight: 26 },
+      runbook: { shape: "roundrectangle", color: "#f0fdf4", borderColor: "#16a34a", halfWidth: 66, halfHeight: 28 },
+      retro: { shape: "roundrectangle", color: "#fff7ed", borderColor: "#f97316", halfWidth: 58, halfHeight: 34 },
+      owner: { shape: "roundrectangle", color: "#ffffff", borderColor: "#111827", halfWidth: 34, halfHeight: 34 },
+    }),
     edgeTypes: {
       contains: { color: "#246bfe", width: 1.8 },
       links_to: { color: "#74839b", width: 1.4 },
@@ -341,17 +359,17 @@ const jiraBoard: Preset = {
       labelWeight: 750,
     },
     defaultEdgeStyle: { color: "#7686a8", width: 1.3, arrow: "triangle" },
-    nodeTypes: {
-      board: { shape: "hexagon", color: "#16213d", borderColor: "#67e8f9", halfWidth: 70, halfHeight: 30 },
-      sprint: { shape: "octagon", color: "#18213a", borderColor: "#38bdf8", halfWidth: 58, halfHeight: 28 },
-      epic: { shape: "diamond", color: "#2b1645", borderColor: "#c084fc", halfWidth: 64, halfHeight: 34 },
+    nodeTypes: cardNodeTypes({
+      board: { shape: "roundrectangle", color: "#16213d", borderColor: "#67e8f9", halfWidth: 70, halfHeight: 30 },
+      sprint: { shape: "roundrectangle", color: "#18213a", borderColor: "#38bdf8", halfWidth: 58, halfHeight: 28 },
+      epic: { shape: "roundrectangle", color: "#2b1645", borderColor: "#c084fc", halfWidth: 64, halfHeight: 34 },
       story: { shape: "roundrectangle", color: "#10293a", borderColor: "#38bdf8", halfWidth: 66, halfHeight: 24 },
-      task: { shape: "square", color: "#102a22", borderColor: "#34d399", halfWidth: 52, halfHeight: 26 },
-      bug: { shape: "triangle", color: "#32131c", borderColor: "#fb7185", halfWidth: 52, halfHeight: 34 },
-      test: { shape: "barrel", color: "#2d230f", borderColor: "#fbbf24", halfWidth: 58, halfHeight: 26 },
-      owner: { shape: "circle", color: "#172033", borderColor: "#f8fafc", halfWidth: 32, halfHeight: 32 },
-      risk: { shape: "diamond", color: "#32131c", borderColor: "#fb7185", halfWidth: 58, halfHeight: 32 },
-    },
+      task: { shape: "roundrectangle", color: "#102a22", borderColor: "#34d399", halfWidth: 52, halfHeight: 26 },
+      bug: { shape: "roundrectangle", color: "#32131c", borderColor: "#fb7185", halfWidth: 52, halfHeight: 34 },
+      test: { shape: "roundrectangle", color: "#2d230f", borderColor: "#fbbf24", halfWidth: 58, halfHeight: 26 },
+      owner: { shape: "roundrectangle", color: "#172033", borderColor: "#f8fafc", halfWidth: 32, halfHeight: 32 },
+      risk: { shape: "roundrectangle", color: "#32131c", borderColor: "#fb7185", halfWidth: 58, halfHeight: 32 },
+    }),
     edgeTypes: {
       tracks: { color: "#67e8f9", width: 1.9 },
       contains: { color: "#c084fc", width: 1.7 },
@@ -426,17 +444,17 @@ const serviceLogs: Preset = {
       labelWeight: 750,
     },
     defaultEdgeStyle: { color: "#64748b", width: 1.35, arrow: "triangle" },
-    nodeTypes: {
-      trace: { shape: "hexagon", color: "#062c36", borderColor: "#00e5ff", halfWidth: 58, halfHeight: 30 },
+    nodeTypes: cardNodeTypes({
+      trace: { shape: "roundrectangle", color: "#062c36", borderColor: "#00e5ff", halfWidth: 58, halfHeight: 30 },
       service: { shape: "roundrectangle", color: "#101a33", borderColor: "#60a5fa", halfWidth: 66, halfHeight: 24 },
-      database: { shape: "barrel", color: "#201a0c", borderColor: "#f59e0b", halfWidth: 62, halfHeight: 28 },
-      queue: { shape: "octagon", color: "#1a1531", borderColor: "#a78bfa", halfWidth: 66, halfHeight: 28 },
-      deploy: { shape: "diamond", color: "#27142a", borderColor: "#f472b6", halfWidth: 66, halfHeight: 34 },
-      log: { shape: "square", color: "#2b1018", borderColor: "#fb7185", halfWidth: 54, halfHeight: 26, labelFont: MONO_FONT },
-      alert: { shape: "triangle", color: "#35150b", borderColor: "#fb923c", halfWidth: 58, halfHeight: 36 },
+      database: { shape: "roundrectangle", color: "#201a0c", borderColor: "#f59e0b", halfWidth: 62, halfHeight: 28 },
+      queue: { shape: "roundrectangle", color: "#1a1531", borderColor: "#a78bfa", halfWidth: 66, halfHeight: 28 },
+      deploy: { shape: "roundrectangle", color: "#27142a", borderColor: "#f472b6", halfWidth: 66, halfHeight: 34 },
+      log: { shape: "roundrectangle", color: "#2b1018", borderColor: "#fb7185", halfWidth: 54, halfHeight: 26, labelFont: MONO_FONT },
+      alert: { shape: "roundrectangle", color: "#35150b", borderColor: "#fb923c", halfWidth: 58, halfHeight: 36 },
       dashboard: { shape: "roundrectangle", color: "#101f19", borderColor: "#34d399", halfWidth: 72, halfHeight: 24 },
-      external: { shape: "circle", color: "#111827", borderColor: "#e5e7eb", halfWidth: 36, halfHeight: 36 },
-    },
+      external: { shape: "roundrectangle", color: "#111827", borderColor: "#e5e7eb", halfWidth: 36, halfHeight: 36 },
+    }),
     edgeTypes: {
       passes_through: { color: "#00e5ff", width: 2 },
       calls: { color: "#60a5fa", width: 1.7 },

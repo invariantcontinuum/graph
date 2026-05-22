@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   GraphScene,
   type EdgeData,
@@ -260,6 +260,7 @@ export default function Showcase() {
   const [legend, setLegend] = useState<LegendSummary | null>(null);
   const [stats, setStats] = useState<GraphStats | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
 
@@ -277,6 +278,7 @@ export default function Showcase() {
       setThemeOverrides(nextPreset.overrides);
       setThemeJson(formatJson(nextPreset.overrides));
       setSelectedId(null);
+      setDetailsOpen(false);
       setSnapshotErr(null);
       setThemeErr(null);
       refit();
@@ -290,6 +292,7 @@ export default function Showcase() {
       setSnapshot(normalized);
       setSnapshotJson(formatJson(normalized));
       setSelectedId(nextSelectedId);
+      setDetailsOpen(nextSelectedId !== null);
       setSnapshotErr(null);
       refit();
     },
@@ -342,6 +345,11 @@ export default function Showcase() {
       (edge) => edge.source === selectedId || edge.target === selectedId,
     );
   }, [selectedId, snapshot.edges]);
+
+  const selectedMetaEntries = useMemo(
+    () => (selectedNode ? Object.entries(selectedNode.meta ?? {}) : []),
+    [selectedNode],
+  );
 
   const focusIds = useMemo(() => {
     if (!selectedId) return null;
@@ -428,15 +436,35 @@ export default function Showcase() {
       },
       null,
     );
+    setDetailsOpen(false);
   }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
   const frameSelected = useCallback(() => {
     graphRef.current?.focusFit(selectedId, 64);
   }, [selectedId]);
 
+  const clearSelection = useCallback(() => {
+    setSelectedId(null);
+    setDetailsOpen(false);
+  }, []);
+
+  const openNodeDetails = useCallback((node: NodeData) => {
+    setSelectedId(node.id);
+    setDetailsOpen(true);
+  }, []);
+
   const handlePositionsReady = useCallback(() => {
     refit(48);
   }, [refit]);
+
+  useEffect(() => {
+    if (!detailsOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDetailsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [detailsOpen]);
 
   return (
     <main className="workbench-shell">
@@ -656,7 +684,7 @@ export default function Showcase() {
                   className="action-button"
                   title="Keyboard shortcut: Escape"
                   aria-keyshortcuts="Escape"
-                  onClick={() => setSelectedId(null)}
+                  onClick={clearSelection}
                 >
                   Clear
                 </button>
@@ -673,7 +701,10 @@ export default function Showcase() {
                         type="button"
                         title={neighbor}
                         aria-label={`Select neighbor ${neighbor}`}
-                        onClick={() => setSelectedId(neighborId)}
+                        onClick={() => {
+                          setSelectedId(neighborId);
+                          setDetailsOpen(true);
+                        }}
                       >
                         {neighbor}
                       </button>
@@ -750,8 +781,8 @@ export default function Showcase() {
             themeOverrides={themeOverrides}
             focusIds={focusIds}
             showCommunities
-            onNodeClick={(node) => setSelectedId(node.id)}
-            onBackgroundClick={() => setSelectedId(null)}
+            onNodeClick={openNodeDetails}
+            onBackgroundClick={clearSelection}
             onLegendChange={setLegend}
             onStatsChange={setStats}
             onPositionsReady={handlePositionsReady}
@@ -759,6 +790,114 @@ export default function Showcase() {
           />
         </div>
       </section>
+
+      {detailsOpen && selectedNode ? (
+        <div className="details-backdrop" role="presentation" onMouseDown={() => setDetailsOpen(false)}>
+          <section
+            className="node-details-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="node-details-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="details-header">
+              <div>
+                <p className="kicker">Node details</p>
+                <h2 id="node-details-title">{selectedNode.name}</h2>
+                <span>{selectedNode.id}</span>
+              </div>
+              <button
+                type="button"
+                className="modal-close"
+                aria-label="Close node details"
+                onClick={() => setDetailsOpen(false)}
+              >
+                x
+              </button>
+            </header>
+
+            <dl className="details-grid">
+              <div>
+                <dt>Type</dt>
+                <dd>{selectedNode.type}</dd>
+              </div>
+              <div>
+                <dt>Domain</dt>
+                <dd>{selectedNode.domain}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{selectedNode.status}</dd>
+              </div>
+              <div>
+                <dt>Community</dt>
+                <dd>{selectedNode.community ?? "none"}</dd>
+              </div>
+            </dl>
+
+            <section className="details-section" aria-label="Connected edges">
+              <div className="section-title">
+                <span>Connections</span>
+                <strong>{selectedEdges.length}</strong>
+              </div>
+              {selectedEdges.length > 0 ? (
+                <ul className="modal-edge-list">
+                  {selectedEdges.map((edge) => {
+                    const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
+                    const neighbor =
+                      snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
+                    return (
+                      <li key={edge.id}>
+                        <span>{edge.type}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedId(neighborId);
+                            setDetailsOpen(true);
+                            graphRef.current?.panToNode(neighborId);
+                          }}
+                        >
+                          {neighbor}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="empty-state">No connected edges.</p>
+              )}
+            </section>
+
+            <section className="details-section" aria-label="Node metadata">
+              <div className="section-title">
+                <span>Metadata</span>
+                <strong>{selectedMetaEntries.length}</strong>
+              </div>
+              {selectedMetaEntries.length > 0 ? (
+                <pre className="meta-block">{formatJson(selectedNode.meta)}</pre>
+              ) : (
+                <p className="empty-state">No metadata on this node.</p>
+              )}
+            </section>
+
+            <div className="modal-actions">
+              <button type="button" className="action-button" onClick={frameSelected}>
+                Frame
+              </button>
+              <button
+                type="button"
+                className="action-button"
+                onClick={() => graphRef.current?.panToNode(selectedNode.id)}
+              >
+                Center
+              </button>
+              <button type="button" className="action-button" onClick={() => setDetailsOpen(false)}>
+                Close
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

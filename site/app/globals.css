@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --surface: #eef2f7;
+  --surface: #f3f6f4;
   --surface-raised: #ffffff;
-  --surface-soft: #f8fafc;
-  --panel: #070a12;
-  --panel-raised: #0d1422;
-  --panel-soft: #111b2c;
-  --panel-line: #223149;
+  --surface-soft: #f7faf8;
+  --panel: #101312;
+  --panel-raised: #171b19;
+  --panel-soft: #1e2421;
+  --panel-line: #303a35;
   --text: #111827;
-  --text-muted: #64748b;
+  --text-muted: #64706b;
   --panel-text: #f8fafc;
-  --panel-muted: #9aa8bd;
-  --line: #d5deea;
-  --cyan: #22d3ee;
-  --blue: #3b82f6;
-  --violet: #a78bfa;
+  --panel-muted: #a8b3ad;
+  --line: #d8e1dc;
+  --cyan: #14b8a6;
+  --blue: #2563eb;
+  --violet: #0f766e;
   --green: #34d399;
   --amber: #f59e0b;
   --rose: #fb7185;
@@ -90,7 +90,7 @@ button {
   background: var(--panel);
   color: var(--panel-text);
   padding: 1rem;
-  scrollbar-color: #34445f transparent;
+  scrollbar-color: #3f514a transparent;
 }
 
 .panel-head {
@@ -184,7 +184,7 @@ button {
   min-height: 64px;
   border: 1px solid var(--panel-line);
   border-radius: 8px;
-  background: linear-gradient(180deg, var(--panel-raised), #0b111e);
+  background: var(--panel-raised);
   color: var(--panel-text);
   cursor: pointer;
   padding: 0.7rem;
@@ -194,7 +194,7 @@ button {
 .preset-button:hover,
 .preset-button[data-active="true"] {
   border-color: var(--cyan);
-  background: #101b2d;
+  background: var(--panel-soft);
 }
 
 .preset-button[data-active="true"] {
@@ -265,7 +265,7 @@ button {
 }
 
 .segmented button[data-active="true"] {
-  background: #12263a;
+  background: #12312c;
 }
 
 .action-button:disabled,
@@ -413,7 +413,7 @@ button {
   resize: vertical;
   border: 1px solid var(--panel-line);
   border-radius: 8px;
-  background: #040711;
+  background: #080a09;
   color: #dbeafe;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.72rem;
@@ -511,6 +511,7 @@ button:focus-visible {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-raised);
+  box-shadow: 0 16px 36px rgba(16, 19, 18, 0.08);
 }
 
 .graph-stage .graph-scene {
@@ -543,6 +544,160 @@ button:focus-visible {
   display: none;
 }
 
+.details-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  background: rgba(16, 19, 18, 0.44);
+  padding: 1rem;
+}
+
+.node-details-modal {
+  display: grid;
+  gap: 1rem;
+  width: min(520px, calc(100vw - 2rem));
+  max-height: min(760px, calc(100vh - 2rem));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: 0 24px 70px rgba(16, 19, 18, 0.24);
+  padding: 1rem;
+}
+
+.details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.85rem;
+}
+
+.details-header h2 {
+  margin: 0.12rem 0;
+  font-size: 1.3rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.details-header span {
+  color: var(--text-muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.modal-close {
+  display: inline-grid;
+  height: 34px;
+  width: 34px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 800;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.details-grid div {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 0.65rem;
+}
+
+.details-grid dt {
+  color: var(--text-muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.details-grid dd {
+  margin: 0.18rem 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.details-section {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.modal-edge-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: 0;
+}
+
+.modal-edge-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.modal-edge-list span,
+.modal-edge-list button {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  padding: 0.48rem 0.55rem;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-edge-list button {
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.meta-block {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080a09;
+  color: #d1fae5;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
 @media (max-width: 920px) {
   .workbench-shell {
     display: block;
@@ -557,7 +712,7 @@ button:focus-visible {
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--line);
-    background: rgba(238, 242, 247, 0.96);
+    background: rgba(243, 246, 244, 0.96);
     padding: 0.65rem;
   }
 
@@ -589,7 +744,24 @@ button:focus-visible {
     inset: 0;
     z-index: 15;
     display: block;
-    background: rgba(7, 10, 18, 0.5);
+    background: rgba(16, 19, 18, 0.5);
+  }
+
+  .details-backdrop {
+    align-items: end;
+    justify-items: stretch;
+    padding: 0.65rem;
+  }
+
+  .node-details-modal {
+    width: 100%;
+    max-height: calc(100vh - 1.3rem);
+  }
+
+  .details-grid,
+  .modal-actions,
+  .modal-edge-list li {
+    grid-template-columns: 1fr;
   }
 
   .graph-workspace {
