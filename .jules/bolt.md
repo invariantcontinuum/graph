@@ -80,3 +80,7 @@
 ## 2026-05-19 - [Optimize Barnes-Hut Ensure Children]
 **Learning:** In Rust hot paths such as quadtree node insertion (`ensure_children` in `crates/graph-layout/src/force/barnes_hut.rs`), manually unrolling fixed-size array initializations, removing intermediate helper methods (like `child_bounds`) to inline coordinate calculations, and replacing float division (`/ 2.0`) with multiplication (`* 0.5`) prevents unnecessary loop overhead and saves CPU cycles.
 **Action:** Identify extremely hot paths (like O(N log N) tree traversals executed per tick) and replace array setup with manual unrolled explicit accesses and avoid division when multiplying by its reciprocal works.
+
+## 2026-05-20 - [Optimize QuadTree Construction (Barnes-Hut)]
+**Learning:** In hot loops such as Barnes-Hut `ensure_children` for quadtree construction, unrolling fixed-size array initialization, removing intermediate function calls like `child_bounds`, and replacing floating-point division (`/ 2.0`) with multiplication (`* 0.5`) saves CPU cycles without compromising logic.
+**Action:** Optimize calculations involving repetitive instantiation and spatial splitting by manually unrolling initialization and converting divisions to multiplications to reduce overhead.
