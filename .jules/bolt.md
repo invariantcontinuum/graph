@@ -60,3 +60,7 @@
 ## 2026-05-16 - [Unroll Iterators for Fixed Arrays in Tree Insertions]
 **Learning:** In `crates/graph-layout/src/force/barnes_hut.rs`, iterating through a loop to allocate an array of fixed size quadtree children added significant execution overhead because it occurred heavily during tree insertion in hot loops (`ensure_children`). Unrolling the loop and generating children directly saved CPU cycles.
 **Action:** When working on array generation inside frequently hit hot paths, such as tree traversal setup or child initialization, use unrolled, static instantiation instead of iterations. Also replace division by floating points with multiplication of their reciprocals (e.g. replacing `/ 2.0` with `* 0.5`).
+
+## 2026-05-17 - [Optimize QuadNode child initialization]
+**Learning:** In Rust hot paths such as quadtree node insertion, manually unrolling fixed-size array initializations (e.g., explicitly instantiating children instead of iterating to populate an array) and replacing float division (`/ 2.0`) with multiplication (`* 0.5`) prevents unnecessary loop overhead and saves CPU cycles, improving layout performance.
+**Action:** Always replace `/ 2.0` with `* 0.5` for floats in math heavy loop processing and prefer unrolling loops for fixed small bounds rather than iterating arrays.
