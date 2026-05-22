@@ -41,3 +41,7 @@
 ## 2026-05-14 - [Iterator over push loops for flattening data]
 **Learning:** In hot paths doing data conversion (flattening tuple structs into f32 slices, or unflattening), chunk iteration with `.chunks_exact(2)` + `extend` outperforms index-based iteration and sequential `push()` operations by ~50-80%.
 **Action:** Use `extend` with iterators or `.chunks_exact(n)` when copying/flattening data slices instead of repeatedly pushing elements or indexing in a loop.
+
+## 2026-05-14 - [Use \`extend\` for bulk slice transformations in hot paths]
+**Learning:** Functions like \`flatten_positions\` and \`unflatten_positions\` that manually iterate and \`push()\` elements within hot layout loops suffer from significant overhead due to continual bounds-checking and iterator management. Leveraging standard library mass operations like \`.extend()\` with \`flat_map()\` or \`chunks_exact()\` delegates the optimization to Rust's core, significantly reducing slice copying times.
+**Action:** Always prefer Rust slice bulk transformations (like \`extend()\` combined with map/flat_map) over manually coded loop-pushes when transforming raw data between buffered layouts, especially during per-tick calculations.
