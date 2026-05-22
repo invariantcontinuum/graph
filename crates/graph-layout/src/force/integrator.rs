@@ -51,13 +51,14 @@ fn snapshot_pinned(
     positions: &[f32],
     pinned: &std::collections::HashSet<usize>,
 ) -> Vec<(usize, f32, f32)> {
-    pinned
-        .iter()
-        .filter_map(|&idx| {
-            let i = idx * 2;
-            (i + 1 < positions.len()).then(|| (idx, positions[i], positions[i + 1]))
-        })
-        .collect()
+    let mut res = Vec::with_capacity(pinned.len());
+    for &idx in pinned {
+        let i = idx * 2;
+        if i + 1 < positions.len() {
+            res.push((idx, positions[i], positions[i + 1]));
+        }
+    }
+    res
 }
 
 fn restore_pinned(positions: &mut [f32], saved: &[(usize, f32, f32)]) {
@@ -76,20 +77,20 @@ fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &
         if src >= n || tgt >= n {
             continue;
         }
-        let sx = positions[src * 2];
-        let sy = positions[src * 2 + 1];
-        let tx = positions[tgt * 2];
-        let ty = positions[tgt * 2 + 1];
-        let dx = tx - sx;
-        let dy = ty - sy;
+        let src_pos = &positions[src * 2..src * 2 + 2];
+        let tgt_pos = &positions[tgt * 2..tgt * 2 + 2];
+        let dx = tgt_pos[0] - src_pos[0];
+        let dy = tgt_pos[1] - src_pos[1];
         // Mathematically simplify distance calculations (fx = ATTRACTION * dx)
         // to completely bypass expensive .sqrt() and floating-point division operations
         let fx = ATTRACTION * dx;
         let fy = ATTRACTION * dy;
-        forces[src].0 += fx;
-        forces[src].1 += fy;
-        forces[tgt].0 -= fx;
-        forces[tgt].1 -= fy;
+        let src_force = &mut forces[src];
+        src_force.0 += fx;
+        src_force.1 += fy;
+        let tgt_force = &mut forces[tgt];
+        tgt_force.0 -= fx;
+        tgt_force.1 -= fy;
     }
 }
 
@@ -98,19 +99,22 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    let n = positions.len() / 2;
-    if velocities.len() < n {
+    if velocities.len() * 2 < positions.len() {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
-    for (i, (fx, fy)) in forces.iter().enumerate().take(n) {
-        let vel = &mut velocities[i];
+    // ⚡ Bolt: Chunked iteration over positions avoids index-based bounds checks.
+    let zipped = positions
+        .chunks_exact_mut(2)
+        .zip(velocities.iter_mut())
+        .zip(forces.iter());
+    for ((pos, vel), &(fx, fy)) in zipped {
         vel.0 = (vel.0 + fx) * DAMPING;
         vel.1 = (vel.1 + fy) * DAMPING;
         let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
         max_velocity_sq = max_velocity_sq.max(v_sq);
-        positions[i * 2] += vel.0;
-        positions[i * 2 + 1] += vel.1;
+        pos[0] += vel.0;
+        pos[1] += vel.1;
     }
     max_velocity_sq
 }
