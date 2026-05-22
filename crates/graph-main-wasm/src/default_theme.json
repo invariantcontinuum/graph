@@ -1,5 +1,6 @@
 {
   "background": "#0d0d12",
+  "gridLineColor": "#1a1f2c",
   "nodes": {
     "default": {
       "shape": "roundrectangle",

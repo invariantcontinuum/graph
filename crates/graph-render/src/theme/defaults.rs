@@ -5,6 +5,9 @@
 pub(super) fn background() -> String {
     "#0d1117".into()
 }
+pub(super) fn grid_line_color() -> String {
+    "#1a1f2c".into()
+}
 pub(super) fn shape() -> String {
     "circle".into()
 }

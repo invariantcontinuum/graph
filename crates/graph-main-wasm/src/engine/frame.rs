@@ -65,6 +65,20 @@ impl RenderEngine {
         let (br, bg, bb, ba) = parse_css_color(&self.theme.background);
         self.ctx.clear(br, bg, bb, ba);
 
+        let grid_color = parse_css_color(&self.theme.grid_line_color);
+        let dpr = web_sys::window()
+            .map(|w| w.device_pixel_ratio() as f32)
+            .unwrap_or(1.0)
+            .max(1.0);
+        self.grid_renderer.draw(
+            &self.ctx.gl,
+            &vp,
+            self.ctx.width as f32,
+            self.ctx.height as f32,
+            dpr,
+            &[grid_color.0, grid_color.1, grid_color.2, grid_color.3],
+        );
+
         self.hull_renderer.draw(&self.ctx.gl, &vp);
         self.edge_renderer.draw(&self.ctx.gl, &vp, time);
         self.arrow_renderer.draw(&self.ctx.gl, &vp);

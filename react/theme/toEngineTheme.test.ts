@@ -40,9 +40,11 @@ describe("graphThemeToEngineJson", () => {
     expect(def.size).toBe(Math.max(def.halfWidth, def.halfHeight));
   });
 
-  test("background is transparent (CSS grid shows through)", () => {
-    const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
-    expect(json.background).toMatch(/rgba\(0\s*,\s*0\s*,\s*0\s*,\s*0\)/);
+  test("background is opaque canvas bg (grid is now drawn inside WebGL)", () => {
+    const dark = buildGraphTheme("dark");
+    const json = graphThemeToEngineJson(dark) as any;
+    expect(json.background).toBe(dark.canvasBg);
+    expect(json.gridLineColor).toBe(dark.gridLineColor);
   });
 
   test("interaction strokes stay below heavy painted-outline widths", () => {

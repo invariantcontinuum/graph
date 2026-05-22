@@ -29,6 +29,7 @@ use graph_render::arrows::ArrowRenderer;
 use graph_render::camera::Camera;
 use graph_render::context::RenderContext;
 use graph_render::edges::EdgeRenderer;
+use graph_render::grid::GridRenderer;
 use graph_render::hulls::HullRenderer;
 use graph_render::nodes::NodeRenderer;
 use graph_render::text::TextRenderer;
@@ -72,6 +73,7 @@ pub struct RenderEngine {
     pub(super) arrow_renderer: ArrowRenderer,
     pub(super) text_renderer: TextRenderer,
     pub(super) hull_renderer: HullRenderer,
+    pub(super) grid_renderer: GridRenderer,
 
     // Current data from worker
     pub(super) positions: Vec<f32>,
@@ -154,6 +156,7 @@ impl RenderEngine {
         let arrow_renderer = ArrowRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
         let text_renderer = TextRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
         let hull_renderer = HullRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
+        let grid_renderer = GridRenderer::new(&ctx).map_err(|e| JsValue::from_str(&e))?;
 
         Ok(Self {
             ctx,
@@ -164,6 +167,7 @@ impl RenderEngine {
             arrow_renderer,
             text_renderer,
             hull_renderer,
+            grid_renderer,
             positions: Vec::new(),
             visual_flags: Vec::new(),
             edge_data: Vec::new(),

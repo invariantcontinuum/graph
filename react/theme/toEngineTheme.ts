@@ -42,8 +42,11 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
   for (const [k, v] of Object.entries(t.edgeTypes)) byTypeEdges[k] = toEdgeOverride(v);
 
   return {
-    // Transparent so the underlying GridOverlay paints through.
-    background: "rgba(0, 0, 0, 0)",
+    // Opaque canvas bg: the grid is now rendered inside the WebGL canvas as
+    // the first pass, so antialiased edges no longer bleed an underlying
+    // overlay through.
+    background: t.canvasBg,
+    gridLineColor: t.gridLineColor,
     nodes: {
       default: toNodeBody(t.defaultNodeStyle),
       byType: byTypeNodes,

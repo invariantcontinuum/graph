@@ -697,6 +697,12 @@ function __wbg_get_imports() {
         __wbg_uniform1i_acce06d190ce18d5: function(arg0, arg1, arg2) {
             arg0.uniform1i(arg1, arg2);
         },
+        __wbg_uniform2f_186549d813184ee8: function(arg0, arg1, arg2, arg3) {
+            arg0.uniform2f(arg1, arg2, arg3);
+        },
+        __wbg_uniform4f_50286376821185ad: function(arg0, arg1, arg2, arg3, arg4, arg5) {
+            arg0.uniform4f(arg1, arg2, arg3, arg4, arg5);
+        },
         __wbg_uniformMatrix4fv_5395d1840e1704d7: function(arg0, arg1, arg2, arg3, arg4) {
             arg0.uniformMatrix4fv(arg1, arg2 !== 0, getArrayF32FromWasm0(arg3, arg4));
         },

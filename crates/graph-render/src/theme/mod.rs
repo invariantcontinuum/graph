@@ -22,6 +22,8 @@ use std::collections::HashMap;
 pub struct ThemeConfig {
     #[serde(default = "defaults::background")]
     pub background: String,
+    #[serde(rename = "gridLineColor", default = "defaults::grid_line_color")]
+    pub grid_line_color: String,
     pub nodes: NodeTheme,
     pub edges: EdgeTheme,
     #[serde(default)]

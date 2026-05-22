@@ -1,6 +1,5 @@
 import { forwardRef, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Graph, type GraphHandle, type GraphProps } from "./Graph";
-import { GridOverlay } from "./GridOverlay";
 import { CompoundFramesOverlay } from "./CompoundFramesOverlay";
 import { LabelOverlay } from "./LabelOverlay";
 import { buildGraphTheme } from "./theme/buildTheme";
@@ -48,11 +47,13 @@ export interface GraphSceneProps
  * GraphScene — the full Cytoscape-style rendering pipeline in one component.
  *
  * Composes:
- *   1. GridOverlay            (camera-synced background grid, z=0)
+ *   1. Graph                  (WASM/WebGL2 grid + edges + nodes, z=0)
  *   2. CompoundFramesOverlay  (dashed source cluster frames, z=1)
- *   3. Graph                  (WASM/WebGL2 edges + nodes, z=2)
- *   4. LabelOverlay           (Canvas2D text labels, z=3)
- *   5. Chrome slot            (app controls, z=10)
+ *   3. LabelOverlay           (Canvas2D text labels, z=3)
+ *   4. Chrome slot            (app controls, z=10)
+ *
+ * The grid is now painted by the WASM engine as the first WebGL pass so
+ * antialiased edges no longer let an underlying overlay bleed through.
  *
  * Consumers pass `themeMode` + snapshot; the package handles theme
  * propagation, JSON marshalling to the WASM engine, and z-order. Frontend
@@ -155,7 +156,6 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
         ...style,
       }}
     >
-      <GridOverlay engineRef={engineRef} theme={graphTheme} ready={ready} />
       {nodeSourceIds && sourceLabels ? (
         <CompoundFramesOverlay
           engineRef={engineRef}
