@@ -91,6 +91,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
   const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
+  const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
   const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
@@ -121,6 +122,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }
     };
     rafRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  const nodeFromId = useCallback((id: string): NodeData => {
+    return nodeDataByIdRef.current.get(id) ?? ({ id } as NodeData);
   }, []);
 
   // Initialize engine and worker
@@ -234,6 +239,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (!workerRef.current) return;
     convergedRef.current = false;
     pendingFitRef.current = true;
+
+    const nodeDataById = new Map<string, NodeData>();
+    for (const node of snap.nodes) nodeDataById.set(node.id, node);
+    nodeDataByIdRef.current = nodeDataById;
 
     if (snap.nodes.length === 0 && snap.edges.length === 0) {
       workerRef.current.postMessage({ type: "clear_snapshot" });
@@ -503,7 +512,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
         if (hoveredId !== undefined) {
           canvas.style.cursor = hoveredId ? "pointer" : "default";
-          callbacksRef.current.onNodeHover?.({ id: hoveredId } as NodeData);
+          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
         }
         requestRender();
         return;
@@ -521,7 +530,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
           if (hoveredId !== undefined) {
             canvas.style.cursor = hoveredId ? "pointer" : "default";
-            callbacksRef.current.onNodeHover?.({ id: hoveredId } as NodeData);
+            callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
           }
         }
       } else if (active.size === 2) {
@@ -565,7 +574,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
             : false;
           const pickedId = draggingNodeRef.current;
           if (!moved && pickedId) {
-            callbacksRef.current.onNodeClick?.({ id: pickedId } as NodeData);
+            callbacksRef.current.onNodeClick?.(nodeFromId(pickedId));
             suppressNextClick = true;
           }
           // Clear on next tick to suppress the synthetic click that fires
@@ -601,7 +610,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const local = toLocal(e.clientX, e.clientY);
       const clickedId = engineRef.current?.handle_click(local.x, local.y);
       if (clickedId) {
-        callbacksRef.current.onNodeClick?.({ id: clickedId } as NodeData);
+        callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
       } else {
         // Clicking empty canvas clears spotlight — Cytoscape parity. Hosts
         // that wire `onBackgroundClick` to `setSelectedNodeId(null)` get the
@@ -650,7 +659,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [pumpWorkerMessages, requestRender]);
+  }, [nodeFromId, pumpWorkerMessages, requestRender]);
 
   useImperativeHandle(
     ref,

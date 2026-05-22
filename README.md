@@ -72,14 +72,14 @@ function GraphPage({ snapshot }: { snapshot: GraphSnapshot }) {
         showCommunities
         themeOverrides={{
           nodeTypes: {
-            risk: { shape: "hexagon", borderColor: "#f97316" },
+            risk: { borderColor: "#f97316" },
           },
           edgeTypes: {
             blocks: { color: "#22c55e", width: 3, style: "dashed" },
           },
         }}
         onLegendChange={setLegend}
-        onNodeClick={(node) => console.log("node", node.id)}
+        onNodeClick={(node) => console.log("node details", node)}
         chrome={
           legend ? (
             <aside>
@@ -110,7 +110,7 @@ function BareGraph({ snapshot }: { snapshot: GraphSnapshot }) {
       snapshot={snapshot}
       layout="force"
       onReady={() => ref.current?.fit(80)}
-      onNodeClick={(node) => console.log(node.id)}
+      onNodeClick={(node) => console.log(node)}
       style={{ width: "100%", height: "100%" }}
     />
   );
@@ -128,6 +128,8 @@ function BareGraph({ snapshot }: { snapshot: GraphSnapshot }) {
 - `LabelOverlay` for Canvas2D node labels
 - Theme conversion from `themeMode` into the engine JSON format
 - `chrome` slot for app-owned legend, toolbar, or inspector UI
+
+`GraphScene` owns the default z-order: the grid is always the background layer, source frames sit above the grid, the WebGL engine renders edges and nodes above those background overlays, labels sit above the engine, and app chrome sits at the top.
 
 Key props:
 
@@ -155,9 +157,9 @@ Key props:
 | `filter` | `GraphFilter \| null` | Worker-side filtering by type, domain, or status |
 | `spotlightIds` | `string[] \| null` | Explicit spotlight ids when composing the scene yourself |
 | `showCommunities` | `boolean` | Toggle community hull rendering |
-| `onNodeClick` | `(node: NodeData) => void` | Fires when a node is clicked |
+| `onNodeClick` | `(node: NodeData) => void` | Fires with the full active snapshot node when a node is clicked |
 | `onBackgroundClick` | `() => void` | Fires when empty canvas is clicked |
-| `onNodeHover` | `(node: NodeData \| null) => void` | Fires on hover enter/leave |
+| `onNodeHover` | `(node: NodeData \| null) => void` | Fires with the full active snapshot node on hover enter, and `null` on leave |
 | `onLegendChange` | `(legend: LegendSummary) => void` | Receives theme-resolved node and edge legend data |
 | `onStatsChange` | `(stats: GraphStats) => void` | Receives node/edge/violation counts |
 | `onPositionsReady` | `() => void` | Fires after the first post-layout positions arrive |
@@ -229,6 +231,8 @@ interface GraphSnapshot {
 ```
 
 The bundled theme presets recognize node types such as `service`, `source`, `database`, `cache`, `data`, `policy`, `adr`, `incident`, `external`, `config`, `script`, `doc`, and `asset`, and edge types such as `depends`, `depends_on`, `violation`, `enforces`, `why`, and `drift`. Unknown node types, edge types, and statuses are preserved as strings and fall back to default styling unless supplied through `themeOverrides` or `mergeGraphTheme`.
+
+By default, all bundled node types render as consistent rounded cards with light borders. Applications can still opt into custom `shape` values through `themeOverrides`, but the package defaults avoid mixed symbolic shapes so nodes read as stable UI objects at every zoom level.
 
 ## Architecture
 

@@ -48,11 +48,11 @@ export interface GraphSceneProps
  * GraphScene — the full Cytoscape-style rendering pipeline in one component.
  *
  * Composes:
- *   1. GridOverlay            (camera-synced background grid)
- *   2. CompoundFramesOverlay  (dashed group frames around source clusters)
- *   3. Graph                  (WASM/WebGL2 nodes + edges — the engine)
- *   4. LabelOverlay           (Canvas2D text labels w/ spotlight-aware dim)
- *   5. EdgeLabelsOverlay      (type pills on focus-edges)
+ *   1. GridOverlay            (camera-synced background grid, z=0)
+ *   2. CompoundFramesOverlay  (dashed source cluster frames, z=1)
+ *   3. Graph                  (WASM/WebGL2 edges + nodes, z=2)
+ *   4. LabelOverlay           (Canvas2D text labels, z=3)
+ *   5. Chrome slot            (app controls, z=10)
  *
  * Consumers pass `themeMode` + snapshot; the package handles theme
  * propagation, JSON marshalling to the WASM engine, and z-order. Frontend
@@ -150,6 +150,8 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
         width: "100%",
         height: "100%",
         background: graphTheme.canvasBg,
+        overflow: "hidden",
+        isolation: "isolate",
         ...style,
       }}
     >
@@ -185,7 +187,13 @@ export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function Grap
         // worker-thread path wired here that produces the heavy ghost dim.)
         spotlightIds={focusIds ? Array.from(focusIds) : null}
         className="graph-canvas-webgl"
-        style={{ width: "100%", height: "100%" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 2,
+          width: "100%",
+          height: "100%",
+        }}
       />
       <LabelOverlay
         engineRef={engineRef}

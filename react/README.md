@@ -9,7 +9,7 @@ engine renders whatever theme you hand it.
 ## Quick start
 
 ```tsx
-import { GraphScene, buildGraphTheme } from "@invariantcontinuum/graph/react";
+import { GraphScene } from "@invariantcontinuum/graph/react";
 
 const snapshot = {
   nodes: [
@@ -22,7 +22,13 @@ const snapshot = {
 };
 
 export function App() {
-  return <GraphScene mode="dark" snapshot={snapshot} />;
+  return (
+    <GraphScene
+      themeMode="dark"
+      snapshot={snapshot}
+      onNodeClick={(node) => console.log("node details", node)}
+    />
+  );
 }
 ```
 
@@ -47,7 +53,6 @@ const themeOverrides: GraphThemeOverrides = {
       labelColor: "#e2e8f0",
     },
     process: {
-      shape: "diamond",
       color: "#431407",
       borderColor: "#f97316",
     },
@@ -60,7 +65,7 @@ const themeOverrides: GraphThemeOverrides = {
   },
 };
 
-<GraphScene mode="dark" snapshot={snapshot} themeOverrides={themeOverrides} />;
+<GraphScene themeMode="dark" snapshot={snapshot} themeOverrides={themeOverrides} />;
 ```
 
 Any node type not in `themeOverrides.nodeTypes` falls back to
@@ -81,7 +86,7 @@ export function App() {
 
   return (
     <div className="flex">
-      <GraphScene snapshot={snapshot} onLegendChange={setLegend} />
+      <GraphScene themeMode="dark" snapshot={snapshot} onLegendChange={setLegend} />
       {legend && (
         <aside>
           <h3>Node types</h3>
@@ -109,18 +114,26 @@ import { GraphScene, type GraphHandle } from "@invariantcontinuum/graph/react";
 
 const graphRef = useRef<GraphHandle | null>(null);
 
-<GraphScene ref={graphRef} snapshot={snapshot} />;
+<GraphScene ref={graphRef} themeMode="dark" snapshot={snapshot} />;
 
 // Later:
 graphRef.current?.panToNode("n1");
 graphRef.current?.focusFit("n1", 32);
 ```
 
+## Scene layering and click payloads
+
+`GraphScene` stacks rendering layers deliberately: `GridOverlay` is the background, compound source frames are the next background layer, the WebGL engine renders edges and nodes above them, labels sit above the engine, and the chrome slot is topmost.
+
+`onNodeClick` and `onNodeHover` receive the full `NodeData` object from the active snapshot, not just an id. This lets host apps open an inspector or details modal without maintaining a duplicate id-to-node cache.
+
 ## Shapes
 
 Built-in shapes (resolved by `shape` in your theme): `circle`, `diamond`,
 `square`, `hexagon`, `triangle`, `octagon`, `roundrectangle`, `barrel`.
 Unknown shape names fall back to `circle`.
+
+The default type table renders every bundled node type as a rounded rectangle card with a light border. Custom shapes remain supported through `themeOverrides` for apps that need symbolic geometry.
 
 ## Edge styles
 

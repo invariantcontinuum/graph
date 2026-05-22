@@ -135,7 +135,7 @@ export function LabelOverlay({
       style={{
         position: "absolute",
         inset: 0,
-        zIndex: 4,
+        zIndex: 3,
         pointerEvents: "none",
         width: "100%",
         height: "100%",

@@ -15,43 +15,44 @@ export interface TypeShape {
   labelSize: number;
 }
 
-const R_LARGE: Omit<TypeShape, "shape"> = {
-  halfWidth: 66,
+const NODE_CARD: Omit<TypeShape, "shape"> = {
+  halfWidth: 68,
   halfHeight: 24,
-  cornerRadius: 8,
-  borderWidth: 2.2,
+  cornerRadius: 10,
+  borderWidth: 1.35,
   labelSize: 12,
 };
-const R_COMPACT: Omit<TypeShape, "shape"> = {
-  halfWidth: 54,
-  halfHeight: 20,
-  cornerRadius: 8,
-  borderWidth: 2,
+
+const NODE_CARD_COMPACT: Omit<TypeShape, "shape"> = {
+  halfWidth: 58,
+  halfHeight: 22,
+  cornerRadius: 10,
+  borderWidth: 1.25,
   labelSize: 11,
 };
 
 export const TYPE_STYLES: Record<NodeType, TypeShape> = {
-  service:  { shape: "roundrectangle", ...R_LARGE },
-  source:   { shape: "roundrectangle", ...R_LARGE },
-  data:     { shape: "roundrectangle", ...R_LARGE },
-  config:   { shape: "roundrectangle", ...R_LARGE },
-  script:   { shape: "roundrectangle", ...R_LARGE },
-  doc:      { shape: "roundrectangle", ...R_LARGE },
-  asset:    { shape: "roundrectangle", ...R_LARGE },
-  database: { shape: "barrel",         ...R_LARGE },
-  cache:    { shape: "barrel",         ...R_LARGE },
-  policy:   { shape: "diamond",        halfWidth: 64, halfHeight: 32, cornerRadius: 8, borderWidth: 2.6, labelSize: 12 },
-  adr:      { shape: "roundrectangle", ...R_COMPACT },
-  incident: { shape: "roundrectangle", halfWidth: 56, halfHeight: 22, cornerRadius: 8, borderWidth: 2.6, labelSize: 11 },
-  external: { shape: "roundrectangle", halfWidth: 58, halfHeight: 22, cornerRadius: 8, borderWidth: 2.1, labelSize: 11 },
+  service:  { shape: "roundrectangle", ...NODE_CARD },
+  source:   { shape: "roundrectangle", ...NODE_CARD },
+  data:     { shape: "roundrectangle", ...NODE_CARD },
+  config:   { shape: "roundrectangle", ...NODE_CARD },
+  script:   { shape: "roundrectangle", ...NODE_CARD },
+  doc:      { shape: "roundrectangle", ...NODE_CARD },
+  asset:    { shape: "roundrectangle", ...NODE_CARD },
+  database: { shape: "roundrectangle", ...NODE_CARD },
+  cache:    { shape: "roundrectangle", ...NODE_CARD },
+  policy:   { shape: "roundrectangle", ...NODE_CARD },
+  adr:      { shape: "roundrectangle", ...NODE_CARD_COMPACT },
+  incident: { shape: "roundrectangle", ...NODE_CARD_COMPACT, borderWidth: 1.45 },
+  external: { shape: "roundrectangle", ...NODE_CARD_COMPACT },
 };
 
 export const DEFAULT_STYLE: TypeShape = {
   shape: "roundrectangle",
-  halfWidth: 66,
+  halfWidth: 68,
   halfHeight: 24,
-  cornerRadius: 8,
-  borderWidth: 2,
+  cornerRadius: 10,
+  borderWidth: 1.35,
   labelSize: 12,
 };
 

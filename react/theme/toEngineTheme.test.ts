@@ -45,6 +45,13 @@ describe("graphThemeToEngineJson", () => {
     expect(json.background).toMatch(/rgba\(0\s*,\s*0\s*,\s*0\s*,\s*0\)/);
   });
 
+  test("interaction strokes stay below heavy painted-outline widths", () => {
+    const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
+    expect(json.interaction.select.borderWidth).toBeLessThanOrEqual(2.2);
+    expect(json.nodes.byStatus.violation.borderWidth).toBeLessThanOrEqual(2.1);
+    expect(json.nodes.byStatus.drift.borderWidth).toBeLessThanOrEqual(1.8);
+  });
+
   test("spotlight.dimOpacity follows the package theme", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
     expect(json.interaction.spotlight.dimOpacity).toBeCloseTo(0.14);
