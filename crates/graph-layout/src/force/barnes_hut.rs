@@ -153,12 +153,15 @@ impl QuadNode {
         if self.children.is_some() {
             return;
         }
-        let mut children: [Option<QuadNode>; 4] = [None, None, None, None];
-        for (i, child) in children.iter_mut().enumerate() {
-            let (cx_min, cy_min, cx_max, cy_max) = self.child_bounds(i);
-            *child = Some(QuadNode::new(cx_min, cy_min, cx_max, cy_max));
-        }
-        self.children = Some(Box::new(children));
+        let (x_min, y_min, x_max, y_max) = self.bounds;
+        let mx = (x_min + x_max) * 0.5;
+        let my = (y_min + y_max) * 0.5;
+        self.children = Some(Box::new([
+            Some(QuadNode::new(x_min, y_min, mx, my)),
+            Some(QuadNode::new(mx, y_min, x_max, my)),
+            Some(QuadNode::new(x_min, my, mx, y_max)),
+            Some(QuadNode::new(mx, my, x_max, y_max)),
+        ]));
     }
 
     fn push_existing_body_down(&mut self, depth: usize) {
@@ -172,32 +175,19 @@ impl QuadNode {
     fn can_approximate(&self, dist_sq: f32) -> bool {
         let (x_min, _y_min, x_max, _y_max) = self.bounds;
         let width = x_max - x_min;
-        self.children.is_none() || (width * width) < THETA_SQ * dist_sq
+        self.children.is_none() || (width * width) < (THETA_SQ * dist_sq)
     }
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
         let (x_min, y_min, x_max, y_max) = self.bounds;
-        let mx = (x_min + x_max) / 2.0;
-        let my = (y_min + y_max) / 2.0;
+        let mx = (x_min + x_max) * 0.5;
+        let my = (y_min + y_max) * 0.5;
         if x < mx {
             if y < my { 0 } else { 2 }
         } else if y < my {
             1
         } else {
             3
-        }
-    }
-
-    fn child_bounds(&self, q: usize) -> Bounds {
-        let (x_min, y_min, x_max, y_max) = self.bounds;
-        let mx = (x_min + x_max) / 2.0;
-        let my = (y_min + y_max) / 2.0;
-        match q {
-            0 => (x_min, y_min, mx, my),
-            1 => (mx, y_min, x_max, my),
-            2 => (x_min, my, mx, y_max),
-            3 => (mx, my, x_max, y_max),
-            _ => unreachable!(),
         }
     }
 }

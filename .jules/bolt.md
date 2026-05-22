@@ -56,3 +56,7 @@
 ## 2026-05-16 - [Optimize flattening operations with iterators]
 **Learning:** In Rust hot paths (e.g., `flatten_positions` and `unflatten_positions` during per-tick layouts), replacing sequential `.push()` and index-based iteration loops with bulk slice transformations using `.extend()` combined with `.flat_map()` and `.chunks_exact()` significantly outperforms manual loops. This elides bounds checks across multiple slices, yielding an ~19% performance improvement.
 **Action:** Use iterator extension and chunk iteration in Rust for bulk operations on slices instead of manual index-based or push-based loops in hot paths.
+
+## 2026-05-16 - [Unroll Iterators for Fixed Arrays in Tree Insertions]
+**Learning:** In `crates/graph-layout/src/force/barnes_hut.rs`, iterating through a loop to allocate an array of fixed size quadtree children added significant execution overhead because it occurred heavily during tree insertion in hot loops (`ensure_children`). Unrolling the loop and generating children directly saved CPU cycles.
+**Action:** When working on array generation inside frequently hit hot paths, such as tree traversal setup or child initialization, use unrolled, static instantiation instead of iterations. Also replace division by floating points with multiplication of their reciprocals (e.g. replacing `/ 2.0` with `* 0.5`).
