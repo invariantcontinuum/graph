@@ -209,10 +209,11 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     let mut y_min = f32::MAX;
     let mut x_max = f32::MIN;
     let mut y_max = f32::MIN;
-    let n = positions_flat.len() / 2;
-    for i in 0..n {
-        let x = positions_flat[i * 2];
-        let y = positions_flat[i * 2 + 1];
+    // ⚡ Bolt: Using chunks_exact(2) allows the compiler to elide bounds checks
+    // and vectorizing operations when possible, providing a performance win.
+    for chunk in positions_flat.chunks_exact(2) {
+        let x = chunk[0];
+        let y = chunk[1];
         x_min = x_min.min(x);
         y_min = y_min.min(y);
         x_max = x_max.max(x);
