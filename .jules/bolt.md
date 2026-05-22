@@ -64,3 +64,7 @@
 ## 2026-05-17 - [Optimize QuadNode child initialization]
 **Learning:** In Rust hot paths such as quadtree node insertion, manually unrolling fixed-size array initializations (e.g., explicitly instantiating children instead of iterating to populate an array) and replacing float division (`/ 2.0`) with multiplication (`* 0.5`) prevents unnecessary loop overhead and saves CPU cycles, improving layout performance.
 **Action:** Always replace `/ 2.0` with `* 0.5` for floats in math heavy loop processing and prefer unrolling loops for fixed small bounds rather than iterating arrays.
+
+## 2026-05-17 - Avoid creating intermediate variables and small closures when unrolling loops
+**Learning:** In the `ensure_children` and `quadrant` methods of `barnes_hut.rs`, there were helper functions and small unrolled iterations that can be done simpler. Removing the `child_bounds` closure and manually unrolling the instantiation of the 4 `QuadNode` objects in the `ensure_children` method of the `Barnes-Hut` approximation step resulted in performance improvements for the force layouts benchmark.
+**Action:** Unroll fixed length 4x loops in `ensure_children` and `quadrant` in `barnes_hut.rs` to inline constants and manually calculate coordinates.
