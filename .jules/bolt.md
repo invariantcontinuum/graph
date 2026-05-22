@@ -76,3 +76,7 @@
 ## 2026-05-18 - [Bulk slice transformation in flatten/unflatten positions]
 **Learning:** In Rust hot paths (e.g., `flatten_positions` and `unflatten_positions` in `crates/graph-layout`), preferring bulk slice transformations using `.extend()` with `.flat_map()` or `.chunks_exact()` over manual loop-pushes minimizes bounds-checking and delegates optimizations to Rust's core, significantly reducing execution time during repeated per-tick layouts.
 **Action:** Replace manual `.push()` loops with `.extend()` combined with slice iterators whenever converting between nested/flat array structures.
+
+## 2026-05-19 - [Optimize Barnes-Hut Ensure Children]
+**Learning:** In Rust hot paths such as quadtree node insertion (`ensure_children` in `crates/graph-layout/src/force/barnes_hut.rs`), manually unrolling fixed-size array initializations, removing intermediate helper methods (like `child_bounds`) to inline coordinate calculations, and replacing float division (`/ 2.0`) with multiplication (`* 0.5`) prevents unnecessary loop overhead and saves CPU cycles.
+**Action:** Identify extremely hot paths (like O(N log N) tree traversals executed per tick) and replace array setup with manual unrolled explicit accesses and avoid division when multiplying by its reciprocal works.
