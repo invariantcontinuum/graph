@@ -42,3 +42,7 @@
 ## 2024-10-24 - Destructive Actions Confirmation
 **Learning:** Destructive actions without confirmation dialogues (like deleting a node and its edges in a graph UI) can lead to accidental data loss and cause severe UX frustration. Users might accidentally click the wrong button, especially in dense control panels.
 **Action:** Always wrap destructive UI actions (such as removing items) with a confirmation mechanism, such as `window.confirm`, providing clear context on what is being deleted.
+
+## 2026-05-19 - Destructive Action Guard
+**Learning:** Destructive UI actions (like removing elements) need explicit confirmation guards to prevent accidental data loss. This improves UX by making destructive behavior intentional rather than accidental.
+**Action:** Guard destructive actions, such as removing elements from the graph, with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss.
