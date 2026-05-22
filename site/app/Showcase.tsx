@@ -453,7 +453,7 @@ export default function Showcase() {
           <span />
           <span />
         </button>
-        <span className="brand-mark">@invariantcontinuum/graph</span>
+        <span className="brand-mark" title="@invariantcontinuum/graph">@invariantcontinuum/graph</span>
       </div>
 
       {sidebarOpen ? (
@@ -502,8 +502,8 @@ export default function Showcase() {
                 onClick={() => applyPreset(item.slug)}
               >
                 <span>{item.folio}</span>
-                <strong>{item.title}</strong>
-                <small>{item.subtitle}</small>
+                <strong title={item.title}>{item.title}</strong>
+                <small title={item.subtitle}>{item.subtitle}</small>
               </button>
             ))}
           </nav>
