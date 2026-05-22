@@ -410,6 +410,11 @@ export default function Showcase() {
 
   const removeSelected = useCallback(() => {
     if (!selectedId) return;
+    const nodeName = snapshot.nodes.find((n) => n.id === selectedId)?.name ?? selectedId;
+    if (!window.confirm(`Are you sure you want to remove "${nodeName}" and all its connected edges?`)) {
+      return;
+    }
+
     commitSnapshot(
       {
         ...snapshot,
