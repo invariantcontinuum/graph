@@ -412,7 +412,7 @@ export default function Showcase() {
     if (!selectedId || !selectedNode) return;
     if (
       !window.confirm(
-        `Are you sure you want to remove "${selectedNode.name}" and all its connected edges?`,
+        `Are you sure you want to remove "${selectedNode.name}" and all its connected edges? This action cannot be undone.`,
       )
     ) {
       return;

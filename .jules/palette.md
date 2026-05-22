@@ -46,3 +46,7 @@
 ## 2026-05-19 - Destructive Action Guard
 **Learning:** Destructive UI actions (like removing elements) need explicit confirmation guards to prevent accidental data loss. This improves UX by making destructive behavior intentional rather than accidental.
 **Action:** Guard destructive actions, such as removing elements from the graph, with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss.
+
+## 2024-05-20 - Guard Destructive Actions
+**Learning:** Destructive actions without warning can easily cause data loss. In custom application graphs or canvas workspaces where elements can be deleted without easy undo features, always include a confirmation step.
+**Action:** Use window.confirm with the specific element's name to guarantee users know exactly what they are removing before executing the destructive function.
