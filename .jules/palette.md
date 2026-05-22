@@ -38,3 +38,7 @@
 ## 2026-05-16 - Add Confirmation to Destructive Actions
 **Learning:** Destructive actions without confirmation pose a severe data-loss risk, especially in graph editing where restoring edges can be tedious.
 **Action:** Always wrap destructive UI operations (like removing nodes) in a confirmation mechanism, such as `window.confirm`, to verify user intent and prevent accidents.
+
+## 2024-10-24 - Destructive Actions Confirmation
+**Learning:** Destructive actions without confirmation dialogues (like deleting a node and its edges in a graph UI) can lead to accidental data loss and cause severe UX frustration. Users might accidentally click the wrong button, especially in dense control panels.
+**Action:** Always wrap destructive UI actions (such as removing items) with a confirmation mechanism, such as `window.confirm`, providing clear context on what is being deleted.
