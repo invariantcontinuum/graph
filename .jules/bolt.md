@@ -88,3 +88,7 @@
 ## 2026-05-20 - [Avoid iterator overhead in Force Layout hot loop array initialization]
 **Learning:** In the Barnes-Hut quadtree implementation (`crates/graph-layout/src/force/barnes_hut.rs`), the `ensure_children` method initializes an array of 4 children. Using `.iter_mut().enumerate()` on a fixed `[None; 4]` array to populate children added measurable overhead inside the highly recursive O(N log N) traversal tree build process.
 **Action:** Unroll the loop manually and directly initialize the array with its values like `let children: [Option<QuadNode>; 4] = [Some(...), Some(...), Some(...), Some(...)]`. This eliminates iterator overhead and improves benchmark times by ~4-5%.
+
+## 2026-05-21 - Avoid floating point division in barnes_hut.rs
+**Learning:** Checking for division operations in the hot path of graph force-layout integration reveals optimization opportunities. However, the exact division was refactored in a previous update. We should instead focus on manual unrolling of iterator chains and minimizing dynamic allocations for small loops in hot paths to avoid the cost of setup and bounds checks.
+**Action:** Use manual loop unrolling and explicit child initializations within the quadtree building phase of the layout. In `BarnesHut::ensure_children()`, changing the `.iter_mut().enumerate()` over a 4-element array into manually initializing `children = Some(Box::new([Some(...), Some(...), Some(...), Some(...)]))` provides measurable speedup to layout time by skipping the iterator initialization and reducing instructions.

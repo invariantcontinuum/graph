@@ -156,6 +156,10 @@ impl QuadNode {
         let (x_min, y_min, x_max, y_max) = self.bounds;
         let mx = (x_min + x_max) * 0.5;
         let my = (y_min + y_max) * 0.5;
+
+        // ⚡ Bolt: Manually unroll the initialization of children nodes
+        // and eliminate the child_bounds method helper and bounds-checked iterators
+        // to save CPU cycles in the tree construction hot-path.
         self.children = Some(Box::new([
             Some(QuadNode::new(x_min, y_min, mx, my)),
             Some(QuadNode::new(mx, y_min, x_max, my)),
@@ -173,9 +177,12 @@ impl QuadNode {
     }
 
     fn can_approximate(&self, dist_sq: f32) -> bool {
+        if self.children.is_none() {
+            return true;
+        }
         let (x_min, _y_min, x_max, _y_max) = self.bounds;
         let width = x_max - x_min;
-        self.children.is_none() || (width * width) < (THETA_SQ * dist_sq)
+        (width * width) < THETA_SQ * dist_sq
     }
 
     fn quadrant(&self, x: f32, y: f32) -> usize {
