@@ -84,13 +84,7 @@ impl GridRenderer {
         gl.uniform2f(Some(&self.u_origin), origin_x, origin_y);
         gl.uniform1f(Some(&self.u_grid_px), grid_px);
         gl.uniform1f(Some(&self.u_line_px), line_px);
-        gl.uniform4f(
-            Some(&self.u_color),
-            color[0],
-            color[1],
-            color[2],
-            color[3],
-        );
+        gl.uniform4f(Some(&self.u_color), color[0], color[1], color[2], color[3]);
         gl.draw_arrays(GL::TRIANGLES, 0, 3);
         gl.bind_vertex_array(None);
     }
