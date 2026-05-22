@@ -45,3 +45,7 @@
 ## 2026-05-14 - [Use \`extend\` for bulk slice transformations in hot paths]
 **Learning:** Functions like \`flatten_positions\` and \`unflatten_positions\` that manually iterate and \`push()\` elements within hot layout loops suffer from significant overhead due to continual bounds-checking and iterator management. Leveraging standard library mass operations like \`.extend()\` with \`flat_map()\` or \`chunks_exact()\` delegates the optimization to Rust's core, significantly reducing slice copying times.
 **Action:** Always prefer Rust slice bulk transformations (like \`extend()\` combined with map/flat_map) over manually coded loop-pushes when transforming raw data between buffered layouts, especially during per-tick calculations.
+
+## 2026-05-15 - [Use Bulk Iterators for Buffer Mapping in Hot Paths]
+**Learning:** In Rust hot loops, such as per-tick vector flattening operations in ForceLayout (`flatten_positions` and `unflatten_positions`), iterating elements and manually calling `.push()` incurs a measurable overhead due to capacity and bounds checking.
+**Action:** Always replace manual loops with slice iterators (`chunks_exact` or `flat_map`) coupled with bulk operations (`.extend()`). This pattern allows the Rust compiler to pre-allocate correctly and fully optimize or elide the inner loop bounds checks.
