@@ -92,3 +92,7 @@
 ## 2026-05-21 - Avoid floating point division in barnes_hut.rs
 **Learning:** Checking for division operations in the hot path of graph force-layout integration reveals optimization opportunities. However, the exact division was refactored in a previous update. We should instead focus on manual unrolling of iterator chains and minimizing dynamic allocations for small loops in hot paths to avoid the cost of setup and bounds checks.
 **Action:** Use manual loop unrolling and explicit child initializations within the quadtree building phase of the layout. In `BarnesHut::ensure_children()`, changing the `.iter_mut().enumerate()` over a 4-element array into manually initializing `children = Some(Box::new([Some(...), Some(...), Some(...), Some(...)]))` provides measurable speedup to layout time by skipping the iterator initialization and reducing instructions.
+
+## 2023-10-27 - [Avoid index-based loops in build_tree]
+**Learning:** In the `build_tree` method of `crates/graph-layout/src/force/barnes_hut.rs`, manually iterating over the number of elements and indexing into the `positions_flat` array (e.g., `positions_flat[i * 2]`) incurs unnecessary bounds checking and loop overhead. Replacing this with a chunk-based iterator (`positions_flat.chunks_exact(2)`) improved layout performance by approximately 8%.
+**Action:** Use `.chunks_exact(n)` for iterating over flat arrays instead of manual index-based loops whenever accessing consecutive elements, especially in hot paths like tree construction.

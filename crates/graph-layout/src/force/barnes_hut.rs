@@ -223,9 +223,10 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
 pub(super) fn build_tree(positions_flat: &[f32], bounds: Bounds) -> QuadNode {
     let (x_min, y_min, x_max, y_max) = bounds;
     let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
-    let n = positions_flat.len() / 2;
-    for i in 0..n {
-        root.insert(positions_flat[i * 2], positions_flat[i * 2 + 1]);
+    // ⚡ Bolt: chunk iteration avoids sequential indexing bounds checks
+    // and manual indexing, saving computation time in this hot loop.
+    for chunk in positions_flat.chunks_exact(2) {
+        root.insert(chunk[0], chunk[1]);
     }
     root
 }
