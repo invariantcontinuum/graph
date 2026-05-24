@@ -103,18 +103,23 @@ fn integrate_positions(
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
-    // ⚡ Bolt: Chunked iteration over positions avoids index-based bounds checks.
-    let zipped = positions
-        .chunks_exact_mut(2)
-        .zip(velocities.iter_mut())
-        .zip(forces.iter());
-    for ((pos, vel), &(fx, fy)) in zipped {
+    // ⚡ Bolt: Simple index-based loop prevents iterator chaining overhead
+    // and allows LLVM to vectorize position integration.
+    let n = velocities.len();
+    // Pre-assert lengths to allow LLVM to elide bounds checks in the loop
+    assert!(positions.len() >= n * 2);
+    assert!(forces.len() >= n);
+    for i in 0..n {
+        let vel = &mut velocities[i];
+        let (fx, fy) = forces[i];
         vel.0 = (vel.0 + fx) * DAMPING;
         vel.1 = (vel.1 + fy) * DAMPING;
+
         let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
-        max_velocity_sq = max_velocity_sq.max(v_sq);
-        pos[0] += vel.0;
-        pos[1] += vel.1;
+        if v_sq > max_velocity_sq { max_velocity_sq = v_sq; }
+
+        positions[i * 2] += vel.0;
+        positions[i * 2 + 1] += vel.1;
     }
     max_velocity_sq
 }
