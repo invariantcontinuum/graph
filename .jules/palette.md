@@ -54,3 +54,6 @@
 ## 2024-05-22 - Add confirmation dialog for delete action
 **Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss. Furthermore, truncated text elements must include `title` attributes to ensure content is accessible.
 **Action:** Always wrap delete/remove callbacks with a `window.confirm` dialog, specifically including the name of the entity being deleted. Always add `title` to text elements truncated with `text-overflow: ellipsis`.
+## 2026-05-24 - Truncated Text Accessibility
+**Learning:** UI elements with visually truncated text (e.g., due to `text-overflow: ellipsis`) must include `title` attributes to expose the full text on hover, and interactive elements should use `aria-label` to ensure the complete text is announced by screen readers.
+**Action:** Always add `title` and `aria-label` attributes to elements that are styled with `text-overflow: ellipsis`, particularly interactive elements like buttons, to ensure accessibility.
