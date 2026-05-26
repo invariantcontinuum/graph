@@ -85,7 +85,6 @@ fn pair_push(x: f32, y: f32, ox: f32, oy: f32, gap_sq: f32) -> (f32, f32) {
         return (0.0, 0.0);
     }
     let d = d_sq.sqrt();
-    // ⚡ Bolt: Use multiplication by the inverse to avoid expensive floating point divisions.
     let inv_d = 1.0 / d;
     let push = (MIN_NODE_GAP - d) * 0.5 * inv_d;
     (ddx * push, ddy * push)
