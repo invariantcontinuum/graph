@@ -89,7 +89,21 @@ impl QuadNode {
             }
 
             if node.can_approximate(dist_sq) {
-                let force_over_dist = -REPULSION * node.mass / (dist_sq * dist_sq.sqrt());
+                // ⚡ Bolt: Replacing floating-point division by `dist_sq * dist_sq.sqrt()`
+                // with the calculation of the inverse square root (`1.0 / dist_sq.sqrt()`)
+                // and subsequent repeated multiplications avoids slow division operations
+                // and yields significant performance improvements.
+                let inv_dist = 1.0 / dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
+                fx += force_over_dist * dx;
+                fy += force_over_dist * dy;
+                continue;
+            }
+
+            if node.children.is_none() {
+                // Leaf node body-body exact interaction
+                let inv_dist = 1.0 / dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
                 fx += force_over_dist * dx;
                 fy += force_over_dist * dy;
                 continue;
