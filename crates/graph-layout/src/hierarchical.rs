@@ -1,5 +1,6 @@
 use crate::LayoutEngine;
 use graph_core::graph::GraphStore;
+use petgraph::visit::NodeIndexable;
 use std::collections::{HashMap, VecDeque};
 
 const LAYER_SPACING: f32 = 120.0;
@@ -19,51 +20,51 @@ impl HierarchicalLayout {
     }
 
     fn assign_layers(&self, graph: &GraphStore) -> HashMap<String, u32> {
+        // ⚡ Bolt: Use petgraph::NodeIndex and Vec<u32> instead of String and HashMap
+        // to reduce O(3N) string allocations to O(N) per node and improve lookup speed
+        // through direct array indexing.
         let inner = graph.inner();
-        let mut in_degree: HashMap<String, usize> = HashMap::new();
-        let mut layers: HashMap<String, u32> = HashMap::new();
+        // Use node_bound() to properly allocate vectors covering all possible indices,
+        // avoiding panics if the graph is a StableGraph with node deletions.
+        let n = inner.node_bound();
+        let mut in_degree = vec![0_usize; n];
+        let mut layers_vec = vec![0_u32; n];
 
-        for node in graph.nodes() {
-            in_degree.entry(node.id.clone()).or_insert(0);
-        }
-        for edge in graph.edges() {
-            *in_degree.entry(edge.target.clone()).or_insert(0) += 1;
-        }
-
-        let mut queue: VecDeque<String> = in_degree
-            .iter()
-            .filter(|&(_, &d)| d == 0)
-            .map(|(id, _)| id.clone())
-            .collect();
-
-        if queue.is_empty()
-            && let Some(n) = graph.nodes().next()
-        {
-            queue.push_back(n.id.clone());
-        }
-
-        for id in &queue {
-            layers.insert(id.clone(), 0);
-        }
-
-        while let Some(id) = queue.pop_front() {
-            let current_layer = *layers.get(&id).unwrap_or(&0);
-            if let Some(idx) = graph.node_index(&id) {
-                for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
-                    if let Some(data) = inner.node_weight(neighbor) {
-                        let new_layer = current_layer + 1;
-                        let existing = layers.get(&data.id).copied().unwrap_or(0);
-                        if new_layer > existing {
-                            layers.insert(data.id.clone(), new_layer);
-                        }
-                        queue.push_back(data.id.clone());
-                    }
-                }
+        for idx in inner.node_indices() {
+            for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
+                in_degree[neighbor.index()] += 1;
             }
         }
 
-        for node in graph.nodes() {
-            layers.entry(node.id.clone()).or_insert(0);
+        let mut queue: VecDeque<petgraph::graph::NodeIndex> = inner
+            .node_indices()
+            .filter(|&idx| in_degree[idx.index()] == 0)
+            .collect();
+
+        if queue.is_empty()
+            && let Some(node_idx) = inner.node_indices().next() {
+                queue.push_back(node_idx);
+            }
+
+        // layers_vec is already initialized to 0
+
+        while let Some(idx) = queue.pop_front() {
+            let current_layer = layers_vec[idx.index()];
+            for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
+                let new_layer = current_layer + 1;
+                let n_idx = neighbor.index();
+                if new_layer > layers_vec[n_idx] {
+                    layers_vec[n_idx] = new_layer;
+                }
+                queue.push_back(neighbor);
+            }
+        }
+
+        let mut layers: HashMap<String, u32> = HashMap::new();
+        for idx in inner.node_indices() {
+            if let Some(data) = inner.node_weight(idx) {
+                layers.insert(data.id.clone(), layers_vec[idx.index()]);
+            }
         }
 
         layers
