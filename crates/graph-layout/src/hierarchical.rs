@@ -42,9 +42,10 @@ impl HierarchicalLayout {
             .collect();
 
         if queue.is_empty()
-            && let Some(node_idx) = inner.node_indices().next() {
-                queue.push_back(node_idx);
-            }
+            && let Some(node_idx) = inner.node_indices().next()
+        {
+            queue.push_back(node_idx);
+        }
 
         // layers_vec is already initialized to 0
 
