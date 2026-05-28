@@ -505,6 +505,7 @@ export default function Showcase() {
                         <span>{edge.type}</span>
                         <button
                           type="button"
+                          aria-label={`Select neighbor ${neighbor}`}
                           onClick={() => {
                             setSelectedId(neighborId);
                             setDetailsOpen(true);

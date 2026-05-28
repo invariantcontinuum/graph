@@ -13,3 +13,11 @@
 ## 2024-05-17 - Destructive Action Guard
 **Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss.
 **Action:** When implementing destructive operations, always ensure a descriptive confirmation prompt is presented to the user beforehand.
+
+## 2024-05-28 - Accessibility Consistency Across Duplicate Components
+**Learning:** When UI lists or components (like edge connections) are duplicated across different areas of an application (e.g., a side panel and a modal), ensure accessibility attributes such as `title` and `aria-label` are consistently applied across all instances to avoid inconsistent screen reader experiences.
+**Action:** Always cross-reference similar UI components in different parts of the application to ensure accessibility attributes are applied identically.
+
+## 2024-05-28 - Avoid Redundant Title Attributes
+**Learning:** Adding `title` attributes that merely duplicate visible text content on elements like `span` or `button` is a UX anti-pattern. It creates annoying, redundant tooltips for mouse users and provides little or no additional value to assistive technologies.
+**Action:** Only use `title` attributes when providing genuinely supplementary information (like a keyboard shortcut) or when the full text is visually truncated (e.g., `text-overflow: ellipsis`). Rely on `aria-label` for screen-reader-only descriptive context.
