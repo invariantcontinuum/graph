@@ -5,7 +5,9 @@ let layoutRunning = false;
 let tickScheduled = false;
 
 globalThis.onmessage = async (e: MessageEvent) => {
-  initPromise ??= init("/graph/graph_worker_wasm_bg.wasm").then(() => undefined);
+  initPromise ??= init({
+    module_or_path: "/graph/graph_worker_wasm_bg.wasm",
+  }).then(() => undefined);
   await initPromise;
 
   handle_message(e.data);
