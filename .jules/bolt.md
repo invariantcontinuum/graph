@@ -93,6 +93,9 @@
 **Learning:** Checking for division operations in the hot path of graph force-layout integration reveals optimization opportunities. However, the exact division was refactored in a previous update. We should instead focus on manual unrolling of iterator chains and minimizing dynamic allocations for small loops in hot paths to avoid the cost of setup and bounds checks.
 **Action:** Use manual loop unrolling and explicit child initializations within the quadtree building phase of the layout. In `BarnesHut::ensure_children()`, changing the `.iter_mut().enumerate()` over a 4-element array into manually initializing `children = Some(Box::new([Some(...), Some(...), Some(...), Some(...)]))` provides measurable speedup to layout time by skipping the iterator initialization and reducing instructions.
 
+## 2026-05-23 - [Inline node approximation logic]
+**Learning:** In the hot path of graph force-layout calculation (`compute_force` in `barnes_hut.rs`), moving the logic from `can_approximate` directly into the method removed the function call overhead. Since `compute_force` operates O(N log N) times inside an O(T) layout loop (where T is iterations, and N is nodes), function call boundaries and nested member access add significant execution time.
+**Action:** When a method inside a highly nested loop or recursive tree structure does simple conditional arithmetic (like boundary checking), manually inline it if it is only used once to avoid the function call overhead.
 
 ## 2026-05-23 - [Remove iterator overhead in hot loop array initialization]
 **Learning:** In `crates/graph-layout/src/force/integrator.rs`, the force integration loop (`integrate_positions`) was chaining multiple `.zip()` iterators over `positions.chunks_exact_mut(2)`, `velocities.iter_mut()`, and `forces.iter()`. This iterator overhead inside a highly critical hot loop (called for every node on every tick) caused measurable slowdown.
