@@ -1,5 +1,6 @@
 use crate::LayoutEngine;
 use graph_core::graph::GraphStore;
+use petgraph::visit::NodeIndexable;
 use std::collections::{HashMap, VecDeque};
 
 const LAYER_SPACING: f32 = 120.0;
@@ -20,50 +21,53 @@ impl HierarchicalLayout {
 
     fn assign_layers(&self, graph: &GraphStore) -> HashMap<String, u32> {
         let inner = graph.inner();
-        let mut in_degree: HashMap<String, usize> = HashMap::new();
-        let mut layers: HashMap<String, u32> = HashMap::new();
-
-        for node in graph.nodes() {
-            in_degree.entry(node.id.clone()).or_insert(0);
-        }
-        for edge in graph.edges() {
-            *in_degree.entry(edge.target.clone()).or_insert(0) += 1;
+        let node_count = inner.node_count();
+        if node_count == 0 {
+            return HashMap::new();
         }
 
-        let mut queue: VecDeque<String> = in_degree
-            .iter()
-            .filter(|&(_, &d)| d == 0)
-            .map(|(id, _)| id.clone())
+        // Use NodeIndex-addressed vectors to avoid cloning IDs during traversal.
+        let node_bound = inner.node_bound();
+        let mut in_degree = vec![0_usize; node_bound];
+        let mut layers_vec = vec![0_u32; node_bound];
+        let mut relax_count = vec![0_usize; node_bound];
+
+        for idx in inner.node_indices() {
+            for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
+                in_degree[neighbor.index()] += 1;
+            }
+        }
+
+        let mut queue: VecDeque<petgraph::graph::NodeIndex> = inner
+            .node_indices()
+            .filter(|&idx| in_degree[idx.index()] == 0)
             .collect();
 
         if queue.is_empty()
-            && let Some(n) = graph.nodes().next()
+            && let Some(node_idx) = inner.node_indices().next()
         {
-            queue.push_back(n.id.clone());
+            queue.push_back(node_idx);
         }
 
-        for id in &queue {
-            layers.insert(id.clone(), 0);
-        }
-
-        while let Some(id) = queue.pop_front() {
-            let current_layer = *layers.get(&id).unwrap_or(&0);
-            if let Some(idx) = graph.node_index(&id) {
-                for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
-                    if let Some(data) = inner.node_weight(neighbor) {
-                        let new_layer = current_layer + 1;
-                        let existing = layers.get(&data.id).copied().unwrap_or(0);
-                        if new_layer > existing {
-                            layers.insert(data.id.clone(), new_layer);
-                        }
-                        queue.push_back(data.id.clone());
-                    }
+        let max_relaxations_per_node = node_count;
+        while let Some(idx) = queue.pop_front() {
+            let current_layer = layers_vec[idx.index()];
+            for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
+                let new_layer = current_layer + 1;
+                let n_idx = neighbor.index();
+                if new_layer > layers_vec[n_idx] && relax_count[n_idx] < max_relaxations_per_node {
+                    relax_count[n_idx] += 1;
+                    layers_vec[n_idx] = new_layer;
+                    queue.push_back(neighbor);
                 }
             }
         }
 
-        for node in graph.nodes() {
-            layers.entry(node.id.clone()).or_insert(0);
+        let mut layers: HashMap<String, u32> = HashMap::new();
+        for idx in inner.node_indices() {
+            if let Some(data) = inner.node_weight(idx) {
+                layers.insert(data.id.clone(), layers_vec[idx.index()]);
+            }
         }
 
         layers
@@ -166,5 +170,25 @@ mod tests {
         layout.compute(&g);
         assert!(layout.is_converged());
         assert!(!layout.tick(&g));
+    }
+
+    #[test]
+    fn cyclic_graph_terminates() {
+        let mut g = GraphStore::new();
+        for id in ["a", "b", "c"] {
+            g.add_node(make_node(id));
+        }
+        g.add_edge(make_edge("e1", "a", "b"));
+        g.add_edge(make_edge("e2", "b", "c"));
+        g.add_edge(make_edge("e3", "c", "a"));
+
+        let mut layout = HierarchicalLayout::new();
+        let positions = layout.compute(&g);
+
+        assert_eq!(positions.len(), 3);
+        for (_, x, y) in positions {
+            assert!(x.is_finite());
+            assert!(y.is_finite());
+        }
     }
 }

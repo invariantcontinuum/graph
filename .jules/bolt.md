@@ -92,6 +92,9 @@
 ## 2026-05-21 - Avoid floating point division in barnes_hut.rs
 **Learning:** Checking for division operations in the hot path of graph force-layout integration reveals optimization opportunities. However, the exact division was refactored in a previous update. We should instead focus on manual unrolling of iterator chains and minimizing dynamic allocations for small loops in hot paths to avoid the cost of setup and bounds checks.
 **Action:** Use manual loop unrolling and explicit child initializations within the quadtree building phase of the layout. In `BarnesHut::ensure_children()`, changing the `.iter_mut().enumerate()` over a 4-element array into manually initializing `children = Some(Box::new([Some(...), Some(...), Some(...), Some(...)]))` provides measurable speedup to layout time by skipping the iterator initialization and reducing instructions.
+## 2026-05-28 - [Avoid String allocations in HierarchicalLayout layer assignment]
+**Learning:** In `crates/graph-layout/src/hierarchical.rs`, calculating node layers using `HashMap<String, u32>` and string cloning incurs a measurable O(3N) string allocation penalty when traversing nodes.
+**Action:** Use `petgraph::NodeIndex` along with an initialized `Vec<u32>` matching the graph `node_count()` to map layer values, effectively avoiding `HashMap` hashing and string instantiation operations entirely.
 
 ## 2026-05-22 - Replace division with inverse square root multiplication
 **Learning:** In hot geometric calculations, replacing floating-point division by `dist_sq * dist_sq.sqrt()` with the calculation of the inverse square root (`1.0 / dist_sq.sqrt()`) and subsequent repeated multiplications avoids slow division operations and yields significant performance improvements.
