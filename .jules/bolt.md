@@ -93,6 +93,10 @@
 **Learning:** Checking for division operations in the hot path of graph force-layout integration reveals optimization opportunities. However, the exact division was refactored in a previous update. We should instead focus on manual unrolling of iterator chains and minimizing dynamic allocations for small loops in hot paths to avoid the cost of setup and bounds checks.
 **Action:** Use manual loop unrolling and explicit child initializations within the quadtree building phase of the layout. In `BarnesHut::ensure_children()`, changing the `.iter_mut().enumerate()` over a 4-element array into manually initializing `children = Some(Box::new([Some(...), Some(...), Some(...), Some(...)]))` provides measurable speedup to layout time by skipping the iterator initialization and reducing instructions.
 
+## 2026-05-22 - Replace division with inverse square root multiplication
+**Learning:** In hot geometric calculations, replacing floating-point division by `dist_sq * dist_sq.sqrt()` with the calculation of the inverse square root (`1.0 / dist_sq.sqrt()`) and subsequent repeated multiplications avoids slow division operations and yields significant performance improvements.
+**Action:** In `QuadNode::compute_force`, use `1.0 / dist_sq.sqrt()` and multiply it repeatedly instead of dividing by `dist_sq * dist_sq.sqrt()`. This pattern is broadly applicable to gravitational/repulsive force approximations.
+
 ## 2026-05-26 - [Replace division with multiplication in Barnes-Hut inverse square root]
 **Learning:** In the hot path of `QuadNode::compute_force` within the Barnes-Hut quad tree, computing `dist_sq * dist_sq.sqrt()` and dividing by it was causing a performance bottleneck. Computing the inverse distance `1.0 / dist_sq.sqrt()` and multiplying it three times mathematically equates to dividing by the cube of distance, but multiplication is significantly faster than division for floats, yielding an ~17% layout execution speedup.
 **Action:** Always replace division by a computed float value with multiplication by its inverse in performance-critical numeric and geometric calculations within hot paths.
