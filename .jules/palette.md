@@ -58,3 +58,7 @@
 ## 2024-05-27 - Consistent Accessibility Attributes on Duplicated Elements
 **Learning:** When UI elements like item lists or action buttons are duplicated across different areas of the application (e.g., inside a sidebar vs. inside a modal dialog), it is easy to forget accessibility attributes on the secondary instance. This creates an inconsistent and confusing experience for screen reader users and keyboard navigators.
 **Action:** Always verify that accessibility attributes, such as `title`, `aria-label`, and `aria-keyshortcuts`, are consistently applied across all instances of a UI pattern, regardless of whether it is in a main view or a modal/sidebar.
+
+## 2024-06-26 - Truncated Text Accessibility in Custom Lists
+**Learning:** In highly customized, dense React components (like a `.modal-edge-list`), textual elements that use `text-overflow: ellipsis` for layout considerations are unreadable by both sighted users (if they hover) and screen readers. Additionally, action buttons that identify a target item only by an abbreviated or visually derived name lack context.
+**Action:** Always add `title` attributes to elements truncated via `text-overflow: ellipsis` so their full content is available on hover. For interactive elements in these lists, ensure they have an explicit `aria-label` describing the action and its complete target name.
