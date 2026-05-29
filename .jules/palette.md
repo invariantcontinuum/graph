@@ -102,3 +102,7 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+
+## 2026-05-29 - Removed redundant presentation role from canvases
+**Learning:** Using `role="presentation"` on decorative `<canvas>` elements that are already `aria-hidden={true}` and non-interactive is noisy and can trigger accessibility flags like SonarCloud's `typescript:S6819` rule. It does not provide additional value when the element is correctly hidden from the accessibility tree.
+**Action:** When creating supplementary, non-interactive overlay canvases, omit the `role` attribute entirely. Rely on `aria-hidden={true}` and `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
