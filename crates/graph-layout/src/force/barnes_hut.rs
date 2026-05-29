@@ -88,11 +88,12 @@ impl QuadNode {
                 continue;
             }
 
-            if node.can_approximate(dist_sq) {
-                // ⚡ Bolt: Replacing floating-point division by `dist_sq * dist_sq.sqrt()`
-                // with the calculation of the inverse square root (`1.0 / dist_sq.sqrt()`)
-                // and subsequent repeated multiplications avoids slow division operations
-                // and yields significant performance improvements.
+            // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2
+            let is_leaf = node.children.is_none();
+            let (x_min, _, x_max, _) = node.bounds;
+            let width = x_max - x_min;
+
+            if is_leaf || (width * width) < THETA_SQ * dist_sq {
                 let inv_dist = 1.0 / dist_sq.sqrt();
                 let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
                 fx += force_over_dist * dx;
@@ -100,17 +101,7 @@ impl QuadNode {
                 continue;
             }
 
-            if node.children.is_none() {
-                // Leaf node body-body exact interaction
-                let inv_dist = 1.0 / dist_sq.sqrt();
-                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
-                fx += force_over_dist * dx;
-                fy += force_over_dist * dy;
-                continue;
-            }
-
-            if let Some(ref children) = node.children {
-                let c = &**children;
+            if let Some(c) = node.children.as_deref() {
                 // ⚡ Bolt: Only push nodes with mass > 0.0 to the stack.
                 // This avoids pushing empty nodes, which saves us from having to pop them
                 // off the stack and check `if node.mass == 0.0` in the next iteration.
@@ -190,15 +181,6 @@ impl QuadNode {
         }
     }
 
-    fn can_approximate(&self, dist_sq: f32) -> bool {
-        if self.children.is_none() {
-            return true;
-        }
-        let (x_min, _y_min, x_max, _y_max) = self.bounds;
-        let width = x_max - x_min;
-        (width * width) < THETA_SQ * dist_sq
-    }
-
     fn quadrant(&self, x: f32, y: f32) -> usize {
         let (x_min, y_min, x_max, y_max) = self.bounds;
         let mx = (x_min + x_max) * 0.5;
@@ -237,9 +219,10 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
 pub(super) fn build_tree(positions_flat: &[f32], bounds: Bounds) -> QuadNode {
     let (x_min, y_min, x_max, y_max) = bounds;
     let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
-    let n = positions_flat.len() / 2;
-    for i in 0..n {
-        root.insert(positions_flat[i * 2], positions_flat[i * 2 + 1]);
+    // ⚡ Bolt: chunk iteration avoids sequential indexing bounds checks
+    // and manual indexing, saving computation time in this hot loop.
+    for chunk in positions_flat.chunks_exact(2) {
+        root.insert(chunk[0], chunk[1]);
     }
     root
 }
