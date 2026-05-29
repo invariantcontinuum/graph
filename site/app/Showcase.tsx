@@ -14,6 +14,8 @@ import {
 } from "@invariantcontinuum/graph/react";
 import { PRESETS, presetBySlug, type Preset } from "./presets";
 
+const PACKAGE_VERSION = "0.2.9";
+
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
@@ -48,9 +50,13 @@ function countBy(values: string[]): Array<{ key: string; count: number }> {
   );
 }
 
+function compactLabel(value: string): string {
+  return value.replaceAll("_", " ");
+}
+
 export default function Showcase() {
   const graphRef = useRef<GraphHandle>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeSlug, setActiveSlug] = useState(PRESETS[0].slug);
   const [layout, setLayout] = useState<LayoutType>("force");
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
@@ -65,7 +71,7 @@ export default function Showcase() {
 
   const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
 
-  const refit = useCallback((padding = 48) => {
+  const refit = useCallback((padding = 56) => {
     requestAnimationFrame(() => graphRef.current?.focusFit(null, padding));
   }, []);
 
@@ -77,6 +83,7 @@ export default function Showcase() {
       setThemeOverrides(nextPreset.overrides);
       setSelectedId(null);
       setDetailsOpen(false);
+      setDrawerOpen(false);
       refit();
     },
     [refit],
@@ -129,16 +136,21 @@ export default function Showcase() {
     [snapshot.edges],
   );
 
+  const graphDensity = useMemo(() => {
+    if (snapshot.nodes.length < 2) return 0;
+    return Math.round((snapshot.edges.length / snapshot.nodes.length) * 100) / 100;
+  }, [snapshot.edges.length, snapshot.nodes.length]);
+
   const addNode = useCallback(() => {
     const existing = new Set(snapshot.nodes.map((node) => node.id));
     const id = nextId("node", existing);
     const node: NodeData = {
       id,
-      name: `Node ${snapshot.nodes.length + 1}`,
+      name: `Probe ${snapshot.nodes.length + 1}`,
       type: snapshot.nodes[0]?.type ?? "entity",
-      domain: "custom",
-      status: "healthy",
-      meta: { source: "showcase" },
+      domain: "showcase",
+      status: "draft",
+      meta: { origin: "showcase", package: PACKAGE_VERSION },
     };
     commitSnapshot({ ...snapshot, nodes: [...snapshot.nodes, node] }, id);
   }, [commitSnapshot, snapshot]);
@@ -147,7 +159,7 @@ export default function Showcase() {
     if (!selectedId || !selectedNode) return;
     if (
       !window.confirm(
-        `Are you sure you want to remove "${selectedNode.name}" and all its connected edges? This action cannot be undone.`,
+        `Remove "${selectedNode.name}" and its connected edges? This cannot be undone.`,
       )
     ) {
       return;
@@ -166,14 +178,14 @@ export default function Showcase() {
     setDetailsOpen(false);
   }, [commitSnapshot, selectedId, selectedNode, snapshot]);
 
-  const frameSelected = useCallback(() => {
-    graphRef.current?.focusFit(selectedId, 64);
-  }, [selectedId]);
-
   const clearSelection = useCallback(() => {
     setSelectedId(null);
     setDetailsOpen(false);
   }, []);
+
+  const frameSelected = useCallback(() => {
+    graphRef.current?.focusFit(selectedId, 72);
+  }, [selectedId]);
 
   const openNodeDetails = useCallback((node: NodeData) => {
     setSelectedId(node.id);
@@ -181,252 +193,157 @@ export default function Showcase() {
   }, []);
 
   const handlePositionsReady = useCallback(() => {
-    refit(48);
+    refit(56);
   }, [refit]);
 
   useEffect(() => {
-    if (!detailsOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setDetailsOpen(false);
+      if (event.key === "Escape") {
+        setDetailsOpen(false);
+        setDrawerOpen(false);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [detailsOpen]);
+  }, []);
 
   return (
-    <main className="workbench-shell">
-      <div className="mobile-topbar">
+    <main className="atlas-shell">
+      <a className="skip-link" href="#graph-stage">
+        Skip to graph
+      </a>
+
+      <header className="atlas-topbar">
         <button
           type="button"
-          className="icon-button"
-          aria-label={sidebarOpen ? "Close controls" : "Open controls"}
-          aria-expanded={sidebarOpen}
-          aria-controls="graph-controls"
-          onClick={() => setSidebarOpen((open) => !open)}
+          className="drawer-toggle"
+          aria-label={drawerOpen ? "Close scenario rail" : "Open scenario rail"}
+          aria-expanded={drawerOpen}
+          aria-controls="scenario-rail"
+          onClick={() => setDrawerOpen((open) => !open)}
         >
           <span />
           <span />
           <span />
         </button>
-        <span className="brand-mark" title="@invariantcontinuum/graph">@invariantcontinuum/graph</span>
-      </div>
+        <div className="brand-lockup">
+          <span className="brand-sigil">ic</span>
+          <div>
+            <p>Invariant Continuum</p>
+            <strong>Graph Atlas</strong>
+          </div>
+        </div>
+        <nav className="top-links" aria-label="Project links">
+          <a href="https://github.com/invariantcontinuum/graph" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <span>v{PACKAGE_VERSION}</span>
+        </nav>
+      </header>
 
-      {sidebarOpen ? (
+      {drawerOpen ? (
         <button
           type="button"
           className="drawer-backdrop"
-          aria-label="Close controls"
-          onClick={() => setSidebarOpen(false)}
+          aria-label="Close scenario rail"
+          onClick={() => setDrawerOpen(false)}
         />
       ) : null}
 
       <aside
-        id="graph-controls"
-        className="control-panel"
-        data-open={sidebarOpen}
-        aria-label="Graph controls"
+        id="scenario-rail"
+        className="scenario-rail"
+        data-open={drawerOpen}
+        aria-label="Scenario catalog"
       >
-        <div className="panel-head">
-          <div>
-            <p className="kicker">Graph Scenario Lab</p>
-            <h1>Graph Control Plane</h1>
-          </div>
-          <a
-            className="repo-link"
-            href="https://github.com/invariantcontinuum/graph"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            GitHub
-          </a>
+        <div className="rail-heading">
+          <p>Scenario catalog</p>
+          <strong>{PRESETS.length} maps</strong>
         </div>
-
-        <section className="panel-section">
-          <div className="section-title">
-            <span>Scenarios</span>
-            <strong>{PRESETS.length}</strong>
-          </div>
-          <nav className="preset-list" aria-label="Graph presets">
-            {PRESETS.map((item) => (
-              <button
-                key={item.slug}
-                type="button"
-                className="preset-button"
-                data-active={item.slug === activeSlug}
-                aria-current={item.slug === activeSlug ? "true" : undefined}
-                onClick={() => applyPreset(item.slug)}
-              >
-                <span>{item.folio}</span>
-                <strong title={item.title}>{item.title}</strong>
-                <small title={item.subtitle}>{item.subtitle}</small>
-              </button>
-            ))}
-          </nav>
-        </section>
-
-        <section className="panel-section">
-          <div className="section-title">
-            <span>Render</span>
-            <strong>{layout}</strong>
-          </div>
-          <div className="segmented" aria-label="Layout">
-            {(["force", "hierarchical", "grid"] as LayoutType[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                data-active={layout === item}
-                aria-pressed={layout === item}
-                onClick={() => setLayout(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <div className="segmented" aria-label="Theme mode">
-            {(["light", "dark"] as ThemeMode[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                data-active={themeMode === item}
-                aria-pressed={themeMode === item}
-                onClick={() => setThemeMode(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <div className="button-row">
-            <button type="button" className="action-button" onClick={() => graphRef.current?.fit(48)}>
-              Fit view
-            </button>
-          </div>
-        </section>
-
-        <section className="panel-section">
-          <div className="section-title">
-            <span>Graph</span>
-            <strong>
-              {snapshot.nodes.length} / {snapshot.edges.length}
-            </strong>
-          </div>
-          <div className="button-row">
-            <button type="button" className="action-button" onClick={addNode}>
-              Add node
-            </button>
+        <nav className="scenario-list" aria-label="Graph scenarios">
+          {PRESETS.map((item) => (
             <button
+              key={item.slug}
               type="button"
-              className="danger-button"
-              disabled={!selectedNode}
-              title={!selectedNode ? "Select a node first to remove it" : undefined}
-              onClick={removeSelected}
+              className="scenario-card"
+              data-active={item.slug === activeSlug}
+              aria-current={item.slug === activeSlug ? "true" : undefined}
+              onClick={() => applyPreset(item.slug)}
             >
-              Remove
+              <span>{item.folio}</span>
+              <strong title={item.title}>{item.title}</strong>
+              <small title={item.subtitle}>{item.subtitle}</small>
+              <b>
+                {item.snapshot.nodes.length}n / {item.snapshot.edges.length}e
+              </b>
             </button>
-          </div>
-          <div className="type-cloud" aria-label="Node types">
-            {nodeTypes.map((item) => (
-              <span key={item.key}>
-                {item.key}
-                <b>{item.count}</b>
-              </span>
-            ))}
-          </div>
-          <div className="type-cloud" aria-label="Edge types">
-            {edgeTypes.map((item) => (
-              <span key={item.key}>
-                {item.key}
-                <b>{item.count}</b>
-              </span>
-            ))}
-          </div>
-        </section>
+          ))}
+        </nav>
 
-        <section className="panel-section">
-          <div className="section-title">
-            <span>Selection</span>
-            <strong>{selectedNode ? selectedNode.id : "none"}</strong>
-          </div>
-          {selectedNode ? (
-            <div className="selection-box">
-              <h2>{selectedNode.name}</h2>
-              <dl>
-                <div>
-                  <dt>Type</dt>
-                  <dd>{selectedNode.type}</dd>
-                </div>
-                <div>
-                  <dt>Domain</dt>
-                  <dd>{selectedNode.domain}</dd>
-                </div>
-                <div>
-                  <dt>Status</dt>
-                  <dd>{selectedNode.status}</dd>
-                </div>
-              </dl>
-              <div className="button-row">
-                <button
-                  type="button"
-                  className="action-button"
-                  onClick={() => graphRef.current?.panToNode(selectedNode.id)}
-                >
-                  Center on node
-                </button>
-                <button
-                  type="button"
-                  className="action-button"
-                  title="Keyboard shortcut: Escape"
-                  aria-keyshortcuts="Escape"
-                  onClick={clearSelection}
-                >
-                  Clear
-                </button>
-              </div>
-              <ul className="edge-list" aria-label="Incident edges">
-                {selectedEdges.map((edge) => {
-                  const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
-                  const neighbor =
-                    snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
-                  return (
-                    <li key={edge.id}>
-                      <span title={edge.type}>{edge.type}</span>
-                      <button
-                        type="button"
-                        title={neighbor}
-                        aria-label={`Select neighbor ${neighbor}`}
-                        onClick={() => {
-                          setSelectedId(neighborId);
-                          setDetailsOpen(true);
-                        }}
-                      >
-                        {neighbor}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : (
-            <p className="empty-state">No node selected. Click a node on the canvas to inspect it.</p>
-          )}
+        <section className="rail-panel" aria-label="Package release">
+          <p className="panel-label">Released package</p>
+          <strong>@invariantcontinuum/graph</strong>
+          <span>0.2.9 pinned in this site</span>
         </section>
-
       </aside>
 
-      <section className="graph-workspace" aria-label="Graph canvas">
-        <div className="graph-toolbar">
+      <section className="graph-deck" aria-label="Interactive graph showcase">
+        <div className="deck-head">
           <div>
             <p className="scenario-eyebrow">{preset.subtitle}</p>
-            <h2>{preset.title}</h2>
-            <p className="scenario-copy">{preset.essay}</p>
+            <h1>{preset.title}</h1>
+            <p>{preset.essay}</p>
           </div>
-          <div className="graph-stats" aria-label="Graph stats">
-            <span>{stats?.nodeCount ?? snapshot.nodes.length} nodes</span>
-            <span>{stats?.edgeCount ?? snapshot.edges.length} edges</span>
-            <span>{legend?.node_types.length ?? nodeTypes.length} types</span>
+          <div className="mode-cluster" aria-label="Graph controls">
+            <div className="segmented" aria-label="Layout">
+              {(["force", "hierarchical", "grid"] as LayoutType[]).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  data-active={layout === item}
+                  aria-pressed={layout === item}
+                  onClick={() => setLayout(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+            <div className="segmented compact" aria-label="Theme mode">
+              {(["dark", "light"] as ThemeMode[]).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  data-active={themeMode === item}
+                  aria-pressed={themeMode === item}
+                  onClick={() => setThemeMode(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="graph-stage">
+        <div className="metrics-strip" aria-label="Graph metrics">
+          <span>
+            <b>{stats?.nodeCount ?? snapshot.nodes.length}</b>
+            nodes
+          </span>
+          <span>
+            <b>{stats?.edgeCount ?? snapshot.edges.length}</b>
+            edges
+          </span>
+          <span>
+            <b>{nodeTypes.length}</b>
+            node types
+          </span>
+          <span>
+            <b>{graphDensity}</b>
+            density
+          </span>
+        </div>
+
+        <div id="graph-stage" className="graph-stage">
           <GraphScene
             ref={graphRef}
             snapshot={snapshot}
@@ -445,6 +362,125 @@ export default function Showcase() {
         </div>
       </section>
 
+      <aside className="insight-rail" aria-label="Graph inspector">
+        <section className="inspector-panel selected-panel">
+          <div className="panel-topline">
+            <p>Selection</p>
+            <strong>{selectedNode ? selectedNode.id : "none"}</strong>
+          </div>
+          {selectedNode ? (
+            <>
+              <h2>{selectedNode.name}</h2>
+              <dl className="node-facts">
+                <div>
+                  <dt>Type</dt>
+                  <dd>{selectedNode.type}</dd>
+                </div>
+                <div>
+                  <dt>Domain</dt>
+                  <dd>{selectedNode.domain}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>{selectedNode.status}</dd>
+                </div>
+                <div>
+                  <dt>Edges</dt>
+                  <dd>{selectedEdges.length}</dd>
+                </div>
+              </dl>
+              <div className="action-grid">
+                <button type="button" onClick={frameSelected}>
+                  Frame
+                </button>
+                <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                  Center
+                </button>
+                <button
+                  type="button"
+                  title="Keyboard shortcut: Escape"
+                  aria-keyshortcuts="Escape"
+                  onClick={clearSelection}
+                >
+                  Clear
+                </button>
+                <button type="button" className="danger-action" onClick={removeSelected}>
+                  Remove
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="empty-copy">No active node.</p>
+          )}
+        </section>
+
+        <section className="inspector-panel">
+          <div className="panel-topline">
+            <p>Connections</p>
+            <strong>{selectedEdges.length}</strong>
+          </div>
+          {selectedEdges.length > 0 ? (
+            <ul className="connection-list" aria-label="Selected node connections">
+              {selectedEdges.map((edge) => {
+                const neighborId = edge.source === selectedNode?.id ? edge.target : edge.source;
+                const neighbor =
+                  snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
+                return (
+                  <li key={edge.id}>
+                    <span title={edge.type}>{compactLabel(edge.type)}</span>
+                    <button
+                      type="button"
+                      title={neighbor}
+                      aria-label={`Select neighbor ${neighbor}`}
+                      onClick={() => {
+                        setSelectedId(neighborId);
+                        graphRef.current?.panToNode(neighborId);
+                      }}
+                    >
+                      {neighbor}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="empty-copy">No connected edge list.</p>
+          )}
+        </section>
+
+        <section className="inspector-panel">
+          <div className="panel-topline">
+            <p>Composition</p>
+            <strong>{legend?.edge_types.length ?? edgeTypes.length} edge types</strong>
+          </div>
+          <div className="type-cloud" aria-label="Node type counts">
+            {nodeTypes.map((item) => (
+              <span key={item.key}>
+                {compactLabel(item.key)}
+                <b>{item.count}</b>
+              </span>
+            ))}
+          </div>
+          <div className="type-cloud muted-cloud" aria-label="Edge type counts">
+            {edgeTypes.slice(0, 8).map((item) => (
+              <span key={item.key}>
+                {compactLabel(item.key)}
+                <b>{item.count}</b>
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <section className="inspector-panel controls-panel">
+          <button type="button" onClick={() => graphRef.current?.fit(56)}>
+            Fit all
+          </button>
+          <button type="button" onClick={addNode}>
+            Add probe
+          </button>
+        </section>
+      </aside>
+
       {detailsOpen && selectedNode ? (
         <div className="details-backdrop" role="presentation" onMouseDown={() => setDetailsOpen(false)}>
           <section
@@ -456,7 +492,7 @@ export default function Showcase() {
           >
             <header className="details-header">
               <div>
-                <p className="kicker">Node details</p>
+                <p>Node record</p>
                 <h2 id="node-details-title">{selectedNode.name}</h2>
                 <span>{selectedNode.id}</span>
               </div>
@@ -468,7 +504,7 @@ export default function Showcase() {
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
-                x
+                Close
               </button>
             </header>
 
@@ -492,19 +528,19 @@ export default function Showcase() {
             </dl>
 
             <section className="details-section" aria-label="Connected edges">
-              <div className="section-title">
-                <span>Connections</span>
+              <div className="panel-topline">
+                <p>Adjacent records</p>
                 <strong>{selectedEdges.length}</strong>
               </div>
               {selectedEdges.length > 0 ? (
-                <ul className="modal-edge-list">
+                <ul className="connection-list modal-list">
                   {selectedEdges.map((edge) => {
                     const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
                     const neighbor =
                       snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
                     return (
                       <li key={edge.id}>
-                        <span title={edge.type}>{edge.type}</span>
+                        <span title={edge.type}>{compactLabel(edge.type)}</span>
                         <button
                           type="button"
                           title={neighbor}
@@ -522,36 +558,31 @@ export default function Showcase() {
                   })}
                 </ul>
               ) : (
-                <p className="empty-state">No connected edges.</p>
+                <p className="empty-copy">No connected records.</p>
               )}
             </section>
 
             <section className="details-section" aria-label="Node metadata">
-              <div className="section-title">
-                <span>Metadata</span>
+              <div className="panel-topline">
+                <p>Metadata</p>
                 <strong>{selectedMetaEntries.length}</strong>
               </div>
               {selectedMetaEntries.length > 0 ? (
                 <pre className="meta-block">{formatJson(selectedNode.meta)}</pre>
               ) : (
-                <p className="empty-state">No metadata on this node.</p>
+                <p className="empty-copy">No metadata on this node.</p>
               )}
             </section>
 
             <div className="modal-actions">
-              <button type="button" className="action-button" onClick={frameSelected}>
+              <button type="button" onClick={frameSelected}>
                 Frame
               </button>
-              <button
-                type="button"
-                className="action-button"
-                onClick={() => graphRef.current?.panToNode(selectedNode.id)}
-              >
+              <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
                 type="button"
-                className="action-button"
                 title="Keyboard shortcut: Escape"
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}

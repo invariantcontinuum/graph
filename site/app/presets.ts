@@ -22,8 +22,8 @@ type RawEdge = Omit<GraphSnapshot["edges"][number], "id" | "label" | "weight"> &
   weight?: number;
 };
 
-const LABEL_FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
-const MONO_FONT = "JetBrains Mono, ui-monospace, monospace";
+const LABEL_FONT = "Space Grotesk, -apple-system, BlinkMacSystemFont, sans-serif";
+const MONO_FONT = "IBM Plex Mono, ui-monospace, monospace";
 
 type NodeTypeOverrides = NonNullable<GraphThemeOverrides["nodeTypes"]>;
 
@@ -55,7 +55,7 @@ function snap(nodes: RawNode[], edges: RawEdge[]): GraphSnapshot {
     meta: {
       node_count: nodes.length,
       edge_count: edges.length,
-      last_updated: "2026-05-06T00:00:00Z",
+      last_updated: "2026-05-29T00:00:00Z",
     },
   };
 }
@@ -63,10 +63,10 @@ function snap(nodes: RawNode[], edges: RawEdge[]): GraphSnapshot {
 const gitRepository: Preset = {
   slug: "git-repository",
   folio: "GIT",
-  title: "Tiny Repo",
-  subtitle: "Commits, files, checks, and releases",
+  title: "Release Cartography",
+  subtitle: "Branches, checks, source files, and package tags",
   essay:
-    "A small Git repository graph showing how commits touch source files, tests, packages, and CI gates before a release is cut.",
+    "A package-release map that shows how source edits, quality gates, worker builds, and tags converge before the graph package ships.",
   snapshot: snap(
     [
       { id: "main", name: "main", type: "branch", domain: "git", status: "protected", community: 1 },
@@ -104,10 +104,10 @@ const gitRepository: Preset = {
     canvasBg: "#071014",
     gridLineColor: "#13252c",
     labelHalo: "#071014",
-    selectionBorder: "#38f5b6",
-    selectionFill: "rgba(56, 245, 182, 0.18)",
-    hullFill: "rgba(56, 245, 182, 0.06)",
-    hullStroke: "rgba(56, 245, 182, 0.26)",
+    selectionBorder: "#c5d86d",
+    selectionFill: "rgba(197, 216, 109, 0.18)",
+    hullFill: "rgba(197, 216, 109, 0.06)",
+    hullStroke: "rgba(197, 216, 109, 0.26)",
     dimOpacity: 0.12,
     defaultNodeStyle: {
       color: "#0f1d24",
@@ -119,23 +119,23 @@ const gitRepository: Preset = {
     },
     defaultEdgeStyle: { color: "#5c7c88", width: 1.3, arrow: "triangle" },
     nodeTypes: cardNodeTypes({
-      branch: { shape: "roundrectangle", color: "#102c36", borderColor: "#38f5b6", halfWidth: 54, halfHeight: 28 },
-      commit: { shape: "roundrectangle", color: "#111c26", borderColor: "#64a8ff", halfWidth: 33, halfHeight: 33, labelFont: MONO_FONT, labelSize: 10 },
-      manifest: { shape: "roundrectangle", color: "#241b33", borderColor: "#b98cff", halfWidth: 58, halfHeight: 22 },
-      source: { shape: "roundrectangle", color: "#122238", borderColor: "#64a8ff", halfWidth: 66, halfHeight: 22 },
+      branch: { shape: "roundrectangle", color: "#102c36", borderColor: "#c5d86d", halfWidth: 54, halfHeight: 28 },
+      commit: { shape: "roundrectangle", color: "#111c26", borderColor: "#456990", halfWidth: 33, halfHeight: 33, labelFont: MONO_FONT, labelSize: 10 },
+      manifest: { shape: "roundrectangle", color: "#241b33", borderColor: "#b8872f", halfWidth: 58, halfHeight: 22 },
+      source: { shape: "roundrectangle", color: "#122238", borderColor: "#456990", halfWidth: 66, halfHeight: 22 },
       test: { shape: "roundrectangle", color: "#24220f", borderColor: "#ffd166", halfWidth: 58, halfHeight: 30 },
-      check: { shape: "roundrectangle", color: "#13271d", borderColor: "#38f5b6", halfWidth: 42, halfHeight: 24 },
-      release: { shape: "roundrectangle", color: "#31121f", borderColor: "#ff4d8d", halfWidth: 58, halfHeight: 28 },
+      check: { shape: "roundrectangle", color: "#13271d", borderColor: "#c5d86d", halfWidth: 42, halfHeight: 24 },
+      release: { shape: "roundrectangle", color: "#31121f", borderColor: "#c95735", halfWidth: 58, halfHeight: 28 },
     }),
     edgeTypes: {
-      points_to: { color: "#38f5b6", width: 2.2 },
+      points_to: { color: "#c5d86d", width: 2.2 },
       parent: { color: "#4f6b75", width: 1.4, style: "solid" },
-      touches: { color: "#64a8ff", width: 1.8, style: "dashed" },
-      imports: { color: "#b98cff", width: 1.6 },
+      touches: { color: "#456990", width: 1.8, style: "dashed" },
+      imports: { color: "#b8872f", width: 1.6 },
       covered_by: { color: "#ffd166", width: 1.7, style: "short-dashed" },
-      gates: { color: "#38f5b6", width: 1.9 },
-      tags: { color: "#ff4d8d", width: 2 },
-      publishes: { color: "#ff4d8d", width: 1.8, style: "dotted" },
+      gates: { color: "#c5d86d", width: 1.9 },
+      tags: { color: "#c95735", width: 2 },
+      publishes: { color: "#c95735", width: 1.8, style: "dotted" },
     },
   },
 };
@@ -143,10 +143,10 @@ const gitRepository: Preset = {
 const slackThread: Preset = {
   slug: "slack-thread",
   folio: "SLK",
-  title: "Incident Thread",
-  subtitle: "Messages, people, decisions, and links",
+  title: "Response Channel",
+  subtitle: "People, messages, runbooks, and accepted calls",
   essay:
-    "A Slack incident thread where replies, mentions, runbook links, and final decisions become navigable graph structure.",
+    "A response-room map that turns messages, deploy events, evidence links, and incident decisions into a navigable operational record.",
   snapshot: snap(
     [
       { id: "channel", name: "#ops-war-room", type: "channel", domain: "slack", status: "active", community: 1 },
@@ -184,10 +184,10 @@ const slackThread: Preset = {
     canvasBg: "#fbfbff",
     gridLineColor: "#e7e9f4",
     labelHalo: "#fbfbff",
-    selectionBorder: "#5b5df7",
-    selectionFill: "rgba(91, 93, 247, 0.14)",
-    hullFill: "rgba(91, 93, 247, 0.05)",
-    hullStroke: "rgba(91, 93, 247, 0.2)",
+    selectionBorder: "#3b6f70",
+    selectionFill: "rgba(59, 111, 112, 0.14)",
+    hullFill: "rgba(59, 111, 112, 0.05)",
+    hullStroke: "rgba(59, 111, 112, 0.2)",
     dimOpacity: 0.16,
     defaultNodeStyle: {
       color: "#ffffff",
@@ -199,24 +199,24 @@ const slackThread: Preset = {
     },
     defaultEdgeStyle: { color: "#7a8199", width: 1.25, arrow: "triangle" },
     nodeTypes: cardNodeTypes({
-      channel: { shape: "roundrectangle", color: "#eef1ff", borderColor: "#5b5df7", halfWidth: 72, halfHeight: 28 },
-      person: { shape: "roundrectangle", color: "#ffffff", borderColor: "#10a37f", halfWidth: 34, halfHeight: 34 },
+      channel: { shape: "roundrectangle", color: "#eef1ff", borderColor: "#3b6f70", halfWidth: 72, halfHeight: 28 },
+      person: { shape: "roundrectangle", color: "#ffffff", borderColor: "#8a9a3f", halfWidth: 34, halfHeight: 34 },
       bot: { shape: "roundrectangle", color: "#fff7e6", borderColor: "#f4a62a", halfWidth: 54, halfHeight: 26 },
       message: { shape: "roundrectangle", color: "#ffffff", borderColor: "#7a8199", halfWidth: 70, halfHeight: 24, labelSize: 10 },
-      decision: { shape: "roundrectangle", color: "#f0fff9", borderColor: "#10a37f", halfWidth: 64, halfHeight: 32 },
-      link: { shape: "roundrectangle", color: "#f8f4ff", borderColor: "#9a63ff", halfWidth: 70, halfHeight: 24 },
-      event: { shape: "roundrectangle", color: "#fff0f4", borderColor: "#ff4d8d", halfWidth: 48, halfHeight: 32 },
+      decision: { shape: "roundrectangle", color: "#f0fff9", borderColor: "#8a9a3f", halfWidth: 64, halfHeight: 32 },
+      link: { shape: "roundrectangle", color: "#f8f4ff", borderColor: "#b8872f", halfWidth: 70, halfHeight: 24 },
+      event: { shape: "roundrectangle", color: "#fff0f4", borderColor: "#c95735", halfWidth: 48, halfHeight: 32 },
     }),
     edgeTypes: {
-      posted: { color: "#10a37f", width: 1.7 },
-      contains: { color: "#5b5df7", width: 1.7 },
+      posted: { color: "#8a9a3f", width: 1.7 },
+      contains: { color: "#3b6f70", width: 1.7 },
       reply: { color: "#7a8199", width: 1.4 },
-      supports: { color: "#10a37f", width: 2 },
-      next_step: { color: "#5b5df7", width: 2 },
-      links: { color: "#9a63ff", width: 1.7, style: "dashed" },
-      mentioned_by: { color: "#ff4d8d", width: 1.8, style: "short-dashed" },
+      supports: { color: "#8a9a3f", width: 2 },
+      next_step: { color: "#3b6f70", width: 2 },
+      links: { color: "#b8872f", width: 1.7, style: "dashed" },
+      mentioned_by: { color: "#c95735", width: 1.8, style: "short-dashed" },
       mentions: { color: "#f4a62a", width: 1.5, style: "dotted" },
-      assigned_to: { color: "#10a37f", width: 1.6, style: "dashed" },
+      assigned_to: { color: "#8a9a3f", width: 1.6, style: "dashed" },
     },
   },
 };
@@ -224,10 +224,10 @@ const slackThread: Preset = {
 const confluenceDocs: Preset = {
   slug: "confluence-docs",
   folio: "DOC",
-  title: "Docs Mesh",
-  subtitle: "Confluence pages, owners, ADRs, and runbooks",
+  title: "Knowledge Fabric",
+  subtitle: "Pages, ADRs, owners, specs, and stale trails",
   essay:
-    "A Confluence knowledge graph showing how onboarding pages, ADRs, API docs, and runbooks cite each other and expose ownership gaps.",
+    "A documentation graph that exposes ownership, stale paths, architecture decisions, and the pages that quietly hold systems together.",
   snapshot: snap(
     [
       { id: "space", name: "Platform Space", type: "space", domain: "confluence", status: "active", community: 1 },
@@ -263,10 +263,10 @@ const confluenceDocs: Preset = {
     canvasBg: "#f5f7fb",
     gridLineColor: "#dde4f2",
     labelHalo: "#f5f7fb",
-    selectionBorder: "#246bfe",
-    selectionFill: "rgba(36, 107, 254, 0.13)",
-    hullFill: "rgba(36, 107, 254, 0.05)",
-    hullStroke: "rgba(36, 107, 254, 0.2)",
+    selectionBorder: "#3b6f70",
+    selectionFill: "rgba(59, 111, 112, 0.13)",
+    hullFill: "rgba(59, 111, 112, 0.05)",
+    hullStroke: "rgba(59, 111, 112, 0.2)",
     dimOpacity: 0.15,
     defaultNodeStyle: {
       color: "#ffffff",
@@ -278,19 +278,19 @@ const confluenceDocs: Preset = {
     },
     defaultEdgeStyle: { color: "#74839b", width: 1.3, arrow: "triangle" },
     nodeTypes: cardNodeTypes({
-      space: { shape: "roundrectangle", color: "#e8efff", borderColor: "#246bfe", halfWidth: 70, halfHeight: 30 },
+      space: { shape: "roundrectangle", color: "#e8efff", borderColor: "#3b6f70", halfWidth: 70, halfHeight: 30 },
       page: { shape: "roundrectangle", color: "#ffffff", borderColor: "#9aa8c2", halfWidth: 70, halfHeight: 24 },
-      adr: { shape: "roundrectangle", color: "#f1f0ff", borderColor: "#725cff", halfWidth: 58, halfHeight: 32 },
+      adr: { shape: "roundrectangle", color: "#f1f0ff", borderColor: "#b8872f", halfWidth: 58, halfHeight: 32 },
       spec: { shape: "roundrectangle", color: "#ecfeff", borderColor: "#0891b2", halfWidth: 54, halfHeight: 26 },
       runbook: { shape: "roundrectangle", color: "#f0fdf4", borderColor: "#16a34a", halfWidth: 66, halfHeight: 28 },
       retro: { shape: "roundrectangle", color: "#fff7ed", borderColor: "#f97316", halfWidth: 58, halfHeight: 34 },
       owner: { shape: "roundrectangle", color: "#ffffff", borderColor: "#111827", halfWidth: 34, halfHeight: 34 },
     }),
     edgeTypes: {
-      contains: { color: "#246bfe", width: 1.8 },
+      contains: { color: "#3b6f70", width: 1.8 },
       links_to: { color: "#74839b", width: 1.4 },
       defines: { color: "#0891b2", width: 1.8 },
-      decides: { color: "#725cff", width: 2 },
+      decides: { color: "#b8872f", width: 2 },
       references: { color: "#16a34a", width: 1.7, style: "dashed" },
       updates: { color: "#f97316", width: 1.8, style: "short-dashed" },
       owns: { color: "#111827", width: 1.5, style: "dotted" },
@@ -302,10 +302,10 @@ const confluenceDocs: Preset = {
 const jiraBoard: Preset = {
   slug: "jira-board",
   folio: "JRA",
-  title: "Sprint Board",
-  subtitle: "Epics, stories, tasks, bugs, and blockers",
+  title: "Delivery Risk Map",
+  subtitle: "Epics, blockers, owners, tests, and sprint pressure",
   essay:
-    "A Jira kanban board converted into graph form so product scope, engineering tasks, blockers, owners, and sprint risk are visible together.",
+    "A delivery map that connects scope, implementation work, bug pressure, owners, and timeline risk without flattening it into columns.",
   snapshot: snap(
     [
       { id: "board", name: "Platform Sprint", type: "board", domain: "jira", status: "active", community: 1 },
@@ -345,10 +345,10 @@ const jiraBoard: Preset = {
     canvasBg: "#0b1020",
     gridLineColor: "#1b2747",
     labelHalo: "#0b1020",
-    selectionBorder: "#67e8f9",
-    selectionFill: "rgba(103, 232, 249, 0.16)",
-    hullFill: "rgba(103, 232, 249, 0.06)",
-    hullStroke: "rgba(103, 232, 249, 0.22)",
+    selectionBorder: "#c5d86d",
+    selectionFill: "rgba(197, 216, 109, 0.16)",
+    hullFill: "rgba(197, 216, 109, 0.06)",
+    hullStroke: "rgba(197, 216, 109, 0.22)",
     dimOpacity: 0.12,
     defaultNodeStyle: {
       color: "#111a2f",
@@ -360,25 +360,25 @@ const jiraBoard: Preset = {
     },
     defaultEdgeStyle: { color: "#7686a8", width: 1.3, arrow: "triangle" },
     nodeTypes: cardNodeTypes({
-      board: { shape: "roundrectangle", color: "#16213d", borderColor: "#67e8f9", halfWidth: 70, halfHeight: 30 },
-      sprint: { shape: "roundrectangle", color: "#18213a", borderColor: "#38bdf8", halfWidth: 58, halfHeight: 28 },
-      epic: { shape: "roundrectangle", color: "#2b1645", borderColor: "#c084fc", halfWidth: 64, halfHeight: 34 },
-      story: { shape: "roundrectangle", color: "#10293a", borderColor: "#38bdf8", halfWidth: 66, halfHeight: 24 },
-      task: { shape: "roundrectangle", color: "#102a22", borderColor: "#34d399", halfWidth: 52, halfHeight: 26 },
-      bug: { shape: "roundrectangle", color: "#32131c", borderColor: "#fb7185", halfWidth: 52, halfHeight: 34 },
+      board: { shape: "roundrectangle", color: "#16213d", borderColor: "#c5d86d", halfWidth: 70, halfHeight: 30 },
+      sprint: { shape: "roundrectangle", color: "#18213a", borderColor: "#456990", halfWidth: 58, halfHeight: 28 },
+      epic: { shape: "roundrectangle", color: "#2b1645", borderColor: "#b8872f", halfWidth: 64, halfHeight: 34 },
+      story: { shape: "roundrectangle", color: "#10293a", borderColor: "#456990", halfWidth: 66, halfHeight: 24 },
+      task: { shape: "roundrectangle", color: "#102a22", borderColor: "#8a9a3f", halfWidth: 52, halfHeight: 26 },
+      bug: { shape: "roundrectangle", color: "#32131c", borderColor: "#c95735", halfWidth: 52, halfHeight: 34 },
       test: { shape: "roundrectangle", color: "#2d230f", borderColor: "#fbbf24", halfWidth: 58, halfHeight: 26 },
       owner: { shape: "roundrectangle", color: "#172033", borderColor: "#f8fafc", halfWidth: 32, halfHeight: 32 },
-      risk: { shape: "roundrectangle", color: "#32131c", borderColor: "#fb7185", halfWidth: 58, halfHeight: 32 },
+      risk: { shape: "roundrectangle", color: "#32131c", borderColor: "#c95735", halfWidth: 58, halfHeight: 32 },
     }),
     edgeTypes: {
-      tracks: { color: "#67e8f9", width: 1.9 },
-      contains: { color: "#c084fc", width: 1.7 },
-      implemented_by: { color: "#34d399", width: 1.7 },
-      blocks: { color: "#fb7185", width: 2.3, style: "dashed" },
-      raises: { color: "#fb7185", width: 2 },
+      tracks: { color: "#c5d86d", width: 1.9 },
+      contains: { color: "#b8872f", width: 1.7 },
+      implemented_by: { color: "#8a9a3f", width: 1.7 },
+      blocks: { color: "#c95735", width: 2.3, style: "dashed" },
+      raises: { color: "#c95735", width: 2 },
       verifies: { color: "#fbbf24", width: 1.7, style: "short-dashed" },
       owns: { color: "#f8fafc", width: 1.3, style: "dotted" },
-      threatens: { color: "#fb7185", width: 2.2 },
+      threatens: { color: "#c95735", width: 2.2 },
     },
   },
 };
@@ -386,10 +386,10 @@ const jiraBoard: Preset = {
 const serviceLogs: Preset = {
   slug: "service-logs",
   folio: "LOG",
-  title: "Trace Storm",
-  subtitle: "Logs, services, traces, deploys, and alerts",
+  title: "Telemetry Constellation",
+  subtitle: "Traces, services, queues, deploys, logs, and alerts",
   essay:
-    "A cross-service log graph that connects trace IDs, deploy events, queues, databases, and alerts to explain why errors fan out.",
+    "A production telemetry graph that links spans, services, queues, deploys, logs, vendors, and alert burn into one inspectable map.",
   snapshot: snap(
     [
       { id: "trace", name: "trace 8f21", type: "trace", domain: "observability", status: "hot", community: 1 },
@@ -430,10 +430,10 @@ const serviceLogs: Preset = {
     canvasBg: "#050816",
     gridLineColor: "#151a34",
     labelHalo: "#050816",
-    selectionBorder: "#00e5ff",
-    selectionFill: "rgba(0, 229, 255, 0.18)",
-    hullFill: "rgba(0, 229, 255, 0.06)",
-    hullStroke: "rgba(0, 229, 255, 0.24)",
+    selectionBorder: "#c5d86d",
+    selectionFill: "rgba(197, 216, 109, 0.18)",
+    hullFill: "rgba(197, 216, 109, 0.06)",
+    hullStroke: "rgba(197, 216, 109, 0.24)",
     dimOpacity: 0.1,
     defaultNodeStyle: {
       color: "#0f172a",
@@ -445,27 +445,27 @@ const serviceLogs: Preset = {
     },
     defaultEdgeStyle: { color: "#64748b", width: 1.35, arrow: "triangle" },
     nodeTypes: cardNodeTypes({
-      trace: { shape: "roundrectangle", color: "#062c36", borderColor: "#00e5ff", halfWidth: 58, halfHeight: 30 },
-      service: { shape: "roundrectangle", color: "#101a33", borderColor: "#60a5fa", halfWidth: 66, halfHeight: 24 },
+      trace: { shape: "roundrectangle", color: "#062c36", borderColor: "#c5d86d", halfWidth: 58, halfHeight: 30 },
+      service: { shape: "roundrectangle", color: "#101a33", borderColor: "#456990", halfWidth: 66, halfHeight: 24 },
       database: { shape: "roundrectangle", color: "#201a0c", borderColor: "#f59e0b", halfWidth: 62, halfHeight: 28 },
-      queue: { shape: "roundrectangle", color: "#1a1531", borderColor: "#a78bfa", halfWidth: 66, halfHeight: 28 },
-      deploy: { shape: "roundrectangle", color: "#27142a", borderColor: "#f472b6", halfWidth: 66, halfHeight: 34 },
-      log: { shape: "roundrectangle", color: "#2b1018", borderColor: "#fb7185", halfWidth: 54, halfHeight: 26, labelFont: MONO_FONT },
-      alert: { shape: "roundrectangle", color: "#35150b", borderColor: "#fb923c", halfWidth: 58, halfHeight: 36 },
-      dashboard: { shape: "roundrectangle", color: "#101f19", borderColor: "#34d399", halfWidth: 72, halfHeight: 24 },
+      queue: { shape: "roundrectangle", color: "#1a1531", borderColor: "#b8872f", halfWidth: 66, halfHeight: 28 },
+      deploy: { shape: "roundrectangle", color: "#27142a", borderColor: "#c95735", halfWidth: 66, halfHeight: 34 },
+      log: { shape: "roundrectangle", color: "#2b1018", borderColor: "#c95735", halfWidth: 54, halfHeight: 26, labelFont: MONO_FONT },
+      alert: { shape: "roundrectangle", color: "#35150b", borderColor: "#b8872f", halfWidth: 58, halfHeight: 36 },
+      dashboard: { shape: "roundrectangle", color: "#101f19", borderColor: "#8a9a3f", halfWidth: 72, halfHeight: 24 },
       external: { shape: "roundrectangle", color: "#111827", borderColor: "#e5e7eb", halfWidth: 36, halfHeight: 36 },
     }),
     edgeTypes: {
-      passes_through: { color: "#00e5ff", width: 2 },
-      calls: { color: "#60a5fa", width: 1.7 },
+      passes_through: { color: "#c5d86d", width: 2 },
+      calls: { color: "#456990", width: 1.7 },
       writes: { color: "#f59e0b", width: 1.8 },
-      enqueues: { color: "#a78bfa", width: 1.8 },
-      feeds: { color: "#a78bfa", width: 1.5, style: "dashed" },
-      changed: { color: "#f472b6", width: 2.2, style: "short-dashed" },
-      emits: { color: "#fb7185", width: 1.6, style: "dotted" },
-      triggers: { color: "#fb923c", width: 2.2 },
-      correlates: { color: "#34d399", width: 1.7, style: "dashed" },
-      precedes: { color: "#f472b6", width: 1.8 },
+      enqueues: { color: "#b8872f", width: 1.8 },
+      feeds: { color: "#b8872f", width: 1.5, style: "dashed" },
+      changed: { color: "#c95735", width: 2.2, style: "short-dashed" },
+      emits: { color: "#c95735", width: 1.6, style: "dotted" },
+      triggers: { color: "#b8872f", width: 2.2 },
+      correlates: { color: "#8a9a3f", width: 1.7, style: "dashed" },
+      precedes: { color: "#c95735", width: 1.8 },
     },
   },
 };
