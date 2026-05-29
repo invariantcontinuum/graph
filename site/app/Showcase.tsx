@@ -464,6 +464,8 @@ export default function Showcase() {
                 type="button"
                 className="modal-close"
                 aria-label="Close node details"
+                title="Keyboard shortcut: Escape"
+                aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
                 x
@@ -547,7 +549,13 @@ export default function Showcase() {
               >
                 Center
               </button>
-              <button type="button" className="action-button" onClick={() => setDetailsOpen(false)}>
+              <button
+                type="button"
+                className="action-button"
+                title="Keyboard shortcut: Escape"
+                aria-keyshortcuts="Escape"
+                onClick={() => setDetailsOpen(false)}
+              >
                 Close
               </button>
             </div>
