@@ -34,6 +34,27 @@ batch when touching React files.
 - Every behavior change needs a focused test or a browser/WASM test. Prefer
   tests that fail before the refactor.
 
+## Architecture Principle Review
+
+Every code-focused Jules Bolt pass should also scan for SOLID, DRY, and KISS
+violations. Treat these as design-smell checks that guide fixes, not as slogans
+that justify churn.
+
+| Principle | What to look for | Appropriate fix |
+| --- | --- | --- |
+| Single Responsibility | Components or modules that own rendering, layout math, worker protocol, theme conversion, and input state in one place | Extract cohesive helpers or hooks around one reason to change, such as pointer state, layout adapters, or theme normalization |
+| Open/Closed | Layout or renderer branches that require editing central control flow for every new mode, overlay, or theme variant | Introduce typed strategy maps or small adapters while preserving existing public props |
+| Liskov Substitution | Layout implementations, worker messages, or theme tokens that only work for one mode despite sharing a common type | Tighten interfaces, split incompatible variants, and add tests that exercise force, hierarchical, and grid paths through the same public API |
+| Interface Segregation | Props, options, or internal structs that force callers to provide unrelated node, edge, layout, and overlay settings | Split options by consumer and keep compatibility shims at the boundary when needed |
+| Dependency Inversion | React UI logic directly depending on low-level worker packet details, layout internals, or DOM measurement side effects | Depend on small domain interfaces and isolate packet conversion or DOM reads in adapters |
+| DRY | Copied geometry, theme conversion, edge attachment, label placement, or canvas setup logic across overlays and React bridge code | Extract the shared rule into a named utility only when the duplicate behavior must stay identical |
+| KISS | Abstract factories, generic helpers, or state machines that make simple graph behavior harder to inspect than the original branch | Prefer direct, typed functions with clear names; remove indirection that has no current second use |
+
+When a principle issue is found, record the concrete symptom, affected files,
+and the smallest fix that improves maintainability without weakening runtime
+performance. If the "fix" would create a larger abstraction than the problem,
+leave a note and keep the simpler code.
+
 ## `Graph.tsx` Complexity Plan
 
 The pointer event section should be split by responsibility:
