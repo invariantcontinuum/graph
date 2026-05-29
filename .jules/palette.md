@@ -1,71 +1,104 @@
-## 2024-04-26 - Presentational Canvas Overlays
-**Learning:** In complex, multi-layered WebGL/Canvas React components, screen readers will pick up supplemental canvas overlays if not explicitly hidden. The main interaction layer handles keyboard and screen reader focus, but decorative layers (like grids or text labels) add noise to the accessibility tree.
-**Action:** Always apply `aria-hidden={true}` to supplementary presentation-only `<canvas>` elements that act as visual overlays to an interactive root.
+# Jules Palette Playbook: Accessibility, UX, and Design
 
-## 2024-04-27 - Canvas Focus Ring Accessibility
-**Learning:** For interactive `<canvas>` elements acting as a single application root, native browser `:focus-visible` styling is often masked or inconsistent. Keyboard interactivity (shortcuts) and focus states must be explicitly managed within the canvas component.
-**Action:** Use an explicit `onFocus`/`onBlur` listener checking for `matches(":focus-visible")` to emulate standard `outline` focus rings over custom rendered WebGL/Canvas controls.
+Last updated: 2026-05-29
 
-## 2024-06-18 - [Toggle Panels & Form Labels Accessibility]
-**Learning:** UI interactive layouts specifically using a source/code drawer benefit greatly from native ARIA `aria-expanded` and `aria-controls` bindings (associating the toggle button with the panel ID). Additionally, raw code `textarea` elements styled merely by adjacent visual elements (like `span` tags styled as "eyebrow") fail screen readers. They must be explicitly associated using a semantic `<label htmlFor="...">` matching the `id` of the `textarea`.
-**Action:** Always use `aria-expanded` tracking local state and map it with `aria-controls` to collapsible panels. Avoid visual-only hints; always replace standalone span text descriptions above textareas/inputs with semantic `label`s bound by `htmlFor` to the field `id`.
+This file is the playbook for product experience: graph readability,
+accessibility semantics, keyboard behavior, labels, themes, responsive fit, and
+showcase design. The graph package is a product UI surface, so clarity and
+predictable controls matter more than decorative novelty.
 
-## 2024-05-03 - Form Semantics and Toggle Button Accessibility
-**Learning:** UI interactive layouts must use `aria-expanded` and `aria-controls` on toggle buttons bound to the ID of collapsible panels. Form fields such as `<textarea>` must be explicitly associated with semantic `<label htmlFor="...">` elements rather than visual-only styling like `<span>` with classes.
-**Action:** Consistently enforce the pairing of labels to form inputs via IDs, and track interactive disclosure component state explicitly via `aria-expanded`/`aria-controls` for screen readers.
+## Current SonarCloud Accessibility Target
 
-## 2024-05-15 - Expandable Layouts and Form Labels Accessibility
-**Learning:** Interactive layouts containing drawers, collapsibles, or visually distinct input areas often forget screen reader linkage. Custom toggles omit `aria-expanded` and `aria-controls`, and visually grouped `<span className="eyebrow">` elements above `<textarea>` or `<input>` fields do not act as labels for screen readers.
-**Action:** Always add `aria-expanded` and `aria-controls` to custom toggle buttons, mapping to the ID of the collapsible panel. Convert visual-only `<span className="...">` labels above inputs to semantic `<label htmlFor="...">` to ensure form fields are properly described.
+SonarCloud currently reports overlay and canvas accessibility findings in these
+files:
 
-## 2024-05-05 - Semantic Association of Code Areas
-**Learning:** Found `<textarea>` blocks labeled using visual `<span>` tags rather than semantic `<label>` elements connected via `htmlFor`. A "source view" button toggled code blocks visually but lacked ARIA properties connecting the toggle button state (`aria-expanded`) and relationship (`aria-controls`) to the code container.
-**Action:** Always link form elements with descriptive `<label>`s via IDs and correctly reflect toggle state and relationship of layout blocks using `aria-expanded` and `aria-controls`.
+| Rule | Files | Problem | Preferred fix |
+| --- | --- | --- | --- |
+| `typescript:S6819` | `react/GridOverlay.tsx`, `react/LabelOverlay.tsx`, `react/EdgeLabelsOverlay.tsx`, `react/CompoundFramesOverlay.tsx` | Presentation-role canvas usage is flagged | Remove `role="presentation"` from non-interactive overlay canvases; keep them unfocusable and hidden from assistive tech |
+| `typescript:S6825` | same overlay files | `aria-hidden="true"` is flagged as focusable-risk | Ensure overlay canvases have no `tabIndex`, no interactive handlers, and `pointerEvents: "none"` |
+| `typescript:S6843` | overlay files and `react/Graph.tsx` | Interactive or canvas elements have questionable roles | Keep only the main WebGL canvas focusable; reassess whether `role="application"` is justified or should become a labelled region with documented keyboard support |
 
-## 2024-05-18 - Segmented Controls and Active State Announcements
-**Learning:** For custom segmented controls or lists of buttons representing a single selection state (like theme mode or layout type), relying solely on `data-active` attributes only provides visual updates via CSS. Screen readers fail to announce when a button becomes the active or selected option, leaving keyboard users unaware of their current configuration.
-**Action:** Always complement visual state attributes like `data-active` with `aria-pressed` or `aria-current` dynamically tied to the selected state to ensure screen readers correctly announce the active button.
-## 2024-06-25 - Form Validation and Disabled States Learnings
-**Learning:** React components outputting dynamic validation errors without `role="alert"` or `aria-live="assertive"` cause critical accessibility issues, failing to notify screen reader users when invalid JSON is entered. Additionally, interactive buttons left disabled without explaining why cause severe UX friction for all users (not just assistive tech users) who don't know the required precursor state (e.g., selecting a node).
-**Action:** Always wrap dynamic inline error messages in `role="alert"` or `aria-live` containers. Pair `disabled={true}` states with a `title` (or tooltip wrapper) explaining the missing prerequisites to re-enable the control.
+Done criteria:
 
-## 2024-05-11 - Add Discoverable Clear Selection Button
-**Learning:** While power users and keyboard navigators can use 'Escape' or click the background to clear a selection in the WebGL canvas, relying solely on invisible interactions hurts discoverability. Adding an explicit "Clear" button to the active selection panel not only provides a clear visual escape hatch but also serves as a natural place to advertise the 'Escape' keyboard shortcut via the `title` and `aria-keyshortcuts` attributes.
-**Action:** Always pair global canvas click-to-clear or escape-to-clear behaviors with an explicit, visually apparent button in the active state UI, and use that button to advertise the shortcut.
-## 2026-05-14 - Keyboard Shortcut Accessibility for Zoom Buttons
-**Learning:** When advertising keyboard shortcuts in visual tooltips (`title` attributes), adding the `aria-keyshortcuts` attribute ensures that screen readers also correctly announce these shortcuts, improving discoverability for keyboard-only or visually impaired users.
-**Action:** Always complement `title="Keyboard shortcut: ..."` on buttons with the corresponding `aria-keyshortcuts="..."` attribute to maintain equal accessibility.
-## 2026-05-16 - Add Confirmation to Destructive Actions
-**Learning:** Destructive actions without confirmation pose a severe data-loss risk, especially in graph editing where restoring edges can be tedious.
-**Action:** Always wrap destructive UI operations (like removing nodes) in a confirmation mechanism, such as `window.confirm`, to verify user intent and prevent accidents.
+- Supplementary canvases are not in the accessibility tree.
+- The main graph canvas has one clear accessible name.
+- Keyboard users can discover focus, zoom, fit, selection, and escape behavior.
+- SonarCloud no longer reports the overlay role findings.
 
-## 2024-10-24 - Destructive Actions Confirmation
-**Learning:** Destructive actions without confirmation dialogues (like deleting a node and its edges in a graph UI) can lead to accidental data loss and cause severe UX frustration. Users might accidentally click the wrong button, especially in dense control panels.
-**Action:** Always wrap destructive UI actions (such as removing items) with a confirmation mechanism, such as `window.confirm`, providing clear context on what is being deleted.
+## Canvas Accessibility Contract
 
-## 2026-05-19 - Destructive Action Guard
-**Learning:** Destructive UI actions (like removing elements) need explicit confirmation guards to prevent accidental data loss. This improves UX by making destructive behavior intentional rather than accidental.
-**Action:** Guard destructive actions, such as removing elements from the graph, with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss.
+- `Graph` owns the only focusable canvas.
+- Overlay canvases are decorative implementation layers. They should have
+  `aria-hidden={true}`, no `role`, no `tabIndex`, no pointer handlers, and
+  `pointerEvents: "none"`.
+- If an overlay becomes interactive, it stops being an overlay. Move interaction
+  into `Graph` or expose an HTML control in the host chrome.
+- Do not use `role="presentation"` on `<canvas>` unless a browser and SonarCloud
+  validation proves it is necessary. Current evidence says it is noisy.
+- Do not expose every node as DOM text by default. Large graphs need a
+  canvas-first model, but selection and inspector chrome should expose the
+  active node, connected edges, and action state.
 
-## 2024-05-20 - Guard Destructive Actions
-**Learning:** Destructive actions without warning can easily cause data loss. In custom application graphs or canvas workspaces where elements can be deleted without easy undo features, always include a confirmation step.
-**Action:** Use window.confirm with the specific element's name to guarantee users know exactly what they are removing before executing the destructive function.
+## UX And Design Priorities
 
-## 2024-05-22 - Add confirmation dialog for delete action
-**Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss. Furthermore, truncated text elements must include `title` attributes to ensure content is accessible.
-**Action:** Always wrap delete/remove callbacks with a `window.confirm` dialog, specifically including the name of the entity being deleted. Always add `title` to text elements truncated with `text-overflow: ellipsis`.
-## 2026-05-24 - Truncated Text Accessibility
-**Learning:** UI elements with visually truncated text (e.g., due to `text-overflow: ellipsis`) must include `title` attributes to expose the full text on hover, and interactive elements should use `aria-label` to ensure the complete text is announced by screen readers.
-**Action:** Always add `title` and `aria-label` attributes to elements that are styled with `text-overflow: ellipsis`, particularly interactive elements like buttons, to ensure accessibility.
+The package should feel like a dependable graph workbench:
 
-## 2024-05-27 - Consistent Accessibility Attributes on Duplicated Elements
-**Learning:** When UI elements like item lists or action buttons are duplicated across different areas of the application (e.g., inside a sidebar vs. inside a modal dialog), it is easy to forget accessibility attributes on the secondary instance. This creates an inconsistent and confusing experience for screen reader users and keyboard navigators.
-**Action:** Always verify that accessibility attributes, such as `title`, `aria-label`, and `aria-keyshortcuts`, are consistently applied across all instances of a UI pattern, regardless of whether it is in a main view or a modal/sidebar.
+- Nodes read as stable cards, not random symbols.
+- Edges attach to node boundaries and move during drag.
+- Force, hierarchical, and grid layouts should all be usable, not only force.
+- Dark and light themes must propagate to canvas background, grid, nodes,
+  labels, edges, selection, and hulls.
+- Buttons that represent state use `aria-pressed` or `aria-current`.
+- Truncated visible text gets `title` only when truncation hides information.
+- Destructive graph actions need confirmation until undo exists.
+- Empty states teach the next action; they do not say only "nothing here."
 
-## 2024-06-26 - Truncated Text Accessibility in Custom Lists
-**Learning:** In highly customized, dense React components (like a `.modal-edge-list`), textual elements that use `text-overflow: ellipsis` for layout considerations are unreadable by both sighted users (if they hover) and screen readers. Additionally, action buttons that identify a target item only by an abbreviated or visually derived name lack context.
-**Action:** Always add `title` attributes to elements truncated via `text-overflow: ellipsis` so their full content is available on hover. For interactive elements in these lists, ensure they have an explicit `aria-label` describing the action and its complete target name.
+## Meaningful UX Features To Build
 
-## 2024-05-28 - Avoid Redundant Title Attributes
-**Learning:** Adding `title` attributes that merely duplicate visible text content on elements like `span` or `button` is a UX anti-pattern. It creates annoying, redundant tooltips for mouse users and provides little or no additional value to assistive technologies.
-**Action:** Only use `title` attributes when providing genuinely supplementary information, like a keyboard shortcut, or when the full text is visually truncated. Rely on `aria-label` for screen-reader-only descriptive context.
+Prioritize features that help users inspect and act on graph data:
+
+1. Keyboard graph navigation: arrow-key nearest-neighbor movement, Enter to
+   select, Escape to clear, and `?` for a shortcut popover in host chrome.
+2. Search and filter chrome: text search over node name/id/type/domain/status,
+   with result count and fit-to-result behavior.
+3. Edge inspector: selected node panel should show incoming, outgoing, edge
+   type, label, and target/source status with focus actions.
+4. Layout affordances: preserve selected node context when switching layout and
+   animate only camera state, not layout properties.
+5. Snapshot export: expose a typed helper or host pattern for exporting current
+   graph data plus positions.
+6. Live update status: when `wsUrl` becomes real, show connection state,
+   queued mutations, and last applied update.
+
+## Visual Quality Rules
+
+- Use fixed type sizes for product UI. Avoid viewport-scaled font sizes in
+  compact panels or tool surfaces.
+- Keep graph chrome dense but organized: segmented controls for layout/theme,
+  icon buttons for repeated tools, and clear labels for destructive actions.
+- Avoid cards inside cards. Repeated items may be cards; page sections should
+  be bands or direct layouts.
+- Maintain a restrained palette. Use accent color for active selection,
+  focus, and primary commands, not decoration.
+- Check mobile and desktop screenshots for overlap. Text must fit its controls.
+
+## Validation Checklist
+
+For UX/accessibility work:
+
+```bash
+npm test
+cd site && ./node_modules/.bin/tsc --noEmit
+npm --prefix site run lint
+npm --prefix site run build
+git diff --check
+```
+
+Browser smoke must cover:
+
+- desktop and mobile viewport
+- force, hierarchical, and grid
+- dark and light
+- node click, background click, fit all
+- drag behavior when renderer code changes
+- console errors and failed network requests
