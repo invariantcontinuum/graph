@@ -99,19 +99,21 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    if velocities.len() * 2 < positions.len() {
+    if velocities.len() * 2 < positions.len() || forces.len() * 2 < positions.len() {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
-    // ⚡ Bolt: Simple index-based loop prevents iterator chaining overhead
-    // and allows LLVM to vectorize position integration.
-    let n = velocities.len();
-    // Pre-assert lengths to allow LLVM to elide bounds checks in the loop
-    assert!(positions.len() >= n * 2);
-    assert!(forces.len() >= n);
-    for i in 0..n {
-        let vel = &mut velocities[i];
-        let (fx, fy) = forces[i];
+    // ⚡ Bolt: Using chunked iteration avoids index-based bounds checks,
+    // but chaining multiple .zip() iterators adds overhead. By tracking
+    // an explicit counter, we can iterate over positions, while using un-checked
+    // access into forces and velocities vectors which we know have enough capacity,
+    // thereby improving the speed of this hot mathematical integration loop.
+    for (i, pos) in positions.chunks_exact_mut(2).enumerate() {
+        // SAFETY: We verify that both velocities and forces have sufficient length
+        // (>= positions.len() / 2) at the top of the function to ensure this is safe.
+        let vel = unsafe { velocities.get_unchecked_mut(i) };
+        let &(fx, fy) = unsafe { forces.get_unchecked(i) };
+
         vel.0 = (vel.0 + fx) * DAMPING;
         vel.1 = (vel.1 + fy) * DAMPING;
 
@@ -120,8 +122,8 @@ fn integrate_positions(
             max_velocity_sq = v_sq;
         }
 
-        positions[i * 2] += vel.0;
-        positions[i * 2 + 1] += vel.1;
+        pos[0] += vel.0;
+        pos[1] += vel.1;
     }
     max_velocity_sq
 }
