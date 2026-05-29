@@ -54,3 +54,7 @@
 ## 2024-05-22 - Add confirmation dialog for delete action
 **Learning:** Destructive UI actions, such as removing elements from the graph, must be guarded with a confirmation mechanism (e.g., `window.confirm`) that clearly identifies the target to prevent accidental data loss. Furthermore, truncated text elements must include `title` attributes to ensure content is accessible.
 **Action:** Always wrap delete/remove callbacks with a `window.confirm` dialog, specifically including the name of the entity being deleted. Always add `title` to text elements truncated with `text-overflow: ellipsis`.
+
+## 2024-06-26 - Truncated Text Accessibility in Custom Lists
+**Learning:** In highly customized, dense React components (like a `.modal-edge-list`), textual elements that use `text-overflow: ellipsis` for layout considerations are unreadable by both sighted users (if they hover) and screen readers. Additionally, action buttons that identify a target item only by an abbreviated or visually derived name lack context.
+**Action:** Always add `title` attributes to elements truncated via `text-overflow: ellipsis` so their full content is available on hover. For interactive elements in these lists, ensure they have an explicit `aria-label` describing the action and its complete target name.
