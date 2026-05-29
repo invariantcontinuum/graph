@@ -65,3 +65,7 @@
 ## 2024-06-26 - Truncated Text Accessibility in Custom Lists
 **Learning:** In highly customized, dense React components (like a `.modal-edge-list`), textual elements that use `text-overflow: ellipsis` for layout considerations are unreadable by both sighted users (if they hover) and screen readers. Additionally, action buttons that identify a target item only by an abbreviated or visually derived name lack context.
 **Action:** Always add `title` attributes to elements truncated via `text-overflow: ellipsis` so their full content is available on hover. For interactive elements in these lists, ensure they have an explicit `aria-label` describing the action and its complete target name.
+
+## 2024-05-28 - Avoid Redundant Title Attributes
+**Learning:** Adding `title` attributes that merely duplicate visible text content on elements like `span` or `button` is a UX anti-pattern. It creates annoying, redundant tooltips for mouse users and provides little or no additional value to assistive technologies.
+**Action:** Only use `title` attributes when providing genuinely supplementary information, like a keyboard shortcut, or when the full text is visually truncated. Rely on `aria-label` for screen-reader-only descriptive context.
