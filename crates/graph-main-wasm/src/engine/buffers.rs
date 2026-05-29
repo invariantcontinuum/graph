@@ -26,6 +26,7 @@ const FOCUS_EDGE_WIDTH_SCALE: f32 = 2.2;
 const DIM_EDGE_WIDTH_SCALE: f32 = 0.75;
 const FOCUS_EDGE_ALPHA: f32 = 0.95;
 const ARROW_WORLD_SIZE: f32 = 6.0;
+const EDGE_NODE_GAP: f32 = 3.0;
 
 impl RenderEngine {
     /// Resolve effective per-node style from theme: default + type override + status override.
@@ -226,13 +227,7 @@ impl RenderEngine {
             .spotlight
             .dim_opacity
             .clamp(0.02, 1.0);
-        // Build coord->idx map for edge focus checks using the spotlight helper.
-        // Only pay the allocation cost when a node is actually focused.
-        let coord_to_idx = if spotlight_idx.is_some() {
-            crate::spotlight::build_coord_index(&self.positions)
-        } else {
-            std::collections::HashMap::new()
-        };
+        let coord_to_idx = crate::spotlight::build_coord_index(&self.positions);
         let edge_stride = 6;
         for i in 0..logical_edge_count {
             let base = i * edge_stride;
@@ -245,20 +240,32 @@ impl RenderEngine {
             let ty = self.edge_data[base + 3];
             let type_idx = self.edge_data[base + 4] as usize;
             let _weight = self.edge_data[base + 5];
+            let src_center = (sx, sy);
+            let tgt_center = (tx, ty);
+            let s_idx = coord_to_idx.get(&(sx.to_bits(), sy.to_bits())).copied();
+            let t_idx = coord_to_idx.get(&(tx.to_bits(), ty.to_bits())).copied();
+            let draw_src = s_idx
+                .and_then(|idx| self.node_half_dims.get(idx).copied())
+                .map(|dims| clip_rect_endpoint(src_center, tgt_center, dims))
+                .unwrap_or(src_center);
+            let draw_tgt = t_idx
+                .and_then(|idx| self.node_half_dims.get(idx).copied())
+                .map(|dims| clip_rect_endpoint(tgt_center, src_center, dims))
+                .unwrap_or(tgt_center);
 
             let style = self.resolve_edge_style(type_idx);
             let painted = paint_edge_for_focus(
                 &style,
                 spotlight_idx,
                 &coord_to_idx,
-                (sx, sy),
-                (tx, ty),
+                src_center,
+                tgt_center,
                 &self.theme.interaction.select.border_color,
                 spotlight_dim_opacity,
             );
 
             let segs =
-                tessellate_quadratic((sx, sy), (tx, ty), DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS);
+                tessellate_quadratic(draw_src, draw_tgt, DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS);
             for s in &segs {
                 edge_buf.extend_from_slice(&[
                     s.from.0,
@@ -277,10 +284,10 @@ impl RenderEngine {
 
             // T11: one arrow per logical edge (placed at full edge endpoints, not per segment).
             arrow_instances.extend_from_slice(&[
-                sx,
-                sy,
-                tx,
-                ty,
+                draw_src.0,
+                draw_src.1,
+                draw_tgt.0,
+                draw_tgt.1,
                 ARROW_WORLD_SIZE,
                 painted.color[0],
                 painted.color[1],
@@ -328,6 +335,19 @@ impl RenderEngine {
             animate,
         }
     }
+}
+
+fn clip_rect_endpoint(center: (f32, f32), toward: (f32, f32), half_dims: (f32, f32)) -> (f32, f32) {
+    let dx = toward.0 - center.0;
+    let dy = toward.1 - center.1;
+    if dx.abs() < f32::EPSILON && dy.abs() < f32::EPSILON {
+        return center;
+    }
+
+    let half_w = (half_dims.0 + EDGE_NODE_GAP).max(1.0);
+    let half_h = (half_dims.1 + EDGE_NODE_GAP).max(1.0);
+    let scale = (dx.abs() / half_w).max(dy.abs() / half_h).max(1.0e-6);
+    (center.0 + dx / scale, center.1 + dy / scale)
 }
 
 struct EdgeStyle {
@@ -467,5 +487,26 @@ fn fallback_type_name(type_idx: usize) -> &'static str {
         5 => "adr",
         6 => "incident",
         _ => "service",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::clip_rect_endpoint;
+
+    #[test]
+    fn clips_edge_endpoint_to_card_boundary() {
+        let clipped = clip_rect_endpoint((0.0, 0.0), (200.0, 0.0), (68.0, 24.0));
+
+        assert!((clipped.0 - 71.0).abs() < 0.001, "x={}", clipped.0);
+        assert!(clipped.1.abs() < 0.001, "y={}", clipped.1);
+    }
+
+    #[test]
+    fn clips_diagonal_endpoint_to_first_rect_side_hit() {
+        let clipped = clip_rect_endpoint((0.0, 0.0), (200.0, 100.0), (68.0, 24.0));
+
+        assert!((clipped.0 - 54.0).abs() < 0.001, "x={}", clipped.0);
+        assert!((clipped.1 - 27.0).abs() < 0.001, "y={}", clipped.1);
     }
 }

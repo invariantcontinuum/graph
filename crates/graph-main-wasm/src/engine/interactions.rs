@@ -107,8 +107,11 @@ impl RenderEngine {
         let (wx, wy) = self.camera.screen_to_world(screen_x, screen_y);
         let base = idx * 4;
         if base + 1 < self.positions.len() {
+            let old_x = self.positions[base];
+            let old_y = self.positions[base + 1];
             self.positions[base] = wx;
             self.positions[base + 1] = wy;
+            self.rewrite_dragged_edge_endpoints(old_x, old_y, wx, wy);
         }
         self.buffers_dirty = true;
         self.needs_render = true;
@@ -138,5 +141,20 @@ impl RenderEngine {
     pub fn drain_worker_messages(&mut self) -> JsValue {
         let msgs = std::mem::take(&mut self.pending_worker_messages);
         serde_wasm_bindgen::to_value(&msgs).unwrap_or(JsValue::NULL)
+    }
+}
+
+impl RenderEngine {
+    fn rewrite_dragged_edge_endpoints(&mut self, old_x: f32, old_y: f32, new_x: f32, new_y: f32) {
+        for edge in self.edge_data.chunks_exact_mut(6) {
+            if edge[0].to_bits() == old_x.to_bits() && edge[1].to_bits() == old_y.to_bits() {
+                edge[0] = new_x;
+                edge[1] = new_y;
+            }
+            if edge[2].to_bits() == old_x.to_bits() && edge[3].to_bits() == old_y.to_bits() {
+                edge[2] = new_x;
+                edge[3] = new_y;
+            }
+        }
     }
 }

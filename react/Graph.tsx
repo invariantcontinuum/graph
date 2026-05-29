@@ -287,6 +287,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     if (!ready || !workerRef.current) return;
     convergedRef.current = false;
+    pendingFitRef.current = true;
     workerRef.current.postMessage({ type: "set_layout", layout });
   }, [ready, layout]);
 
@@ -321,7 +322,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   useEffect(() => {
     if (!ready || !theme || !engineRef.current) return;
     engineRef.current.set_theme(theme);
-  }, [ready, theme]);
+    requestRender();
+  }, [ready, theme, requestRender]);
 
   // Filter
   useEffect(() => {
@@ -683,6 +685,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // positions will arrive via worker message; requestRender is chained
         // automatically in the positions handler, so no explicit call here.
         convergedRef.current = false;
+        pendingFitRef.current = true;
         workerRef.current?.postMessage({ type: "set_layout", layout: nextLayout });
       },
       setTheme: (nextTheme) => {

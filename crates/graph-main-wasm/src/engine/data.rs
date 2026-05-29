@@ -32,6 +32,13 @@ impl RenderEngine {
         self.needs_render = true;
     }
 
+    /// Debug/testing helper: return the current logical edge endpoint buffer.
+    pub fn debug_edge_data(&self) -> js_sys::Float32Array {
+        let out = js_sys::Float32Array::new_with_length(self.edge_data.len() as u32);
+        out.copy_from(&self.edge_data);
+        out
+    }
+
     pub fn set_edge_type_keys(&mut self, keys: Vec<String>) {
         self.edge_type_keys = keys;
         self.buffers_dirty = true;

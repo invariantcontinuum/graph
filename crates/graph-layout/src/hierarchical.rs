@@ -1,10 +1,10 @@
 use crate::LayoutEngine;
 use graph_core::graph::GraphStore;
 use petgraph::visit::NodeIndexable;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 
-const LAYER_SPACING: f32 = 120.0;
-const NODE_SPACING: f32 = 60.0;
+const LAYER_SPACING: f32 = 148.0;
+const NODE_SPACING: f32 = 188.0;
 
 pub struct HierarchicalLayout {
     positions: Vec<(String, f32, f32)>,
@@ -83,13 +83,14 @@ impl Default for HierarchicalLayout {
 impl LayoutEngine for HierarchicalLayout {
     fn compute(&mut self, graph: &GraphStore) -> Vec<(String, f32, f32)> {
         let layers = self.assign_layers(graph);
-        let mut layer_groups: HashMap<u32, Vec<String>> = HashMap::new();
+        let mut layer_groups: BTreeMap<u32, Vec<String>> = BTreeMap::new();
         for (id, layer) in &layers {
             layer_groups.entry(*layer).or_default().push(id.clone());
         }
 
         self.positions.clear();
-        for (layer, nodes) in &layer_groups {
+        for (layer, nodes) in &mut layer_groups {
+            nodes.sort();
             let y = *layer as f32 * LAYER_SPACING;
             let total_width = (nodes.len() as f32 - 1.0) * NODE_SPACING;
             let start_x = -total_width / 2.0;
@@ -189,6 +190,40 @@ mod tests {
         for (_, x, y) in positions {
             assert!(x.is_finite());
             assert!(y.is_finite());
+        }
+    }
+
+    #[test]
+    fn siblings_have_card_sized_spacing() {
+        let mut g = GraphStore::new();
+        for id in ["root", "a", "b", "c"] {
+            g.add_node(make_node(id));
+        }
+        g.add_edge(make_edge("e1", "root", "a"));
+        g.add_edge(make_edge("e2", "root", "b"));
+        g.add_edge(make_edge("e3", "root", "c"));
+
+        let mut layout = HierarchicalLayout::new();
+        let positions = layout.compute(&g);
+        let mut layer_one: Vec<f32> = positions
+            .iter()
+            .filter_map(|(id, x, y)| {
+                if id != "root" && (*y - LAYER_SPACING).abs() < 0.01 {
+                    Some(*x)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        layer_one.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        assert_eq!(layer_one.len(), 3);
+        for pair in layer_one.windows(2) {
+            assert!(
+                pair[1] - pair[0] >= 160.0,
+                "sibling nodes too close: {:?}",
+                pair
+            );
         }
     }
 }
