@@ -13,20 +13,11 @@
     <img src="https://sonarcloud.io/images/project_badges/sonarcloud-light.svg"
          style="height: 30px;" />
   </a>
-  <a href="https://sonarcloud.io/summary/new_code?id=invariantcontinuum_graph">
-    <img src="https://sonarcloud.io/api/project_badges/quality_gate?project=invariantcontinuum_graph"
-         style="height: 70px; width: 150px;" />
-  </a>
 </div>
-
-<img width="1554" height="900" alt="image" src="https://github.com/user-attachments/assets/98231041-fa59-4608-add2-6bfad96371f9" />
-
-
 
 WASM + WebGL2 graph renderer for large knowledge graphs, with layout work offloaded to a Web Worker and a React surface that ranges from a low-level `<Graph>` canvas bridge to a full `<GraphScene>` with overlays and theme wiring.
 
-
-<img width="666" height="493" alt="image" src="https://github.com/user-attachments/assets/406a9613-e42b-439f-b1dd-df9040991921" />
+<img width="1508" height="525" alt="image" src="https://github.com/user-attachments/assets/d294f033-1f1d-4313-b00d-f4e7541840d6" />
 
 ## Installation
 
