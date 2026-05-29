@@ -502,9 +502,11 @@ export default function Showcase() {
                       snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
                     return (
                       <li key={edge.id}>
-                        <span>{edge.type}</span>
+                        <span title={edge.type}>{edge.type}</span>
                         <button
                           type="button"
+                          title={neighbor}
+                          aria-label={`Select neighbor ${neighbor}`}
                           onClick={() => {
                             setSelectedId(neighborId);
                             setDetailsOpen(true);
