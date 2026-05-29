@@ -20,15 +20,17 @@ impl HierarchicalLayout {
     }
 
     fn assign_layers(&self, graph: &GraphStore) -> HashMap<String, u32> {
-        // ⚡ Bolt: Use petgraph::NodeIndex and Vec<u32> instead of String and HashMap
-        // to reduce O(3N) string allocations to O(N) per node and improve lookup speed
-        // through direct array indexing.
         let inner = graph.inner();
-        // Use node_bound() to properly allocate vectors covering all possible indices,
-        // avoiding panics if the graph is a StableGraph with node deletions.
-        let n = inner.node_bound();
-        let mut in_degree = vec![0_usize; n];
-        let mut layers_vec = vec![0_u32; n];
+        let node_count = inner.node_count();
+        if node_count == 0 {
+            return HashMap::new();
+        }
+
+        // Use NodeIndex-addressed vectors to avoid cloning IDs during traversal.
+        let node_bound = inner.node_bound();
+        let mut in_degree = vec![0_usize; node_bound];
+        let mut layers_vec = vec![0_u32; node_bound];
+        let mut relax_count = vec![0_usize; node_bound];
 
         for idx in inner.node_indices() {
             for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
@@ -47,17 +49,17 @@ impl HierarchicalLayout {
             queue.push_back(node_idx);
         }
 
-        // layers_vec is already initialized to 0
-
+        let max_relaxations_per_node = node_count;
         while let Some(idx) = queue.pop_front() {
             let current_layer = layers_vec[idx.index()];
             for neighbor in inner.neighbors_directed(idx, petgraph::Direction::Outgoing) {
                 let new_layer = current_layer + 1;
                 let n_idx = neighbor.index();
-                if new_layer > layers_vec[n_idx] {
+                if new_layer > layers_vec[n_idx] && relax_count[n_idx] < max_relaxations_per_node {
+                    relax_count[n_idx] += 1;
                     layers_vec[n_idx] = new_layer;
+                    queue.push_back(neighbor);
                 }
-                queue.push_back(neighbor);
             }
         }
 
@@ -168,5 +170,25 @@ mod tests {
         layout.compute(&g);
         assert!(layout.is_converged());
         assert!(!layout.tick(&g));
+    }
+
+    #[test]
+    fn cyclic_graph_terminates() {
+        let mut g = GraphStore::new();
+        for id in ["a", "b", "c"] {
+            g.add_node(make_node(id));
+        }
+        g.add_edge(make_edge("e1", "a", "b"));
+        g.add_edge(make_edge("e2", "b", "c"));
+        g.add_edge(make_edge("e3", "c", "a"));
+
+        let mut layout = HierarchicalLayout::new();
+        let positions = layout.compute(&g);
+
+        assert_eq!(positions.len(), 3);
+        for (_, x, y) in positions {
+            assert!(x.is_finite());
+            assert!(y.is_finite());
+        }
     }
 }
