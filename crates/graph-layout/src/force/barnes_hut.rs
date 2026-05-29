@@ -94,7 +94,8 @@ impl QuadNode {
             let width = x_max - x_min;
 
             if is_leaf || (width * width) < THETA_SQ * dist_sq {
-                let force_over_dist = -REPULSION * node.mass / (dist_sq * dist_sq.sqrt());
+                let inv_dist = 1.0 / dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
                 fx += force_over_dist * dx;
                 fy += force_over_dist * dy;
                 continue;
