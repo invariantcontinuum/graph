@@ -14,7 +14,7 @@ import {
 } from "@invariantcontinuum/graph/react";
 import { PRESETS, presetBySlug, type Preset } from "./presets";
 
-const PACKAGE_VERSION = "0.2.9";
+const PACKAGE_VERSION = "0.2.10";
 
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -54,6 +54,109 @@ function compactLabel(value: string): string {
   return value.replaceAll("_", " ");
 }
 
+const MODE_PALETTES = {
+  dark: {
+    canvasBg: "#071014",
+    gridLineColor: "#13252c",
+    labelHalo: "#071014",
+    labelColor: "#eef8f3",
+    nodeFill: "#101b20",
+    nodeBorder: "#526a70",
+    edgeDefault: "#6f8990",
+    selectionBorder: "#c5d86d",
+    selectionFill: "rgba(197, 216, 109, 0.18)",
+    hullFill: "rgba(197, 216, 109, 0.055)",
+    hullStroke: "rgba(197, 216, 109, 0.24)",
+    dimOpacity: 0.13,
+    typeFills: ["#102027", "#131f2d", "#1f2116", "#241a25", "#10251e"],
+    edgeColors: ["#c5d86d", "#58a4b0", "#f3a712", "#d45b35", "#8fb339", "#d99c70", "#6ba6ff", "#e7c66b"],
+  },
+  light: {
+    canvasBg: "#f7f1e6",
+    gridLineColor: "#ded4c1",
+    labelHalo: "#f7f1e6",
+    labelColor: "#1e1b16",
+    nodeFill: "#fffaf0",
+    nodeBorder: "#b5a889",
+    edgeDefault: "#766d5c",
+    selectionBorder: "#315f5d",
+    selectionFill: "rgba(49, 95, 93, 0.14)",
+    hullFill: "rgba(49, 95, 93, 0.045)",
+    hullStroke: "rgba(49, 95, 93, 0.2)",
+    dimOpacity: 0.2,
+    typeFills: ["#fffdf6", "#f4fbf8", "#f9f6ff", "#fff4e8", "#f3faed"],
+    edgeColors: ["#315f5d", "#456990", "#8d671b", "#a64625", "#657c2d", "#8f6041", "#376f93", "#9a7828"],
+  },
+} satisfies Record<ThemeMode, {
+  canvasBg: string;
+  gridLineColor: string;
+  labelHalo: string;
+  labelColor: string;
+  nodeFill: string;
+  nodeBorder: string;
+  edgeDefault: string;
+  selectionBorder: string;
+  selectionFill: string;
+  hullFill: string;
+  hullStroke: string;
+  dimOpacity: number;
+  typeFills: string[];
+  edgeColors: string[];
+}>;
+
+function modeAwareOverrides(
+  overrides: GraphThemeOverrides,
+  mode: ThemeMode,
+): GraphThemeOverrides {
+  const palette = MODE_PALETTES[mode];
+  const nodeTypes = Object.fromEntries(
+    Object.entries(overrides.nodeTypes ?? {}).map(([type, style], index) => [
+      type,
+      {
+        ...style,
+        color: palette.typeFills[index % palette.typeFills.length],
+        labelColor: palette.labelColor,
+        borderColor: style.borderColor ?? palette.nodeBorder,
+      },
+    ]),
+  );
+  const edgeTypes = Object.fromEntries(
+    Object.entries(overrides.edgeTypes ?? {}).map(([type, style], index) => [
+      type,
+      {
+        ...style,
+        color: palette.edgeColors[index % palette.edgeColors.length],
+        width: Math.max(style.width ?? 1.35, mode === "dark" ? 1.5 : 1.35),
+      },
+    ]),
+  );
+
+  return {
+    ...overrides,
+    canvasBg: palette.canvasBg,
+    gridLineColor: palette.gridLineColor,
+    labelHalo: palette.labelHalo,
+    selectionBorder: palette.selectionBorder,
+    selectionFill: palette.selectionFill,
+    hullFill: palette.hullFill,
+    hullStroke: palette.hullStroke,
+    dimOpacity: palette.dimOpacity,
+    defaultNodeStyle: {
+      ...overrides.defaultNodeStyle,
+      color: palette.nodeFill,
+      borderColor: overrides.defaultNodeStyle?.borderColor ?? palette.nodeBorder,
+      labelColor: palette.labelColor,
+    },
+    defaultEdgeStyle: {
+      ...overrides.defaultEdgeStyle,
+      color: palette.edgeDefault,
+      width: Math.max(overrides.defaultEdgeStyle?.width ?? 1.3, mode === "dark" ? 1.45 : 1.25),
+    },
+    nodeTypes,
+    edgeTypes,
+  };
+}
+
 export default function Showcase() {
   const graphRef = useRef<GraphHandle>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -61,26 +164,39 @@ export default function Showcase() {
   const [layout, setLayout] = useState<LayoutType>("force");
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [snapshot, setSnapshot] = useState<GraphSnapshot>(PRESETS[0].snapshot);
-  const [themeOverrides, setThemeOverrides] = useState<GraphThemeOverrides>(
-    PRESETS[0].overrides,
-  );
   const [legend, setLegend] = useState<LegendSummary | null>(null);
   const [stats, setStats] = useState<GraphStats | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
+  const graphThemeOverrides = useMemo(
+    () => modeAwareOverrides(preset.overrides, themeMode),
+    [preset.overrides, themeMode],
+  );
 
   const refit = useCallback((padding = 56) => {
     requestAnimationFrame(() => graphRef.current?.focusFit(null, padding));
   }, []);
+
+  useEffect(() => {
+    let resizeTimer: number | undefined;
+    const handleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => refit(), 90);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [refit]);
 
   const applyPreset = useCallback(
     (slug: string) => {
       const nextPreset = presetBySlug(slug);
       setActiveSlug(slug);
       setSnapshot(nextPreset.snapshot);
-      setThemeOverrides(nextPreset.overrides);
       setSelectedId(null);
       setDetailsOpen(false);
       setDrawerOpen(false);
@@ -283,7 +399,7 @@ export default function Showcase() {
         <section className="rail-panel" aria-label="Package release">
           <p className="panel-label">Released package</p>
           <strong>@invariantcontinuum/graph</strong>
-          <span>0.2.9 pinned in this site</span>
+          <span>0.2.10 pinned in this site</span>
         </section>
       </aside>
 
@@ -349,7 +465,7 @@ export default function Showcase() {
             snapshot={snapshot}
             themeMode={themeMode}
             layout={layout}
-            themeOverrides={themeOverrides}
+            themeOverrides={graphThemeOverrides}
             focusIds={focusIds}
             showCommunities
             onNodeClick={openNodeDetails}
