@@ -102,3 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+## 2024-06-01 - Improve empty states and tooltips in Showcase
+**Learning:** Found that the inspector panels used terse empty states ("No active node.") and the main controls lacked tooltips, making the interface slightly less discoverable.
+**Action:** Always aim to make empty states instructional rather than just descriptive, and add `title` attributes as native tooltips for buttons, even if they have text labels, to provide more context without cluttering the UI.
