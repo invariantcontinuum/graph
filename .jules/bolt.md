@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-05-31 - Optimize Inverse Distance Calculation in Barnes-Hut
+**Learning:** In the hot path of the Barnes-Hut layout algorithm, computing a reciprocal square root (`1.0 / dist_sq.sqrt()`) and then cubing it with three consecutive multiplications `inv_dist * inv_dist * inv_dist` is slower than a more direct mathematical equivalent. Because LLVM without `fast-math` cannot safely reassociate these floating-point operations, the compiler must emit all of the instructions exactly as written.
+**Action:** When computing geometric inverses in Rust hot paths, prefer calculating a standard square root (`dist_sq.sqrt()`) and performing a single division (e.g., `1.0 / (dist * dist_sq)`). This combines operations manually, reducing the number of expensive multiplications and significantly improving performance.
