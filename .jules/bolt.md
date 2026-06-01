@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-06-01 - [Avoid recalculating quad bounds widths in tree computation]
+**Learning:** In hot loops checking if a node can be approximated in the Barnes-Hut algorithm, the node's geometry was being calculated via bounds array subtraction each time.
+**Action:** When working on force computation steps, eliminate bounds computation on tree traversals by checking leaf nodes first.
