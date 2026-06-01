@@ -141,3 +141,7 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+
+## 2026-06-01 - Barnes-Hut inverse square distance optimization
+**Learning:** In Rust hot paths involving geometric inverse square distances (like in `QuadNode::compute_force` in the Barnes-Hut layout algorithm), calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than the typical pattern of calculating an inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`).
+**Action:** Prefer `dist_sq.sqrt()` and a single division over an inverse square root and multiple multiplications when computing inverse square forces in Rust layout algorithms.
