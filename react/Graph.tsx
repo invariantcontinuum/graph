@@ -408,7 +408,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const pumpWorkerMessages = useCallback(() => {
+  const flushWorkerMessages = useCallback(() => {
     const raw = engineRef.current?.drain_worker_messages();
     if (!raw || !workerRef.current) return;
     // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
@@ -484,7 +484,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           draggingNodeRef.current = nodeId;
           singleMode = "drag";
           downPos = { x: local.x, y: local.y };
-          pumpWorkerMessages();
+          flushWorkerMessages();
         } else {
           engineRef.current?.handle_pan_start(local.x, local.y);
           singleMode = "pan";
@@ -494,7 +494,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Second pointer joined — end any single-pointer gesture and begin pinch.
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           draggingNodeRef.current = null;
           suppressNextClick = true;
         } else if (singleMode === "pan") {
@@ -507,50 +507,58 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       requestRender();
     };
 
+    const handleHoverOnly = (local: { x: number; y: number }) => {
+      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+      if (hoveredId !== undefined) {
+        canvas.style.cursor = hoveredId ? "pointer" : "default";
+        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+      }
+    };
+
+    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan") => {
+      if (mode === "drag") {
+        engineRef.current?.handle_node_drag_move(local.x, local.y);
+        flushWorkerMessages();
+      } else if (mode === "pan") {
+        engineRef.current?.handle_pan_move(local.x, local.y);
+        // Hover updates only while panning (or hovering without a button).
+        handleHoverOnly(local);
+      }
+    };
+
+    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
+      const d = pinchDist();
+      const c = centroid();
+      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
+      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
+      // Invert via -log so a growing distance zooms in.
+      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
+      if (lastCentroid) {
+        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
+        engineRef.current?.handle_pan_move(c.x, c.y);
+        engineRef.current?.handle_pan_end();
+      }
+      lastPinchDist = d;
+      lastCentroid = c;
+    };
+
     const onMove = (e: PointerEvent) => {
       const local = toLocal(e.clientX, e.clientY);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
         // Hovering without a button pressed
-        const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-        if (hoveredId !== undefined) {
-          canvas.style.cursor = hoveredId ? "pointer" : "default";
-          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-        }
+        handleHoverOnly(local);
         requestRender();
         return;
       }
 
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
-      if (active.size === 1) {
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_move(local.x, local.y);
-          pumpWorkerMessages();
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_move(local.x, local.y);
-          // Hover updates only while panning (or hovering without a button).
-          const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-          if (hoveredId !== undefined) {
-            canvas.style.cursor = hoveredId ? "pointer" : "default";
-            callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-          }
-        }
+      if (active.size === 1 && singleMode) {
+        handleSinglePointerMove(local, singleMode);
       } else if (active.size === 2) {
-        const d = pinchDist();
-        const c = centroid();
-        const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-        // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-        // Invert via -log so a growing distance zooms in.
-        engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-        if (lastCentroid) {
-          engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-          engineRef.current?.handle_pan_move(c.x, c.y);
-          engineRef.current?.handle_pan_end();
-        }
-        lastPinchDist = d;
-        lastCentroid = c;
+        handlePinchMove(active);
       }
       requestRender();
     };
@@ -564,7 +572,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (active.size === 0) {
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           // A "click on node" also begins with a drag-start (because the
           // pointer-down hit-tested a node). If the pointer never moved
           // beyond the threshold, fire onNodeClick directly here — the
@@ -663,7 +671,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [nodeFromId, pumpWorkerMessages, requestRender]);
+  }, [nodeFromId, flushWorkerMessages, requestRender]);
 
   useImperativeHandle(
     ref,
