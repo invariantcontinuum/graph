@@ -102,3 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+## 2024-06-03 - Empty States & Tooltips UX Polish
+**Learning:** Generic empty states ("No active node") provide poor user guidance, and terse button labels ("Center", "Frame") lack contextual clarity without tooltips. Modifying text and adding title attributes requires precision to avoid breaking keyboard shortcut context (e.g., preserving "Keyboard shortcut: Escape" within the new title).
+**Action:** Always replace passive empty-state language with actionable instructions ("Click a node to view details") and proactively apply title tooltips to compact UI actions to clarify intent and improve accessibility.

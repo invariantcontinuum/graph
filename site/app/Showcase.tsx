@@ -506,27 +506,27 @@ export default function Showcase() {
                 </div>
               </dl>
               <div className="action-grid">
-                <button type="button" onClick={frameSelected}>
+                <button type="button" title="Frame selected node" onClick={frameSelected}>
                   Frame
                 </button>
-                <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                <button type="button" title="Center selected node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                   Center
                 </button>
                 <button
                   type="button"
-                  title="Keyboard shortcut: Escape"
+                  title="Clear selection (Keyboard shortcut: Escape)"
                   aria-keyshortcuts="Escape"
                   onClick={clearSelection}
                 >
                   Clear
                 </button>
-                <button type="button" className="danger-action" onClick={removeSelected}>
+                <button type="button" title="Remove selected node" className="danger-action" onClick={removeSelected}>
                   Remove
                 </button>
               </div>
             </>
           ) : (
-            <p className="empty-copy">No active node.</p>
+            <p className="empty-copy">Click a node to view details.</p>
           )}
         </section>
 
@@ -560,7 +560,7 @@ export default function Showcase() {
               })}
             </ul>
           ) : (
-            <p className="empty-copy">No connected edge list.</p>
+            <p className="empty-copy">Select a node to view connections.</p>
           )}
         </section>
 
@@ -588,10 +588,10 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
-          <button type="button" onClick={() => graphRef.current?.fit(56)}>
+          <button type="button" title="Fit all nodes in view" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
-          <button type="button" onClick={addNode}>
+          <button type="button" title="Add a new probe node" onClick={addNode}>
             Add probe
           </button>
         </section>
@@ -674,7 +674,7 @@ export default function Showcase() {
                   })}
                 </ul>
               ) : (
-                <p className="empty-copy">No connected records.</p>
+                <p className="empty-copy">Select a node to view connections.</p>
               )}
             </section>
 
@@ -686,20 +686,20 @@ export default function Showcase() {
               {selectedMetaEntries.length > 0 ? (
                 <pre className="meta-block">{formatJson(selectedNode.meta)}</pre>
               ) : (
-                <p className="empty-copy">No metadata on this node.</p>
+                <p className="empty-copy">Select a node to view metadata.</p>
               )}
             </section>
 
             <div className="modal-actions">
-              <button type="button" onClick={frameSelected}>
+              <button type="button" title="Frame selected node" onClick={frameSelected}>
                 Frame
               </button>
-              <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+              <button type="button" title="Center selected node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
                 type="button"
-                title="Keyboard shortcut: Escape"
+                title="Close (Keyboard shortcut: Escape)"
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
