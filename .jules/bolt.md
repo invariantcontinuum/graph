@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-06-03 - Barnes-Hut Force Calculation Optimization
+**Learning:** In Rust hot paths involving geometric inverse square distances (e.g., `QuadNode::compute_force` in the Barnes-Hut layout algorithm), calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`). Also, deferring variable destructuring until after short-circuiting conditions save unnecessary memory allocations and operations.
+**Action:** When doing math in very hot loops, re-arrange math equations to minimize the total amount of division and multiplication, even if they seem semantically equivalent. In Rust, defer tuple destructuring behind logical `||` with blocks if the data is only needed in a fallback case.
