@@ -91,7 +91,11 @@ impl QuadNode {
             // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2
             let is_leaf = node.children.is_none();
 
-            if is_leaf || { let (x_min, _, x_max, _) = node.bounds; let width = x_max - x_min; (width * width) < THETA_SQ * dist_sq } {
+            if is_leaf || {
+                let (x_min, _, x_max, _) = node.bounds;
+                let width = x_max - x_min;
+                (width * width) < THETA_SQ * dist_sq
+            } {
                 let dist = dist_sq.sqrt();
                 let force_over_dist = -REPULSION * node.mass / (dist * dist_sq);
                 fx += force_over_dist * dx;
