@@ -90,12 +90,14 @@ impl QuadNode {
 
             // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2
             let is_leaf = node.children.is_none();
-            let (x_min, _, x_max, _) = node.bounds;
-            let width = x_max - x_min;
 
-            if is_leaf || (width * width) < THETA_SQ * dist_sq {
-                let inv_dist = 1.0 / dist_sq.sqrt();
-                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
+            if is_leaf || {
+                let (x_min, _, x_max, _) = node.bounds;
+                let width = x_max - x_min;
+                (width * width) < THETA_SQ * dist_sq
+            } {
+                let dist = dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass / (dist * dist_sq);
                 fx += force_over_dist * dx;
                 fy += force_over_dist * dy;
                 continue;
@@ -207,10 +209,18 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     for chunk in positions_flat.chunks_exact(2) {
         let x = chunk[0];
         let y = chunk[1];
-        x_min = x_min.min(x);
-        y_min = y_min.min(y);
-        x_max = x_max.max(x);
-        y_max = y_max.max(y);
+        if x < x_min {
+            x_min = x;
+        }
+        if y < y_min {
+            y_min = y;
+        }
+        if x > x_max {
+            x_max = x;
+        }
+        if y > y_max {
+            y_max = y;
+        }
     }
     (x_min - pad, y_min - pad, x_max + pad, y_max + pad)
 }
