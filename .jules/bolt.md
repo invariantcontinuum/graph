@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-06-05 - Optimize compute_force geometric math
+**Learning:** Calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`) in Rust hot paths. Additionally, deferring tuple unpacking and calculations until after the short-circuiting `is_leaf` check avoids unnecessary work.
+**Action:** Apply the optimized math formula and defer operations in `QuadNode::compute_force`.
