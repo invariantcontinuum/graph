@@ -102,3 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+## 2026-06-05 - Overlay Canvas Accessibility Improvements
+**Learning:** Adding `role="presentation"` to `aria-hidden={true}` overlay `<canvas>` elements creates noisy SonarCloud violations (`typescript:S6819`). The `role="region"` alongside `aria-roledescription="graph"` and `aria-keyshortcuts` creates a robust foundation for an interactive graph container without unnecessarily trapping users into an application context.
+**Action:** Do not use `role="presentation"` on non-interactive overlays that are already removed from the accessibility tree. Use `role="region"` for interactive custom canvases with well-advertised shortcuts instead of defaulting to `role="application"`.
