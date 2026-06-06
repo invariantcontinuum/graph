@@ -57,8 +57,90 @@ export interface GraphHandle {
     cb: (m: { positions: Float32Array; vpMatrix: Float32Array }) => void,
   ) => () => void;
   subscribeEdges: (
-    cb: (e: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys: string[] }) => void,
+    cb: (e: {
+      edgeData: Float32Array;
+      focusIdx: number;
+      edgeTypeKeys: string[];
+    }) => void,
   ) => () => void;
+}
+
+
+// Pure pointer event helpers
+
+export function toLocalPointer(clientX: number, clientY: number, canvas: HTMLCanvasElement): { x: number, y: number } {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  return {
+    x: (clientX - rect.left) * dpr,
+    y: (clientY - rect.top) * dpr,
+  };
+}
+
+export function handleHoverOnly(
+  localX: number,
+  localY: number,
+  engine: any,
+  canvas: HTMLCanvasElement,
+  callbacks: { onNodeHover?: (node: any | null) => void },
+  nodeFromId: (id: string) => any
+): void {
+  const hoveredId = engine?.handle_hover(localX, localY);
+  if (hoveredId !== undefined) {
+    canvas.style.cursor = hoveredId ? "pointer" : "default";
+    callbacks.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+  }
+}
+
+export function handleSinglePointerMove(
+  localX: number,
+  localY: number,
+  singleMode: "drag" | "pan" | null,
+  engine: any,
+  canvas: HTMLCanvasElement,
+  callbacks: { onNodeHover?: (node: any | null) => void },
+  nodeFromId: (id: string) => any,
+  flushWorkerMessages: () => void
+): void {
+  if (singleMode === "drag") {
+    engine?.handle_node_drag_move(localX, localY);
+    flushWorkerMessages();
+  } else if (singleMode === "pan") {
+    engine?.handle_pan_move(localX, localY);
+    handleHoverOnly(localX, localY, engine, canvas, callbacks, nodeFromId);
+  }
+}
+
+export function handlePinchMove(
+  activePointers: Map<number, { id: number; x: number; y: number }>,
+  lastPinchDist: number,
+  lastCentroid: { x: number; y: number } | null,
+  engine: any
+): { dist: number; centroid: { x: number; y: number } } {
+  const arr = [...activePointers.values()];
+  const dx = arr[0].x - arr[1].x;
+  const dy = arr[0].y - arr[1].y;
+  const dist = Math.hypot(dx, dy);
+
+  let cx = 0;
+  let cy = 0;
+  for (const p of activePointers.values()) {
+    cx += p.x;
+    cy += p.y;
+  }
+  cx /= activePointers.size;
+  cy /= activePointers.size;
+  const centroid = { x: cx, y: cy };
+
+  const deltaZoom = dist / Math.max(lastPinchDist, 1e-3);
+  engine?.handle_zoom(-Math.log(deltaZoom), centroid.x, centroid.y);
+  if (lastCentroid) {
+    engine?.handle_pan_start(lastCentroid.x, lastCentroid.y);
+    engine?.handle_pan_move(centroid.x, centroid.y);
+    engine?.handle_pan_end();
+  }
+
+  return { dist, centroid };
 }
 
 export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
@@ -90,13 +172,27 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const workerRef = useRef<Worker | null>(null);
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
-  const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
+  const callbacksRef = useRef({
+    onNodeClick,
+    onBackgroundClick,
+    onNodeHover,
+    onStatsChange,
+    onLegendChange,
+    onPositionsReady,
+  });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
   const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
 
-  callbacksRef.current = { onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady };
+  callbacksRef.current = {
+    onNodeClick,
+    onBackgroundClick,
+    onNodeHover,
+    onStatsChange,
+    onLegendChange,
+    onPositionsReady,
+  };
 
   /* Restart the RAF render loop. Called after every camera-mutating
    * interaction (zoom/pan/fit/drag) because the loop exits when
@@ -146,10 +242,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const engine = new mainWasm.RenderEngine(canvas);
       engineRef.current = engine;
 
-      const worker = new Worker(
-        new URL("./worker.ts", import.meta.url),
-        { type: "module" }
-      );
+      const worker = new Worker(new URL("./worker.ts", import.meta.url), {
+        type: "module",
+      });
       workerRef.current = worker;
 
       worker.onmessage = (e: MessageEvent<WorkerOutMessage>) => {
@@ -361,9 +456,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (!canvas) return;
     const sendRatio = () => {
       const rect = canvas.getBoundingClientRect();
-      const ratio = rect.width > 0 && rect.height > 0
-        ? rect.width / rect.height
-        : 1.77;
+      const ratio =
+        rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 1.77;
       workerRef.current?.postMessage({ type: "set_viewport", ratio });
     };
     sendRatio();
@@ -400,7 +494,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       engineRef.current?.handle_zoom(
         e.deltaY,
         (e.clientX - rect.left) * dpr,
-        (e.clientY - rect.top) * dpr
+        (e.clientY - rect.top) * dpr,
       );
       requestRender();
     };
@@ -408,7 +502,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const pumpWorkerMessages = useCallback(() => {
+  const flushWorkerMessages = useCallback(() => {
     const raw = engineRef.current?.drain_worker_messages();
     if (!raw || !workerRef.current) return;
     // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
@@ -430,18 +524,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     type PointerState = { id: number; x: number; y: number };
 
-    // Cache-adjusted coordinate helpers. The engine expects canvas-local,
-    // DPR-scaled coordinates (matches the wheel + existing drag/hover/click
-    // FFI contract), not raw clientX/Y.
-    const toLocal = (clientX: number, clientY: number) => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      return {
-        x: (clientX - rect.left) * dpr,
-        y: (clientY - rect.top) * dpr,
-      };
-    };
-
     const active: Map<number, PointerState> = new Map();
     // Track whether the current single-pointer gesture is dragging a node,
     // panning the camera, or neither (pre-hit-test state). Resets on release.
@@ -455,36 +537,23 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // timeout before the synthetic click event runs.
     let downPos: { x: number; y: number } | null = null;
 
-    function centroid(): { x: number; y: number } {
-      let x = 0;
-      let y = 0;
-      for (const p of active.values()) {
-        x += p.x;
-        y += p.y;
-      }
-      return { x: x / active.size, y: y / active.size };
-    }
-    function pinchDist(): number {
-      const arr = [...active.values()];
-      const dx = arr[0].x - arr[1].x;
-      const dy = arr[0].y - arr[1].y;
-      return Math.hypot(dx, dy);
-    }
-
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);
-      const local = toLocal(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
         // Hit-test: if the pointer lands on a node, start a node-drag;
         // otherwise start a camera pan.
-        const nodeId = engineRef.current?.handle_node_drag_start(local.x, local.y);
+        const nodeId = engineRef.current?.handle_node_drag_start(
+          local.x,
+          local.y,
+        );
         if (nodeId) {
           draggingNodeRef.current = nodeId;
           singleMode = "drag";
           downPos = { x: local.x, y: local.y };
-          pumpWorkerMessages();
+          flushWorkerMessages();
         } else {
           engineRef.current?.handle_pan_start(local.x, local.y);
           singleMode = "pan";
@@ -494,30 +563,39 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Second pointer joined — end any single-pointer gesture and begin pinch.
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           draggingNodeRef.current = null;
           suppressNextClick = true;
         } else if (singleMode === "pan") {
           engineRef.current?.handle_pan_end();
         }
         singleMode = null;
-        lastPinchDist = pinchDist();
-        lastCentroid = centroid();
+        const arr = [...active.values()];
+        const dx = arr[0].x - arr[1].x;
+        const dy = arr[0].y - arr[1].y;
+        lastPinchDist = Math.hypot(dx, dy);
+        lastCentroid = {
+          x: (arr[0].x + arr[1].x) / 2,
+          y: (arr[0].y + arr[1].y) / 2,
+        };
       }
       requestRender();
     };
 
     const onMove = (e: PointerEvent) => {
-      const local = toLocal(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
         // Hovering without a button pressed
-        const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-        if (hoveredId !== undefined) {
-          canvas.style.cursor = hoveredId ? "pointer" : "default";
-          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-        }
+        handleHoverOnly(
+          local.x,
+          local.y,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+        );
         requestRender();
         return;
       }
@@ -525,32 +603,25 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_move(local.x, local.y);
-          pumpWorkerMessages();
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_move(local.x, local.y);
-          // Hover updates only while panning (or hovering without a button).
-          const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-          if (hoveredId !== undefined) {
-            canvas.style.cursor = hoveredId ? "pointer" : "default";
-            callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-          }
-        }
+        handleSinglePointerMove(
+          local.x,
+          local.y,
+          singleMode,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+          flushWorkerMessages,
+        );
       } else if (active.size === 2) {
-        const d = pinchDist();
-        const c = centroid();
-        const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-        // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-        // Invert via -log so a growing distance zooms in.
-        engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-        if (lastCentroid) {
-          engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-          engineRef.current?.handle_pan_move(c.x, c.y);
-          engineRef.current?.handle_pan_end();
-        }
-        lastPinchDist = d;
-        lastCentroid = c;
+        const result = handlePinchMove(
+          active,
+          lastPinchDist,
+          lastCentroid,
+          engineRef.current,
+        );
+        lastPinchDist = result.dist;
+        lastCentroid = result.centroid;
       }
       requestRender();
     };
@@ -564,14 +635,14 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (active.size === 0) {
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           // A "click on node" also begins with a drag-start (because the
           // pointer-down hit-tested a node). If the pointer never moved
           // beyond the threshold, fire onNodeClick directly here — the
           // synthetic `click` event that follows would otherwise be
           // swallowed by the draggingNodeRef guard inside onClick.
           const movedThreshold = 4;
-          const localUp = toLocal(e.clientX, e.clientY);
+          const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
           const moved = downPos
             ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
               Math.abs(localUp.y - downPos.y) > movedThreshold
@@ -611,7 +682,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         return;
       }
       if (draggingNodeRef.current !== null) return; // consumed by drag
-      const local = toLocal(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       const clickedId = engineRef.current?.handle_click(local.x, local.y);
       if (clickedId) {
         callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
@@ -663,7 +734,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [nodeFromId, pumpWorkerMessages, requestRender]);
+  }, [nodeFromId, flushWorkerMessages, requestRender]);
 
   useImperativeHandle(
     ref,
@@ -686,7 +757,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // automatically in the positions handler, so no explicit call here.
         convergedRef.current = false;
         pendingFitRef.current = true;
-        workerRef.current?.postMessage({ type: "set_layout", layout: nextLayout });
+        workerRef.current?.postMessage({
+          type: "set_layout",
+          layout: nextLayout,
+        });
       },
       setTheme: (nextTheme) => {
         engineRef.current?.set_theme(nextTheme);
@@ -707,7 +781,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       },
       subscribeFrame: (cb) => {
         // Wrap the high-level callback in the low-level one the engine expects.
-        const wrapped = (obj: { positions: Float32Array; vpMatrix: Float32Array }) =>
+        const wrapped = (obj: {
+          positions: Float32Array;
+          vpMatrix: Float32Array;
+        }) =>
           // Engine side uses WASM-memory-backed typed arrays for frame callbacks.
           // Copy into detached JS-owned buffers before handing off so downstream
           // consumers can safely retain the arrays across frames (drag/layout
@@ -727,11 +804,17 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Copy edgeData into a detached JS-owned buffer before handing off so
         // the overlay can safely retain it across frames without aliasing the
         // WASM linear-memory view (which may be invalidated on the next tick).
-        const wrapped = (obj: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys?: string[] }) =>
+        const wrapped = (obj: {
+          edgeData: Float32Array;
+          focusIdx: number;
+          edgeTypeKeys?: string[];
+        }) =>
           cb({
             edgeData: new Float32Array(obj.edgeData),
             focusIdx: obj.focusIdx,
-            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys) ? [...obj.edgeTypeKeys] : [],
+            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys)
+              ? [...obj.edgeTypeKeys]
+              : [],
           });
         const idx = engineRef.current.subscribe_edges(wrapped);
         return () => engineRef.current?.unsubscribe_edges(idx);
@@ -753,7 +836,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         display: "block",
         touchAction: "none",
         outline: "none", // Prevent default browser outline
-        ...style
+        ...style,
       }}
       onFocus={(e) => {
         // Add focus-visible style polyfill for accessibility
