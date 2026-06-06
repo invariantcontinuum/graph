@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-06-06 - WASM Math Optimization
+**Learning:** In Rust hot paths involving geometric inverse square distances (e.g., pair_push in overlap resolution), calculating a standard square root and using a single division (`(MIN_NODE_GAP - d) / (d * 2.0)`) is significantly faster in WASM than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing subsequent multiplications. WASM execution heavily penalized the inverse square root approach in tests.
+**Action:** Prefer standard square root and division over inverse square root for geometric normalizations in WASM targets.
