@@ -10,32 +10,17 @@ describe("palette", () => {
 
   test("typeBorders is exhaustive over NODE_TYPES in both palettes", () => {
     for (const t of NODE_TYPES) {
-      expect(
-        LIGHT.typeBorders[t],
-        `LIGHT missing border for ${t}`,
-      ).toBeDefined();
-      expect(DARK.typeBorders[t], `DARK missing border for ${t}`).toBeDefined();
+      expect(LIGHT.typeBorders[t], `LIGHT missing border for ${t}`).toBeDefined();
+      expect(DARK.typeBorders[t],  `DARK missing border for ${t}`).toBeDefined();
     }
   });
 
   test("edgeAccents is exhaustive over EDGE_TYPES in both palettes", () => {
     for (const t of EDGE_TYPES) {
-      expect(
-        LIGHT.edgeAccents[t]?.line,
-        `LIGHT missing line for ${t}`,
-      ).toBeDefined();
-      expect(
-        LIGHT.edgeAccents[t]?.arrow,
-        `LIGHT missing arrow for ${t}`,
-      ).toBeDefined();
-      expect(
-        DARK.edgeAccents[t]?.line,
-        `DARK missing line for ${t}`,
-      ).toBeDefined();
-      expect(
-        DARK.edgeAccents[t]?.arrow,
-        `DARK missing arrow for ${t}`,
-      ).toBeDefined();
+      expect(LIGHT.edgeAccents[t]?.line, `LIGHT missing line for ${t}`).toBeDefined();
+      expect(LIGHT.edgeAccents[t]?.arrow,`LIGHT missing arrow for ${t}`).toBeDefined();
+      expect(DARK.edgeAccents[t]?.line,  `DARK missing line for ${t}`).toBeDefined();
+      expect(DARK.edgeAccents[t]?.arrow, `DARK missing arrow for ${t}`).toBeDefined();
     }
   });
 

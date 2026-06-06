@@ -57,11 +57,7 @@ export interface GraphHandle {
     cb: (m: { positions: Float32Array; vpMatrix: Float32Array }) => void,
   ) => () => void;
   subscribeEdges: (
-    cb: (e: {
-      edgeData: Float32Array;
-      focusIdx: number;
-      edgeTypeKeys: string[];
-    }) => void,
+    cb: (e: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys: string[] }) => void,
   ) => () => void;
 }
 
@@ -94,27 +90,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const workerRef = useRef<Worker | null>(null);
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
-  const callbacksRef = useRef({
-    onNodeClick,
-    onBackgroundClick,
-    onNodeHover,
-    onStatsChange,
-    onLegendChange,
-    onPositionsReady,
-  });
+  const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
   const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
 
-  callbacksRef.current = {
-    onNodeClick,
-    onBackgroundClick,
-    onNodeHover,
-    onStatsChange,
-    onLegendChange,
-    onPositionsReady,
-  };
+  callbacksRef.current = { onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady };
 
   /* Restart the RAF render loop. Called after every camera-mutating
    * interaction (zoom/pan/fit/drag) because the loop exits when
@@ -164,9 +146,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const engine = new mainWasm.RenderEngine(canvas);
       engineRef.current = engine;
 
-      const worker = new Worker(new URL("./worker.ts", import.meta.url), {
-        type: "module",
-      });
+      const worker = new Worker(
+        new URL("./worker.ts", import.meta.url),
+        { type: "module" }
+      );
       workerRef.current = worker;
 
       worker.onmessage = (e: MessageEvent<WorkerOutMessage>) => {
@@ -378,8 +361,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (!canvas) return;
     const sendRatio = () => {
       const rect = canvas.getBoundingClientRect();
-      const ratio =
-        rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 1.77;
+      const ratio = rect.width > 0 && rect.height > 0
+        ? rect.width / rect.height
+        : 1.77;
       workerRef.current?.postMessage({ type: "set_viewport", ratio });
     };
     sendRatio();
@@ -416,7 +400,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       engineRef.current?.handle_zoom(
         e.deltaY,
         (e.clientX - rect.left) * dpr,
-        (e.clientY - rect.top) * dpr,
+        (e.clientY - rect.top) * dpr
       );
       requestRender();
     };
@@ -495,10 +479,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (active.size === 1) {
         // Hit-test: if the pointer lands on a node, start a node-drag;
         // otherwise start a camera pan.
-        const nodeId = engineRef.current?.handle_node_drag_start(
-          local.x,
-          local.y,
-        );
+        const nodeId = engineRef.current?.handle_node_drag_start(local.x, local.y);
         if (nodeId) {
           draggingNodeRef.current = nodeId;
           singleMode = "drag";
@@ -535,9 +516,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
         if (hoveredId !== undefined) {
           canvas.style.cursor = hoveredId ? "pointer" : "default";
-          callbacksRef.current.onNodeHover?.(
-            hoveredId ? nodeFromId(hoveredId) : null,
-          );
+          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
         }
         requestRender();
         return;
@@ -555,9 +534,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
           if (hoveredId !== undefined) {
             canvas.style.cursor = hoveredId ? "pointer" : "default";
-            callbacksRef.current.onNodeHover?.(
-              hoveredId ? nodeFromId(hoveredId) : null,
-            );
+            callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
           }
         }
       } else if (active.size === 2) {
@@ -709,10 +686,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // automatically in the positions handler, so no explicit call here.
         convergedRef.current = false;
         pendingFitRef.current = true;
-        workerRef.current?.postMessage({
-          type: "set_layout",
-          layout: nextLayout,
-        });
+        workerRef.current?.postMessage({ type: "set_layout", layout: nextLayout });
       },
       setTheme: (nextTheme) => {
         engineRef.current?.set_theme(nextTheme);
@@ -733,10 +707,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       },
       subscribeFrame: (cb) => {
         // Wrap the high-level callback in the low-level one the engine expects.
-        const wrapped = (obj: {
-          positions: Float32Array;
-          vpMatrix: Float32Array;
-        }) =>
+        const wrapped = (obj: { positions: Float32Array; vpMatrix: Float32Array }) =>
           // Engine side uses WASM-memory-backed typed arrays for frame callbacks.
           // Copy into detached JS-owned buffers before handing off so downstream
           // consumers can safely retain the arrays across frames (drag/layout
@@ -756,17 +727,11 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Copy edgeData into a detached JS-owned buffer before handing off so
         // the overlay can safely retain it across frames without aliasing the
         // WASM linear-memory view (which may be invalidated on the next tick).
-        const wrapped = (obj: {
-          edgeData: Float32Array;
-          focusIdx: number;
-          edgeTypeKeys?: string[];
-        }) =>
+        const wrapped = (obj: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys?: string[] }) =>
           cb({
             edgeData: new Float32Array(obj.edgeData),
             focusIdx: obj.focusIdx,
-            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys)
-              ? [...obj.edgeTypeKeys]
-              : [],
+            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys) ? [...obj.edgeTypeKeys] : [],
           });
         const idx = engineRef.current.subscribe_edges(wrapped);
         return () => engineRef.current?.unsubscribe_edges(idx);
@@ -788,7 +753,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         display: "block",
         touchAction: "none",
         outline: "none", // Prevent default browser outline
-        ...style,
+        ...style
       }}
       onFocus={(e) => {
         // Add focus-visible style polyfill for accessibility

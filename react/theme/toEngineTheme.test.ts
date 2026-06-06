@@ -30,9 +30,7 @@ describe("graphThemeToEngineJson", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("dark"));
     for (const k of keysOf(json)) {
       const leaf = k.split(".").pop()!;
-      expect(leaf, `key "${k}" must be camelCase`).toMatch(
-        /^[a-z][a-zA-Z0-9]*$/,
-      );
+      expect(leaf, `key "${k}" must be camelCase`).toMatch(/^[a-z][a-zA-Z0-9]*$/);
     }
   });
 
@@ -65,9 +63,7 @@ describe("graphThemeToEngineJson", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("light")) as any;
     for (const [type, v] of Object.entries(json.nodes.byType)) {
       for (const k of Object.keys(v as object)) {
-        expect(k, `${type}.${k} must be camelCase`).toMatch(
-          /^[a-z][a-zA-Z0-9]*$/,
-        );
+        expect(k, `${type}.${k} must be camelCase`).toMatch(/^[a-z][a-zA-Z0-9]*$/);
       }
     }
   });

@@ -20,10 +20,7 @@ describe("typeStyles", () => {
 
   test("default node vocabulary uses consistent card geometry", () => {
     for (const t of NODE_TYPES) {
-      expect(
-        TYPE_STYLES[t].shape,
-        `${t} should render as a card by default`,
-      ).toBe("roundrectangle");
+      expect(TYPE_STYLES[t].shape, `${t} should render as a card by default`).toBe("roundrectangle");
       expect(TYPE_STYLES[t].cornerRadius).toBeGreaterThanOrEqual(10);
       expect(TYPE_STYLES[t].borderWidth).toBeLessThanOrEqual(1.45);
     }

@@ -6,26 +6,25 @@ import type { GraphTheme, NodeTypeStyle, EdgeTypeStyle } from "./types";
 import { LIGHT, DARK, NODE_TYPES, EDGE_TYPES, type EdgeType } from "./palette";
 import { TYPE_STYLES, DEFAULT_STYLE } from "./typeStyles";
 
-const LABEL_FONT =
-  "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const LABEL_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const LABEL_WEIGHT = 760;
 
 const EDGE_TYPE_LINE_WIDTH: Record<EdgeType, number> = {
-  depends: 2.1,
+  depends:    2.1,
   depends_on: 2.1,
-  violation: 2.9,
-  enforces: 2.2,
-  why: 2.2,
-  drift: 1.9,
+  violation:  2.9,
+  enforces:   2.2,
+  why:        2.2,
+  drift:      1.9,
 };
 
 const EDGE_TYPE_STYLE: Record<EdgeType, EdgeTypeStyle["style"]> = {
-  depends: "solid",
+  depends:    "solid",
   depends_on: "solid",
-  violation: "dashed",
-  enforces: "dotted",
-  why: "short-dashed",
-  drift: "dashed",
+  violation:  "dashed",
+  enforces:   "dotted",
+  why:        "short-dashed",
+  drift:      "dashed",
 };
 
 export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
@@ -84,8 +83,9 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     canvasBg: p.canvasBg,
     gridLineColor: p.gridLine,
     selectionBorder: p.selection,
-    selectionFill:
-      mode === "dark" ? "rgba(34, 211, 238, 0.22)" : "rgba(37, 99, 235, 0.16)",
+    selectionFill: mode === "dark"
+      ? "rgba(34, 211, 238, 0.22)"
+      : "rgba(37, 99, 235, 0.16)",
     hullFill: p.hullFill,
     hullStroke: p.hullStroke,
     dimOpacity: 0.14,

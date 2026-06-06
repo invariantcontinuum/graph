@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { forwardRef, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Graph, type GraphHandle, type GraphProps } from "./Graph";
 import { CompoundFramesOverlay } from "./CompoundFramesOverlay";
 import { LabelOverlay } from "./LabelOverlay";
@@ -16,10 +9,8 @@ import type { GraphTheme, GraphThemeOverrides } from "./theme/types";
 
 export type ThemeMode = "light" | "dark";
 
-export interface GraphSceneProps extends Omit<
-  GraphProps,
-  "theme" | "className" | "style"
-> {
+export interface GraphSceneProps
+  extends Omit<GraphProps, "theme" | "className" | "style"> {
   /** The only theme knob an embedder needs to set — internal buildTheme()
    *  turns this into the full GraphTheme + engine JSON in one place so every
    *  overlay + the WASM shader stay in lock-step. */
@@ -69,169 +60,169 @@ export interface GraphSceneProps extends Omit<
  * apps drop this in a sized box and add their own toolbar / panel chrome
  * via the `chrome` slot.
  */
-export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(
-  function GraphScene(props, ref) {
-    const {
-      themeMode,
-      themeOverrides,
-      snapshot,
-      nodeIds: nodeIdsProp,
-      labels: labelsProp,
-      nodeTypes: nodeTypesProp,
-      nodeSourceIds,
-      sourceLabels,
-      focusIds,
-      chrome,
-      className,
-      style,
-      ...graphProps
-    } = props;
+export const GraphScene = forwardRef<GraphHandle, GraphSceneProps>(function GraphScene(
+  props,
+  ref,
+) {
+  const {
+    themeMode,
+    themeOverrides,
+    snapshot,
+    nodeIds: nodeIdsProp,
+    labels: labelsProp,
+    nodeTypes: nodeTypesProp,
+    nodeSourceIds,
+    sourceLabels,
+    focusIds,
+    chrome,
+    className,
+    style,
+    ...graphProps
+  } = props;
 
-    const baseGraphTheme: GraphTheme = useMemo(
-      () => buildGraphTheme(themeMode),
-      [themeMode],
-    );
-    const graphTheme: GraphTheme = useMemo(
-      () => mergeGraphTheme(baseGraphTheme, themeOverrides),
-      [baseGraphTheme, themeOverrides],
-    );
-    const engineTheme = useMemo(
-      () => graphThemeToEngineJson(graphTheme),
-      [graphTheme],
-    );
+  const baseGraphTheme: GraphTheme = useMemo(
+    () => buildGraphTheme(themeMode),
+    [themeMode],
+  );
+  const graphTheme: GraphTheme = useMemo(
+    () => mergeGraphTheme(baseGraphTheme, themeOverrides),
+    [baseGraphTheme, themeOverrides],
+  );
+  const engineTheme = useMemo(
+    () => graphThemeToEngineJson(graphTheme),
+    [graphTheme],
+  );
 
-    // Derive overlay inputs from the snapshot when the caller hasn't supplied
-    // them directly. Keeping the derivation here means small apps can hand
-    // GraphScene just `{themeMode, snapshot}` and get a complete, working
-    // scene with no extra plumbing.
-    const nodeIds = useMemo(
-      () => nodeIdsProp ?? snapshot?.nodes.map((n) => n.id) ?? [],
-      [nodeIdsProp, snapshot],
-    );
-    const labels = useMemo(() => {
-      if (labelsProp) return labelsProp;
-      const m: Record<string, string> = {};
-      for (const n of snapshot?.nodes ?? []) m[n.id] = n.name;
-      return m;
-    }, [labelsProp, snapshot]);
-    const nodeTypes = useMemo(() => {
-      if (nodeTypesProp) return nodeTypesProp;
-      const m: Record<string, string> = {};
-      for (const n of snapshot?.nodes ?? []) m[n.id] = n.type ?? "external";
-      return m;
-    }, [nodeTypesProp, snapshot]);
+  // Derive overlay inputs from the snapshot when the caller hasn't supplied
+  // them directly. Keeping the derivation here means small apps can hand
+  // GraphScene just `{themeMode, snapshot}` and get a complete, working
+  // scene with no extra plumbing.
+  const nodeIds = useMemo(
+    () => nodeIdsProp ?? snapshot?.nodes.map((n) => n.id) ?? [],
+    [nodeIdsProp, snapshot],
+  );
+  const labels = useMemo(() => {
+    if (labelsProp) return labelsProp;
+    const m: Record<string, string> = {};
+    for (const n of snapshot?.nodes ?? []) m[n.id] = n.name;
+    return m;
+  }, [labelsProp, snapshot]);
+  const nodeTypes = useMemo(() => {
+    if (nodeTypesProp) return nodeTypesProp;
+    const m: Record<string, string> = {};
+    for (const n of snapshot?.nodes ?? []) m[n.id] = n.type ?? "external";
+    return m;
+  }, [nodeTypesProp, snapshot]);
 
-    // Local ref to propagate to each overlay. Using a proxy-like approach: the
-    // forwarded `ref` and the overlays' `engineRef` point at the same Graph
-    // instance.
-    // We pass the same ref to Graph and to every overlay — React's ref
-    // mechanics require a mutable ref object here, not the forwarded one,
-    // because callback refs would invalidate the overlays' useEffect deps.
-    const engineRef = useMemo(
-      () => ({ current: null as GraphHandle | null }),
-      [],
-    );
-    const setRef = (node: GraphHandle | null) => {
-      engineRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref)
-        (ref as React.MutableRefObject<GraphHandle | null>).current = node;
-    };
+  // Local ref to propagate to each overlay. Using a proxy-like approach: the
+  // forwarded `ref` and the overlays' `engineRef` point at the same Graph
+  // instance.
+  // We pass the same ref to Graph and to every overlay — React's ref
+  // mechanics require a mutable ref object here, not the forwarded one,
+  // because callback refs would invalidate the overlays' useEffect deps.
+  const engineRef = useMemo(
+    () => ({ current: null as GraphHandle | null }),
+    [],
+  );
+  const setRef = (node: GraphHandle | null) => {
+    engineRef.current = node;
+    if (typeof ref === "function") ref(node);
+    else if (ref) (ref as React.MutableRefObject<GraphHandle | null>).current = node;
+  };
 
-    // Gate overlay subscriptions on the engine actually being initialised.
-    // Without this, overlays attempt to call `engineRef.current.subscribeFrame`
-    // before the WASM worker has mounted and silently never receive updates —
-    // labels would stay invisible until the next dep change retrigger.
-    const [ready, setReady] = useState(false);
-    const onReady = useCallback(() => {
-      setReady(true);
-      graphProps.onReady?.();
-    }, [graphProps]);
+  // Gate overlay subscriptions on the engine actually being initialised.
+  // Without this, overlays attempt to call `engineRef.current.subscribeFrame`
+  // before the WASM worker has mounted and silently never receive updates —
+  // labels would stay invisible until the next dep change retrigger.
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => {
+    setReady(true);
+    graphProps.onReady?.();
+  }, [graphProps]);
 
-    const spotlightActive = focusIds != null && focusIds.size > 0;
+  const spotlightActive = focusIds != null && focusIds.size > 0;
 
-    return (
-      <div
-        className={`graph-scene${className ? " " + className : ""}`}
-        data-spotlight-active={spotlightActive ? "true" : "false"}
+  return (
+    <div
+      className={`graph-scene${className ? " " + className : ""}`}
+      data-spotlight-active={spotlightActive ? "true" : "false"}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        background: graphTheme.canvasBg,
+        overflow: "hidden",
+        isolation: "isolate",
+        ...style,
+      }}
+    >
+      {nodeSourceIds && sourceLabels ? (
+        <CompoundFramesOverlay
+          engineRef={engineRef}
+          theme={graphTheme}
+          ready={ready}
+          nodeIds={nodeIds}
+          nodeSourceIds={nodeSourceIds}
+          nodeTypes={nodeTypes}
+          sourceLabels={sourceLabels}
+        />
+      ) : null}
+      <Graph
+        {...graphProps}
+        ref={setRef}
+        snapshot={snapshot}
+        theme={engineTheme as Record<string, unknown>}
+        onReady={onReady}
+        // THE spotlight wire. `focusIds` (computed by the host from
+        // `selectedNodeId + 1-hop neighbors`) flows to the worker's
+        // `set_spotlight` handler via this prop; the worker then flags every
+        // non-neighbor in the shared visual_flags buffer, and the shader
+        // reads flag bit 3 to dim those nodes to theme.interaction.spotlight
+        // .dimOpacity. Without this one prop, the whole legacy-Cytoscape
+        // "dim everything except the focus neighborhood" effect never fires —
+        // the worker keeps spotlight_ids empty, every node stays bright,
+        // and the selected node is indistinguishable from the rest of the
+        // grid. (The main engine's `set_focus` path does a separate,
+        // lighter-touch dim on the main-thread visual_flags, but it's the
+        // worker-thread path wired here that produces the heavy ghost dim.)
+        spotlightIds={focusIds ? Array.from(focusIds) : null}
+        className="graph-canvas-webgl"
         style={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
+          zIndex: 2,
           width: "100%",
           height: "100%",
-          background: graphTheme.canvasBg,
-          overflow: "hidden",
-          isolation: "isolate",
-          ...style,
         }}
-      >
-        {nodeSourceIds && sourceLabels ? (
-          <CompoundFramesOverlay
-            engineRef={engineRef}
-            theme={graphTheme}
-            ready={ready}
-            nodeIds={nodeIds}
-            nodeSourceIds={nodeSourceIds}
-            nodeTypes={nodeTypes}
-            sourceLabels={sourceLabels}
-          />
-        ) : null}
-        <Graph
-          {...graphProps}
-          ref={setRef}
-          snapshot={snapshot}
-          theme={engineTheme as Record<string, unknown>}
-          onReady={onReady}
-          // THE spotlight wire. `focusIds` (computed by the host from
-          // `selectedNodeId + 1-hop neighbors`) flows to the worker's
-          // `set_spotlight` handler via this prop; the worker then flags every
-          // non-neighbor in the shared visual_flags buffer, and the shader
-          // reads flag bit 3 to dim those nodes to theme.interaction.spotlight
-          // .dimOpacity. Without this one prop, the whole legacy-Cytoscape
-          // "dim everything except the focus neighborhood" effect never fires —
-          // the worker keeps spotlight_ids empty, every node stays bright,
-          // and the selected node is indistinguishable from the rest of the
-          // grid. (The main engine's `set_focus` path does a separate,
-          // lighter-touch dim on the main-thread visual_flags, but it's the
-          // worker-thread path wired here that produces the heavy ghost dim.)
-          spotlightIds={focusIds ? Array.from(focusIds) : null}
-          className="graph-canvas-webgl"
+      />
+      <LabelOverlay
+        engineRef={engineRef}
+        theme={graphTheme}
+        nodeIds={nodeIds}
+        labels={labels}
+        nodeTypes={nodeTypes}
+        ready={ready}
+        minZoomToShowLabels={0}
+        focusIds={focusIds}
+      />
+      {/* EdgeLabelsOverlay intentionally omitted — the "depends" type pills
+       *  clutter the focus view without adding information the user can't
+       *  infer from the neighbor panel. Legacy Cytoscape never rendered per-
+       *  edge labels in the spotlighted state. The component is still exported
+       *  from the package for apps that genuinely want it. */}
+      {chrome ? (
+        <div
+          className="graph-scene-chrome"
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 2,
-            width: "100%",
-            height: "100%",
+            zIndex: 10,
+            pointerEvents: "none",
           }}
-        />
-        <LabelOverlay
-          engineRef={engineRef}
-          theme={graphTheme}
-          nodeIds={nodeIds}
-          labels={labels}
-          nodeTypes={nodeTypes}
-          ready={ready}
-          minZoomToShowLabels={0}
-          focusIds={focusIds}
-        />
-        {/* EdgeLabelsOverlay intentionally omitted — the "depends" type pills
-         *  clutter the focus view without adding information the user can't
-         *  infer from the neighbor panel. Legacy Cytoscape never rendered per-
-         *  edge labels in the spotlighted state. The component is still exported
-         *  from the package for apps that genuinely want it. */}
-        {chrome ? (
-          <div
-            className="graph-scene-chrome"
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              pointerEvents: "none",
-            }}
-          >
-            {chrome}
-          </div>
-        ) : null}
-      </div>
-    );
-  },
-);
+        >
+          {chrome}
+        </div>
+      ) : null}
+    </div>
+  );
+});

@@ -7,10 +7,8 @@ describe("buildGraphTheme", () => {
   test("dark: every node type uses the uniform glass fill", () => {
     const t = buildGraphTheme("dark");
     for (const type of NODE_TYPES) {
-      expect(
-        t.nodeTypes[type].color,
-        `${type} fill must equal nodeGlassFill`,
-      ).toBe(DARK.nodeGlassFill);
+      expect(t.nodeTypes[type].color, `${type} fill must equal nodeGlassFill`)
+        .toBe(DARK.nodeGlassFill);
     }
   });
 

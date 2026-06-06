@@ -19,16 +19,7 @@ export interface FitLabelOptions {
 const LINE_HEIGHT_RATIO = 1.16;
 
 export function fitLabelInBox(opts: FitLabelOptions): FittedLabel | null {
-  const {
-    ctx,
-    maxWidth,
-    maxHeight,
-    fontFamily,
-    fontWeight,
-    baseFontPx,
-    minFontPx,
-    dpr,
-  } = opts;
+  const { ctx, maxWidth, maxHeight, fontFamily, fontWeight, baseFontPx, minFontPx, dpr } = opts;
   const text = normalizeLabel(opts.text);
   if (!text) return null;
 
@@ -45,14 +36,7 @@ export function fitLabelInBox(opts: FitLabelOptions): FittedLabel | null {
     if (fitted) return fitted;
   }
 
-  return fallbackSingleLine(ctx, text, {
-    maxWidth,
-    maxHeight,
-    fontFamily,
-    fontWeight,
-    minFontPx,
-    dpr,
-  });
+  return fallbackSingleLine(ctx, text, { maxWidth, maxHeight, fontFamily, fontWeight, minFontPx, dpr });
 }
 
 interface SizeAttempt {
@@ -64,20 +48,10 @@ interface SizeAttempt {
   dpr: number;
 }
 
-function tryFitAtSize(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  a: SizeAttempt,
-): FittedLabel | null {
+function tryFitAtSize(ctx: CanvasRenderingContext2D, text: string, a: SizeAttempt): FittedLabel | null {
   ctx.font = `${a.fontWeight} ${a.fontPx}px ${a.fontFamily}`;
-  const lineHeight = Math.max(
-    a.fontPx * LINE_HEIGHT_RATIO,
-    a.fontPx + 1 * a.dpr,
-  );
-  const maxLines = Math.max(
-    1,
-    Math.min(4, Math.floor(a.maxHeight / lineHeight)),
-  );
+  const lineHeight = Math.max(a.fontPx * LINE_HEIGHT_RATIO, a.fontPx + 1 * a.dpr);
+  const maxLines = Math.max(1, Math.min(4, Math.floor(a.maxHeight / lineHeight)));
   const lines = wrapIntoLines(ctx, text, a.maxWidth, maxLines);
   if (lines.length === 0) return null;
   if (lines.length * lineHeight > a.maxHeight + 0.5 * a.dpr) return null;
@@ -99,10 +73,7 @@ function fallbackSingleLine(
   a: FallbackAttempt,
 ): FittedLabel | null {
   ctx.font = `${a.fontWeight} ${a.minFontPx}px ${a.fontFamily}`;
-  const lineHeight = Math.max(
-    a.minFontPx * LINE_HEIGHT_RATIO,
-    a.minFontPx + 1 * a.dpr,
-  );
+  const lineHeight = Math.max(a.minFontPx * LINE_HEIGHT_RATIO, a.minFontPx + 1 * a.dpr);
   if (lineHeight > a.maxHeight) return null;
   return {
     lines: [ellipsize(ctx, text, a.maxWidth)],
@@ -182,11 +153,7 @@ function fitChars(
   return best;
 }
 
-function findSoftBreak(
-  chars: string[],
-  start: number,
-  hardEnd: number,
-): number {
+function findSoftBreak(chars: string[], start: number, hardEnd: number): number {
   for (let i = hardEnd; i > start; i--) {
     if (isBreakChar(chars[i - 1])) return i;
   }
@@ -199,11 +166,7 @@ function isBreakChar(ch: string): boolean {
   return BREAK_CHARS.has(ch);
 }
 
-function ellipsize(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxW: number,
-): string {
+function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
   if (ctx.measureText(text).width <= maxW) return text;
   const ell = "...";
   let lo = 0;
