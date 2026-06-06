@@ -37,9 +37,11 @@ function toEdgeOverride(s: EdgeTypeStyle) {
 
 export function graphThemeToEngineJson(t: GraphTheme): unknown {
   const byTypeNodes: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(t.nodeTypes)) byTypeNodes[k] = toNodeBody(v);
+  for (const [k, v] of Object.entries(t.nodeTypes))
+    byTypeNodes[k] = toNodeBody(v);
   const byTypeEdges: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(t.edgeTypes)) byTypeEdges[k] = toEdgeOverride(v);
+  for (const [k, v] of Object.entries(t.edgeTypes))
+    byTypeEdges[k] = toEdgeOverride(v);
 
   return {
     // Opaque canvas bg: the grid is now rendered inside the WebGL canvas as
@@ -52,7 +54,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
       byType: byTypeNodes,
       byStatus: {
         violation: { borderColor: "#e6706b", borderWidth: 2.1, pulse: true },
-        drift:     { borderColor: "#e8aa99", borderWidth: 1.8, pulse: true },
+        drift: { borderColor: "#e8aa99", borderWidth: 1.8, pulse: true },
       },
     },
     edges: {

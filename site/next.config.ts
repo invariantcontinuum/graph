@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 import path from "node:path";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: "export",
   outputFileTracingRoot: path.join(process.cwd(), ".."),
-  basePath: '/graph',
+  basePath: "/graph",
   transpilePackages: ["@invariantcontinuum/graph"],
   typescript: {
     ignoreBuildErrors: true,

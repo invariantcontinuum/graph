@@ -125,7 +125,6 @@ export function LabelOverlay({
       ref={canvasRef}
       className="graph-label-overlay"
       aria-hidden={true}
-      role="presentation"
       // The WASM shader dims non-focus fills via u_dim_opacity, so labels stay
       // at uniform brightness. We surface the focus-set size as a data
       // attribute so app CSS / devtools can read it without an extra render
@@ -156,7 +155,10 @@ interface FrameContext {
   theme: GraphTheme;
 }
 
-function drawAllLabels(ctx: CanvasRenderingContext2D, frame: FrameContext): void {
+function drawAllLabels(
+  ctx: CanvasRenderingContext2D,
+  frame: FrameContext,
+): void {
   const { positions, nodeIds } = frame;
   // Iterate engine-ordered ids. positions stride-4: [x, y, radius, type_idx].
   for (let i = 0; i < nodeIds.length; i++) {
@@ -172,7 +174,17 @@ function drawOneLabel(
   index: number,
   off: number,
 ): void {
-  const { positions, vpMatrix, cvs, zoom, dpr, nodeIds, labels, nodeTypes, theme } = frame;
+  const {
+    positions,
+    vpMatrix,
+    cvs,
+    zoom,
+    dpr,
+    nodeIds,
+    labels,
+    nodeTypes,
+    theme,
+  } = frame;
 
   const id = nodeIds[index];
   const wx = positions[off];
@@ -183,10 +195,15 @@ function drawOneLabel(
   const type = nodeTypes[id] ?? "";
   const typeStyle = theme.nodeTypes[type] ?? theme.defaultNodeStyle;
   const nodeBox = computeNodeBox(typeStyle, theme, zoom, dpr);
-  if (nodeBox.w < MIN_NODE_WIDTH_PX * dpr || nodeBox.h < MIN_NODE_HEIGHT_PX * dpr) return;
+  if (
+    nodeBox.w < MIN_NODE_WIDTH_PX * dpr ||
+    nodeBox.h < MIN_NODE_HEIGHT_PX * dpr
+  )
+    return;
 
   const textBox = computeTextBox(nodeBox, dpr);
-  if (textBox.w < MIN_BOX_WIDTH_PX * dpr || textBox.h < MIN_BOX_HEIGHT_PX * dpr) return;
+  if (textBox.w < MIN_BOX_WIDTH_PX * dpr || textBox.h < MIN_BOX_HEIGHT_PX * dpr)
+    return;
 
   const fonts = resolveFont(typeStyle, zoom, dpr);
   const fitted = fitLabelInBox({
@@ -245,12 +262,19 @@ interface ResolvedFont {
   basePx: number;
 }
 
-function resolveFont(typeStyle: NodeTypeStyle, zoom: number, dpr: number): ResolvedFont {
+function resolveFont(
+  typeStyle: NodeTypeStyle,
+  zoom: number,
+  dpr: number,
+): ResolvedFont {
   const requested = (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
   return {
     family: typeStyle.labelFont ?? DEFAULT_LABEL_FONT_FAMILY,
     weight: typeStyle.labelWeight ?? DEFAULT_LABEL_FONT_WEIGHT,
-    basePx: Math.min(Math.max(requested, MIN_LABEL_FONT_PX * dpr), MAX_LABEL_FONT_PX * dpr),
+    basePx: Math.min(
+      Math.max(requested, MIN_LABEL_FONT_PX * dpr),
+      MAX_LABEL_FONT_PX * dpr,
+    ),
   };
 }
 
@@ -277,7 +301,10 @@ function paintLabel(ctx: CanvasRenderingContext2D, p: PaintParams): void {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
-  ctx.lineWidth = Math.max(STROKE_WIDTH_FLOOR_PX * dpr, fitted.fontPx * STROKE_WIDTH_RATIO);
+  ctx.lineWidth = Math.max(
+    STROKE_WIDTH_FLOOR_PX * dpr,
+    fitted.fontPx * STROKE_WIDTH_RATIO,
+  );
   ctx.strokeStyle = theme.labelHalo ?? theme.canvasBg;
   ctx.fillStyle = typeStyle.labelColor ?? theme.defaultNodeStyle.labelColor;
 

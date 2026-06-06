@@ -12,10 +12,7 @@ globalThis.onmessage = async (e: MessageEvent) => {
 
   handle_message(e.data);
 
-  if (
-    e.data.type === "load_snapshot" ||
-    e.data.type === "set_layout"
-  ) {
+  if (e.data.type === "load_snapshot" || e.data.type === "set_layout") {
     layoutRunning = true;
     scheduleTick();
   }
