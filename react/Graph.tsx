@@ -745,7 +745,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       ref={canvasRef}
       className={className}
       aria-label={ariaLabel ?? "Interactive graph visualization"}
-      role="application"
+      role="region"
+      aria-roledescription="graph"
+      aria-keyshortcuts="Escape + -"
       tabIndex={0}
       style={{
         width: "100%",
