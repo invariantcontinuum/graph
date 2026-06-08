@@ -88,12 +88,13 @@ impl QuadNode {
                 continue;
             }
 
-            // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2
-            let is_leaf = node.children.is_none();
-            let (x_min, _, x_max, _) = node.bounds;
-            let width = x_max - x_min;
-
-            if is_leaf || (width * width) < THETA_SQ * dist_sq {
+            // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2.
+            // Short-circuiting the quadrant bounds check by placing `node.children.is_none()` before
+            // `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations on leaf nodes.
+            if node.children.is_none() || {
+                let width = node.bounds.2 - node.bounds.0;
+                (width * width) < THETA_SQ * dist_sq
+            } {
                 let inv_dist = 1.0 / dist_sq.sqrt();
                 let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
                 fx += force_over_dist * dx;
