@@ -142,6 +142,10 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
 
-## 2024-05-30 - [Barnes-Hut Quadrant Bounds Check and Hierarchical Layer Assignment Optimization]
-**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating the leaf node condition `node.children.is_none()` before checking the quadrant bounds ratio `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations. In `crates/graph-layout/src/hierarchical.rs`, the `assign_layers` method returning an intermediate `HashMap<String, u32>` was a bottleneck, allocating clones of String IDs. Returning a flat vector `Vec<u32>` directly indexed by `petgraph::NodeIndex` is faster and reduces allocations.
-**Action:** Always short-circuit expensive mathematical operations in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, use `petgraph::NodeIndex` as an implicit array index to return states (like assigned layers) via contiguous flat vectors (`Vec<T>`) rather than building and querying `HashMap<String, T>`.
+## 2026-05-30 - Barnes-Hut Bounds And Hierarchical Layer Optimization
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating the leaf node condition `node.children.is_none()` before checking the quadrant bounds ratio `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations. In `crates/graph-layout/src/hierarchical.rs`, returning assigned layers as a flat `Vec<u32>` indexed by `petgraph::NodeIndex` avoids building and querying a cloned `HashMap<String, u32>`.
+**Action:** Short-circuit expensive math in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, prefer contiguous flat vectors for node-indexed state instead of cloned string-keyed maps.
+
+## 2026-05-30 - Fix TS3776 & Text:S8570
+**Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
+**Action:** Splitting `onMove` into `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`, and updating `sonar-project.properties`.
