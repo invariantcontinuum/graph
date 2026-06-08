@@ -315,13 +315,18 @@ export default function Showcase() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDetailsOpen(false);
-        setDrawerOpen(false);
+        if (drawerOpen) {
+          setDrawerOpen(false);
+        } else if (detailsOpen) {
+          setDetailsOpen(false);
+        } else {
+          clearSelection();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [drawerOpen, detailsOpen, clearSelection]);
 
   return (
     <main className="atlas-shell">
@@ -419,6 +424,7 @@ export default function Showcase() {
                   type="button"
                   data-active={layout === item}
                   aria-pressed={layout === item}
+                  title={`Set layout to ${item}`}
                   onClick={() => setLayout(item)}
                 >
                   {item}
@@ -432,6 +438,7 @@ export default function Showcase() {
                   type="button"
                   data-active={themeMode === item}
                   aria-pressed={themeMode === item}
+                  title={`Switch to ${item} theme`}
                   onClick={() => setThemeMode(item)}
                 >
                   {item}
@@ -507,10 +514,10 @@ export default function Showcase() {
                 </div>
               </dl>
               <div className="action-grid">
-                <button type="button" onClick={frameSelected}>
+                <button type="button" title="Frame selection" onClick={frameSelected}>
                   Frame
                 </button>
-                <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                <button type="button" title="Center node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                   Center
                 </button>
                 <button
@@ -521,7 +528,7 @@ export default function Showcase() {
                 >
                   Clear
                 </button>
-                <button type="button" className="danger-action" onClick={removeSelected}>
+                <button type="button" className="danger-action" title="Remove selected node" onClick={removeSelected}>
                   Remove
                 </button>
               </div>
@@ -692,10 +699,10 @@ export default function Showcase() {
             </section>
 
             <div className="modal-actions">
-              <button type="button" onClick={frameSelected}>
+              <button type="button" title="Frame selection" onClick={frameSelected}>
                 Frame
               </button>
-              <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+              <button type="button" title="Center node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
