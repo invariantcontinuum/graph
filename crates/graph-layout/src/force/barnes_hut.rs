@@ -95,8 +95,9 @@ impl QuadNode {
                 let width = node.bounds.2 - node.bounds.0;
                 (width * width) < THETA_SQ * dist_sq
             } {
-                let inv_dist = 1.0 / dist_sq.sqrt();
-                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
+                // Use one sqrt and one division instead of cubing a reciprocal sqrt.
+                let dist = dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass / (dist * dist_sq);
                 fx += force_over_dist * dx;
                 fy += force_over_dist * dy;
                 continue;

@@ -142,6 +142,10 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
 
+## 2026-05-31 - Optimize Inverse Distance Calculation In Barnes-Hut
+**Learning:** In the hot path of the Barnes-Hut layout algorithm, computing a reciprocal square root (`1.0 / dist_sq.sqrt()`) and then cubing it with three consecutive multiplications is slower than the direct equivalent. LLVM without `fast-math` cannot safely reassociate these floating-point operations, so the compiler must emit the operations as written.
+**Action:** When computing geometric inverses in Rust hot paths, prefer calculating a standard square root (`dist_sq.sqrt()`) and performing a single division such as `1.0 / (dist * dist_sq)`.
+
 ## 2026-05-30 - Barnes-Hut Bounds And Hierarchical Layer Optimization
 **Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating the leaf node condition `node.children.is_none()` before checking the quadrant bounds ratio `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations. In `crates/graph-layout/src/hierarchical.rs`, returning assigned layers as a flat `Vec<u32>` indexed by `petgraph::NodeIndex` avoids building and querying a cloned `HashMap<String, u32>`.
 **Action:** Short-circuit expensive math in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, prefer contiguous flat vectors for node-indexed state instead of cloned string-keyed maps.
