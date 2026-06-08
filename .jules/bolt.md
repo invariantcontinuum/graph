@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-05-29 - ChromeDriver 404 Failure during WASM Tests
+ **Learning:** ChromeDriver sometimes fails with a 404 error during local headless execution via wasm-bindgen-test-runner.
+ **Action:** Rely on the GitHub CI workflow for final validation of wasm test execution as instructed by the playbook.
