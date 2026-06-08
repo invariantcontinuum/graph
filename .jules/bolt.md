@@ -141,3 +141,11 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+
+## 2026-05-30 - Barnes-Hut Bounds And Hierarchical Layer Optimization
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating the leaf node condition `node.children.is_none()` before checking the quadrant bounds ratio `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations. In `crates/graph-layout/src/hierarchical.rs`, returning assigned layers as a flat `Vec<u32>` indexed by `petgraph::NodeIndex` avoids building and querying a cloned `HashMap<String, u32>`.
+**Action:** Short-circuit expensive math in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, prefer contiguous flat vectors for node-indexed state instead of cloned string-keyed maps.
+
+## 2026-05-30 - Fix TS3776 & Text:S8570
+**Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
+**Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.

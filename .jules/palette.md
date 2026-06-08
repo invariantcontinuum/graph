@@ -102,6 +102,11 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
-## 2024-06-01 - Improve empty states and tooltips in Showcase
-**Learning:** Found that the inspector panels used terse empty states ("No active node.") and the main controls lacked tooltips, making the interface slightly less discoverable.
-**Action:** Always aim to make empty states instructional rather than just descriptive, and add `title` attributes as native tooltips for buttons, even if they have text labels, to provide more context without cluttering the UI.
+
+## 2026-05-30 - Overlay Accessibility Fix
+**Learning:** The SonarCloud accessibility rule `typescript:S6819` flags `role="presentation"` when used on decorative canvas elements that are already `aria-hidden={true}` and non-interactive. The role is redundant because these overlays have no pointer handlers, no `tabIndex`, and screen readers already ignore them.
+**Action:** Never use `role="presentation"` on supplementary overlay canvases. Omit the role and rely on `aria-hidden={true}` plus CSS `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
+
+## 2026-06-01 - Showcase Empty States And Tooltips
+**Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
+**Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
