@@ -408,7 +408,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const pumpWorkerMessages = useCallback(() => {
+  const flushWorkerMessages = useCallback(() => {
     const raw = engineRef.current?.drain_worker_messages();
     if (!raw || !workerRef.current) return;
     // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
@@ -433,8 +433,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // Cache-adjusted coordinate helpers. The engine expects canvas-local,
     // DPR-scaled coordinates (matches the wheel + existing drag/hover/click
     // FFI contract), not raw clientX/Y.
-    const toLocalPointer = (e: PointerEvent | MouseEvent, cvs: HTMLCanvasElement) => {
-      const rect = cvs.getBoundingClientRect();
+    const toLocalPointer = (e: PointerEvent | MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       return {
         x: (e.clientX - rect.left) * dpr,
@@ -479,10 +479,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }
     };
 
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan" | null) => {
+    const handleSinglePointerMove = (
+      local: { x: number; y: number },
+      mode: "drag" | "pan" | null,
+    ) => {
       if (mode === "drag") {
         engineRef.current?.handle_node_drag_move(local.x, local.y);
-        pumpWorkerMessages();
+        flushWorkerMessages();
       } else if (mode === "pan") {
         engineRef.current?.handle_pan_move(local.x, local.y);
         handleHoverOnly(local);
@@ -507,7 +510,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);
-      const local = toLocalPointer(e, canvas);
+      const local = toLocalPointer(e);
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
@@ -518,7 +521,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           draggingNodeRef.current = nodeId;
           singleMode = "drag";
           downPos = { x: local.x, y: local.y };
-          pumpWorkerMessages();
+          flushWorkerMessages();
         } else {
           engineRef.current?.handle_pan_start(local.x, local.y);
           singleMode = "pan";
@@ -528,7 +531,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Second pointer joined — end any single-pointer gesture and begin pinch.
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           draggingNodeRef.current = null;
           suppressNextClick = true;
         } else if (singleMode === "pan") {
@@ -542,7 +545,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     };
 
     const onMove = (e: PointerEvent) => {
-      const local = toLocalPointer(e, canvas);
+      const local = toLocalPointer(e);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
@@ -571,14 +574,14 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (active.size === 0) {
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          pumpWorkerMessages();
+          flushWorkerMessages();
           // A "click on node" also begins with a drag-start (because the
           // pointer-down hit-tested a node). If the pointer never moved
           // beyond the threshold, fire onNodeClick directly here — the
           // synthetic `click` event that follows would otherwise be
           // swallowed by the draggingNodeRef guard inside onClick.
           const movedThreshold = 4;
-          const localUp = toLocalPointer(e, canvas);
+          const localUp = toLocalPointer(e);
           const moved = downPos
             ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
               Math.abs(localUp.y - downPos.y) > movedThreshold
@@ -618,7 +621,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         return;
       }
       if (draggingNodeRef.current !== null) return; // consumed by drag
-      const local = toLocalPointer(e, canvas);
+      const local = toLocalPointer(e);
       const clickedId = engineRef.current?.handle_click(local.x, local.y);
       if (clickedId) {
         callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
@@ -670,7 +673,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [nodeFromId, pumpWorkerMessages, requestRender]);
+  }, [nodeFromId, flushWorkerMessages, requestRender]);
 
   useImperativeHandle(
     ref,

@@ -102,3 +102,7 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+
+## 2026-05-30 - Overlay Accessibility Fix
+**Learning:** The SonarCloud accessibility rule `typescript:S6819` flags `role="presentation"` when used on decorative canvas elements that are already `aria-hidden={true}` and non-interactive. The role is redundant because these overlays have no pointer handlers, no `tabIndex`, and screen readers already ignore them.
+**Action:** Never use `role="presentation"` on supplementary overlay canvases. Omit the role and rely on `aria-hidden={true}` plus CSS `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
