@@ -153,3 +153,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-05-30 - Fix TS3776 & Text:S8570
 **Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
 **Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
+
+## 2026-06-08 - Elide Bounds Checking in Overlap Bucket Resolution
+**Learning:** In Rust layout hot paths (e.g., nested loops in `crates/graph-layout/src/force/overlap.rs`), bounds checking inside hot loops can be a significant overhead. If you know that an index pulled from a data structure (like values pulled from a spatial hash bucket) is algorithmically guaranteed to be valid, using `unsafe { slice.get_unchecked(index) }` yields measurable performance improvements without sacrificing structural safety.
+**Action:** When a profiler or benchmark shows array indexing as a bottleneck in a hot layout loop, verify the invariant that guarantees index validity and safely elide the bounds check using `get_unchecked`.
