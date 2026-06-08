@@ -443,41 +443,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     };
 
     const active: Map<number, PointerState> = new Map();
-
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan" | null) => {
-      if (mode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        flushWorkerMessages();
-      } else if (mode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        // Hover updates only while panning (or hovering without a button).
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = () => {
-      const d = pinchDist();
-      const c = centroid();
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
-    };
     // Track whether the current single-pointer gesture is dragging a node,
     // panning the camera, or neither (pre-hit-test state). Resets on release.
     let singleMode: "drag" | "pan" | null = null;
@@ -505,6 +470,43 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const dy = arr[0].y - arr[1].y;
       return Math.hypot(dx, dy);
     }
+
+    const handleHoverOnly = (local: { x: number; y: number }) => {
+      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+      if (hoveredId !== undefined) {
+        canvas.style.cursor = hoveredId ? "pointer" : "default";
+        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+      }
+    };
+
+    const handleSinglePointerMove = (
+      local: { x: number; y: number },
+      mode: "drag" | "pan" | null,
+    ) => {
+      if (mode === "drag") {
+        engineRef.current?.handle_node_drag_move(local.x, local.y);
+        flushWorkerMessages();
+      } else if (mode === "pan") {
+        engineRef.current?.handle_pan_move(local.x, local.y);
+        handleHoverOnly(local);
+      }
+    };
+
+    const handlePinchMove = () => {
+      const d = pinchDist();
+      const c = centroid();
+      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
+      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
+      // Invert via -log so a growing distance zooms in.
+      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
+      if (lastCentroid) {
+        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
+        engineRef.current?.handle_pan_move(c.x, c.y);
+        engineRef.current?.handle_pan_end();
+      }
+      lastPinchDist = d;
+      lastCentroid = c;
+    };
 
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);

@@ -147,5 +147,5 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Action:** Short-circuit expensive math in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, prefer contiguous flat vectors for node-indexed state instead of cloned string-keyed maps.
 
 ## 2026-05-30 - Fix TS3776 & Text:S8570
-**Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
-**Action:** Splitting `onMove` into `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`, and updating `sonar-project.properties`.
+**Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
+**Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
