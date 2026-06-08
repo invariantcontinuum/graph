@@ -334,6 +334,7 @@ export default function Showcase() {
           type="button"
           className="drawer-toggle"
           aria-label={drawerOpen ? "Close scenario rail" : "Open scenario rail"}
+          title={drawerOpen ? "Close scenario rail" : "Open scenario rail"}
           aria-expanded={drawerOpen}
           aria-controls="scenario-rail"
           onClick={() => setDrawerOpen((open) => !open)}
@@ -526,7 +527,7 @@ export default function Showcase() {
               </div>
             </>
           ) : (
-            <p className="empty-copy">No active node.</p>
+            <p className="empty-copy">No active node. Click a node to view its details.</p>
           )}
         </section>
 
@@ -560,7 +561,7 @@ export default function Showcase() {
               })}
             </ul>
           ) : (
-            <p className="empty-copy">No connected edge list.</p>
+            <p className="empty-copy">This node has no connected edges.</p>
           )}
         </section>
 
@@ -588,10 +589,10 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
-          <button type="button" onClick={() => graphRef.current?.fit(56)}>
+          <button type="button" title="Fit the entire graph into view" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
-          <button type="button" onClick={addNode}>
+          <button type="button" title="Add a new test node to the graph" onClick={addNode}>
             Add probe
           </button>
         </section>
@@ -674,7 +675,7 @@ export default function Showcase() {
                   })}
                 </ul>
               ) : (
-                <p className="empty-copy">No connected records.</p>
+                <p className="empty-copy">This record has no adjacent connections.</p>
               )}
             </section>
 
