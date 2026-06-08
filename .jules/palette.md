@@ -103,6 +103,6 @@ Browser smoke must cover:
 - drag behavior when renderer code changes
 - console errors and failed network requests
 
-## 2026-05-29 - Removed redundant presentation role from canvases
-**Learning:** Using `role="presentation"` on decorative `<canvas>` elements that are already `aria-hidden={true}` and non-interactive is noisy and can trigger accessibility flags like SonarCloud's `typescript:S6819` rule. It does not provide additional value when the element is correctly hidden from the accessibility tree.
-**Action:** When creating supplementary, non-interactive overlay canvases, omit the `role` attribute entirely. Rely on `aria-hidden={true}` and `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
+## 2026-05-30 - Overlay Accessibility Fix
+**Learning:** The SonarCloud accessibility rule `typescript:S6819` flags `role="presentation"` when used on decorative canvas elements that are already `aria-hidden={true}` and non-interactive. The role is redundant because these overlays have no pointer handlers, no `tabIndex`, and screen readers already ignore them.
+**Action:** Never use `role="presentation"` on supplementary overlay canvases. Omit the role and rely on `aria-hidden={true}` plus CSS `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
