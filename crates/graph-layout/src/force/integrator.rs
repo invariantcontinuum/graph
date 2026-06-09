@@ -75,7 +75,10 @@ fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &
     let n = positions.len() / 2;
     // SAFETY: We verify that the forces buffer is large enough before bypassing bounds
     // checks inside the loop to avoid undefined behavior.
-    assert!(forces.len() >= n, "forces buffer must be at least as large as positions / 2");
+    assert!(
+        forces.len() >= n,
+        "forces buffer must be at least as large as positions / 2"
+    );
     for &(src, tgt) in edges {
         if src >= n || tgt >= n {
             continue;
