@@ -69,8 +69,7 @@ fn compute_push(
                     continue;
                 }
                 let other_pos = unsafe { positions.get_unchecked(other_idx) };
-                let (push_x, push_y) =
-                    pair_push(x, y, other_pos.0, other_pos.1, gap_sq);
+                let (push_x, push_y) = pair_push(x, y, other_pos.0, other_pos.1, gap_sq);
                 push_dx += push_x;
                 push_dy += push_y;
             }
