@@ -153,3 +153,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-05-30 - Fix TS3776 & Text:S8570
 **Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
 **Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
+
+## 2026-06-09 - Elide Bounds Checking in Layout Algorithmic Hot Loops
+**Learning:** In hot loops within layout algorithms (like `apply_pushes` and `apply_attractive_edges`), Rust's default bounds checking on slices and arrays can introduce noticeable overhead. When algorithms structurally guarantee indices are valid (e.g. by checking `src >= n || tgt >= n` beforehand or querying lengths of populated collections), using `unsafe { slice.get_unchecked(i) }` allows the compiler to elide the bounds check.
+**Action:** In heavily executed Rust geometric and mathematical loops, verify index bounds explicitly before the loop or inside guards, and safely use `.get_unchecked()` or `.get_unchecked_mut()` for array access to recover performance.

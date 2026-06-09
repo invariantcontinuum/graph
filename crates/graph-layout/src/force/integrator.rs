@@ -77,18 +77,23 @@ fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &
         if src >= n || tgt >= n {
             continue;
         }
-        let src_pos = &positions[src * 2..src * 2 + 2];
-        let tgt_pos = &positions[tgt * 2..tgt * 2 + 2];
-        let dx = tgt_pos[0] - src_pos[0];
-        let dy = tgt_pos[1] - src_pos[1];
+        let src_idx = src * 2;
+        let tgt_idx = tgt * 2;
+        let sx = unsafe { *positions.get_unchecked(src_idx) };
+        let sy = unsafe { *positions.get_unchecked(src_idx + 1) };
+        let tx = unsafe { *positions.get_unchecked(tgt_idx) };
+        let ty = unsafe { *positions.get_unchecked(tgt_idx + 1) };
+        let dx = tx - sx;
+        let dy = ty - sy;
+
         // Mathematically simplify distance calculations (fx = ATTRACTION * dx)
         // to completely bypass expensive .sqrt() and floating-point division operations
         let fx = ATTRACTION * dx;
         let fy = ATTRACTION * dy;
-        let src_force = &mut forces[src];
+        let src_force = unsafe { forces.get_unchecked_mut(src) };
         src_force.0 += fx;
         src_force.1 += fy;
-        let tgt_force = &mut forces[tgt];
+        let tgt_force = unsafe { forces.get_unchecked_mut(tgt) };
         tgt_force.0 -= fx;
         tgt_force.1 -= fy;
     }
