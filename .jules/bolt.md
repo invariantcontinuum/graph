@@ -153,3 +153,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-05-30 - Fix TS3776 & Text:S8570
 **Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
 **Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
+
+## 2026-06-10 - Elide bounds checks in force integrator's hot loop
+**Learning:** In `apply_attractive_edges` in the force integrator, chaining bounds-checked access to vectors can introduce unnecessary overhead in a hot loop that gets called repeatedly for every edge on every tick.
+**Action:** Elide bounds checks using `unsafe { slice.get_unchecked(index) }` and `unsafe { slice.get_unchecked_mut(index) }` when iterating over edges, provided an initial bounds check like `if src >= n || tgt >= n { continue; }` has already proven the indices are valid.
