@@ -110,3 +110,6 @@ Browser smoke must cover:
 ## 2026-06-01 - Showcase Empty States And Tooltips
 **Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
 **Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
+## 2026-06-02 - Expose Invisible Zoom Shortcuts
+**Learning:** Invisible canvas interactions like zooming with + and - keys are undiscoverable and can trap keyboard-only users if explicit UI controls are absent. Relying solely on standard keyboard events within the canvas element is insufficient for full accessibility.
+**Action:** Always pair canvas keyboard shortcuts with explicit, visually apparent buttons in the active UI. Use `title` and `aria-keyshortcuts` to advertise the shortcut, avoiding literal key names like '+' to ensure robust screen reader support.
