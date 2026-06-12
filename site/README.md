@@ -28,7 +28,7 @@ The static export is emitted to `site/out`.
 
 The showcase must match the latest released package state. Renderer and React wrapper visual fixes land in `@invariantcontinuum/graph` first, then a package release is cut and published, and only after the Release and Publish workflows are successful should `site/package.json` and `site/package-lock.json` move to that version.
 
-Current showcase package target: `@invariantcontinuum/graph@0.2.10`.
+Current showcase package target: `@invariantcontinuum/graph@0.2.11`.
 
 The site presets intentionally use the package's rounded-card node language rather than symbolic geometry so the showcase reflects the default renderer behavior. If the package render contract changes, publish the package first and then update this dependency plus any showcase theme overrides.
 

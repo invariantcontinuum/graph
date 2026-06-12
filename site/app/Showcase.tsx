@@ -14,7 +14,7 @@ import {
 } from "@invariantcontinuum/graph/react";
 import { PRESETS, presetBySlug, type Preset } from "./presets";
 
-const PACKAGE_VERSION = "0.2.10";
+const PACKAGE_VERSION = "0.2.11";
 
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -193,6 +193,7 @@ export default function Showcase() {
   const [stats, setStats] = useState<GraphStats | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const preset: Preset = useMemo(() => presetBySlug(activeSlug), [activeSlug]);
   const graphThemeOverrides = useMemo(
@@ -225,6 +226,7 @@ export default function Showcase() {
       setSelectedId(null);
       setDetailsOpen(false);
       setDrawerOpen(false);
+      setIsLoading(true);
       refit();
     },
     [refit],
@@ -343,6 +345,22 @@ export default function Showcase() {
     refit(56);
   }, [refit]);
 
+  const handleGraphReady = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  const zoomIn = useCallback(() => {
+    graphRef.current?.zoomIn();
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    graphRef.current?.zoomOut();
+  }, []);
+
+  const fitGraph = useCallback(() => {
+    graphRef.current?.fit(56);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -440,7 +458,7 @@ export default function Showcase() {
         <section className="rail-panel" aria-label="Package release">
           <p className="panel-label">Released package</p>
           <strong>@invariantcontinuum/graph</strong>
-          <span>0.2.10 pinned in this site</span>
+          <span>0.2.11 pinned in this site</span>
         </section>
       </aside>
 
@@ -516,8 +534,48 @@ export default function Showcase() {
             onLegendChange={setLegend}
             onStatsChange={setStats}
             onPositionsReady={handlePositionsReady}
+            onReady={handleGraphReady}
             aria-label={`${preset.title} graph`}
           />
+          {isLoading && (
+            <div className="stage-loading" aria-live="polite" aria-busy="true">
+              <div>
+                <div className="stage-loading-spinner" />
+                <p>Initializing graph engine…</p>
+              </div>
+            </div>
+          )}
+          <div className="stage-overlay">
+            <div className="zoom-bar">
+              <button
+                type="button"
+                className="zoom-control"
+                aria-label="Zoom in"
+                title="Zoom in (+)"
+                onClick={zoomIn}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className="zoom-control"
+                aria-label="Zoom out"
+                title="Zoom out (-)"
+                onClick={zoomOut}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className="zoom-control"
+                aria-label="Fit graph to view"
+                title="Fit graph to view"
+                onClick={fitGraph}
+              >
+                Fit
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

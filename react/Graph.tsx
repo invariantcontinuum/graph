@@ -6,7 +6,6 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { usePointerController } from "./usePointerController";
 import type {
   GraphSnapshot,
   GraphFilter,
@@ -16,8 +15,6 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerEvents } from "./usePointerEvents";
-
 export interface GraphProps {
   snapshotUrl?: string;
   wsUrl?: string;
@@ -68,83 +65,6 @@ export interface GraphHandle {
 }
 
 
-// Pure pointer event helpers
-
-export function toLocalPointer(clientX: number, clientY: number, canvas: HTMLCanvasElement): { x: number, y: number } {
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  return {
-    x: (clientX - rect.left) * dpr,
-    y: (clientY - rect.top) * dpr,
-  };
-}
-
-export function handleHoverOnly(
-  localX: number,
-  localY: number,
-  engine: any,
-  canvas: HTMLCanvasElement,
-  callbacks: { onNodeHover?: (node: any | null) => void },
-  nodeFromId: (id: string) => any
-): void {
-  const hoveredId = engine?.handle_hover(localX, localY);
-  if (hoveredId !== undefined) {
-    canvas.style.cursor = hoveredId ? "pointer" : "default";
-    callbacks.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-  }
-}
-
-export function handleSinglePointerMove(
-  localX: number,
-  localY: number,
-  singleMode: "drag" | "pan" | null,
-  engine: any,
-  canvas: HTMLCanvasElement,
-  callbacks: { onNodeHover?: (node: any | null) => void },
-  nodeFromId: (id: string) => any,
-  flushWorkerMessages: () => void
-): void {
-  if (singleMode === "drag") {
-    engine?.handle_node_drag_move(localX, localY);
-    flushWorkerMessages();
-  } else if (singleMode === "pan") {
-    engine?.handle_pan_move(localX, localY);
-    handleHoverOnly(localX, localY, engine, canvas, callbacks, nodeFromId);
-  }
-}
-
-export function handlePinchMove(
-  activePointers: Map<number, { id: number; x: number; y: number }>,
-  lastPinchDist: number,
-  lastCentroid: { x: number; y: number } | null,
-  engine: any
-): { dist: number; centroid: { x: number; y: number } } {
-  const arr = [...activePointers.values()];
-  const dx = arr[0].x - arr[1].x;
-  const dy = arr[0].y - arr[1].y;
-  const dist = Math.hypot(dx, dy);
-
-  let cx = 0;
-  let cy = 0;
-  for (const p of activePointers.values()) {
-    cx += p.x;
-    cy += p.y;
-  }
-  cx /= activePointers.size;
-  cy /= activePointers.size;
-  const centroid = { x: cx, y: cy };
-
-  const deltaZoom = dist / Math.max(lastPinchDist, 1e-3);
-  engine?.handle_zoom(-Math.log(deltaZoom), centroid.x, centroid.y);
-  if (lastCentroid) {
-    engine?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-    engine?.handle_pan_move(centroid.x, centroid.y);
-    engine?.handle_pan_end();
-  }
-
-  return { dist, centroid };
-}
-
 export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   {
     snapshotUrl,
@@ -183,6 +103,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     onPositionsReady,
   });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
+  const draggingNodeRef = useRef<string | null>(null);
 
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
@@ -546,11 +467,11 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }
     };
 
-    const handleSinglePointerMove = (local: { x: number; y: number }, singleMode: "drag" | "pan" | null) => {
-      if (singleMode === "drag") {
+    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan" | null) => {
+      if (mode === "drag") {
         engineRef.current?.handle_node_drag_move(local.x, local.y);
         flushWorkerMessages();
-      } else if (singleMode === "pan") {
+      } else if (mode === "pan") {
         engineRef.current?.handle_pan_move(local.x, local.y);
         handleHoverOnly(local);
       }
@@ -601,41 +522,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       return Math.hypot(dx, dy);
     }
 
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan" | null) => {
-      if (mode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        pumpWorkerMessages();
-      } else if (mode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        // Hover updates only while panning (or hovering without a button).
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = () => {
-      const d = pinchDist();
-      const c = centroid();
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
-    };
-
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);
       const local = toLocalPointer(e.clientX, e.clientY, canvas);
@@ -673,41 +559,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         lastCentroid = centroid(active);
       }
       requestRender();
-    };
-
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan") => {
-      if (mode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        flushWorkerMessages();
-      } else if (mode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        // Hover updates only while panning (or hovering without a button).
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
-      const d = pinchDist();
-      const c = centroid();
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
     };
 
     const onMove = (e: PointerEvent) => {
