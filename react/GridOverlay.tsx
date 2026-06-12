@@ -75,7 +75,6 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
       ref={canvasRef}
       className="graph-grid-overlay"
       aria-hidden={true}
-
       style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", width: "100%", height: "100%" }}
     />
   );
