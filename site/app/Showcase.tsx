@@ -594,6 +594,24 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
+          <button
+            type="button"
+            title="Keyboard shortcut: Plus"
+            aria-label="Zoom in"
+            aria-keyshortcuts="Plus"
+            onClick={() => graphRef.current?.zoomIn()}
+          >
+            Zoom in
+          </button>
+          <button
+            type="button"
+            title="Keyboard shortcut: Minus"
+            aria-label="Zoom out"
+            aria-keyshortcuts="Minus"
+            onClick={() => graphRef.current?.zoomOut()}
+          >
+            Zoom out
+          </button>
           <button type="button" title="Fit the entire graph into view" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
