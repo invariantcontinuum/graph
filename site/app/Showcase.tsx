@@ -549,29 +549,27 @@ export default function Showcase() {
                 </div>
               </dl>
               <div className="action-grid">
-                <button type="button" title="Frame selection" onClick={frameSelected}>
+                <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
                   Frame
                 </button>
-                <button type="button" title="Center node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                   Center
                 </button>
                 <button
                   type="button"
-                  title="Keyboard shortcut: Escape"
+                  title="Clear selection (Keyboard shortcut: Escape)"
                   aria-keyshortcuts="Escape"
                   onClick={clearSelection}
                 >
                   Clear
                 </button>
-                <button type="button" className="danger-action" title="Remove selected node" onClick={removeSelected}>
+                <button type="button" title="Permanently delete this node" className="danger-action" onClick={removeSelected}>
                   Remove
                 </button>
               </div>
             </>
           ) : (
-            <p className="empty-copy">
-              No active node. Click a node to view its details.
-            </p>
+            <p className="empty-copy">Click a node to view details.</p>
           )}
         </section>
 
@@ -640,18 +638,10 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
-          <button
-            type="button"
-            title="Fit the entire graph into view"
-            onClick={() => graphRef.current?.fit(56)}
-          >
+          <button type="button" title="Zoom to fit the entire graph on screen" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
-          <button
-            type="button"
-            title="Add a new test node to the graph"
-            onClick={addNode}
-          >
+          <button type="button" title="Add a new test node to the graph" onClick={addNode}>
             Add probe
           </button>
         </section>
@@ -763,15 +753,15 @@ export default function Showcase() {
             </section>
 
             <div className="modal-actions">
-              <button type="button" title="Frame selection" onClick={frameSelected}>
+              <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
                 Frame
               </button>
-              <button type="button" title="Center node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+              <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
                 type="button"
-                title="Keyboard shortcut: Escape"
+                title="Close dialog (Keyboard shortcut: Escape)"
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
