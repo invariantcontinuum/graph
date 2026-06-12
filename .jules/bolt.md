@@ -141,10 +141,7 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
-## 2026-06-05 - Barnes-Hut width calculation deferral
-**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), bounding box extraction (`let (x_min, _, x_max, _) = node.bounds`) and width calculation (`let width = x_max - x_min`) are slightly expensive. If the node is a leaf (`is_leaf`), these values are not needed for the width threshold check.
-**Action:** Defer the quadrant bounds subtraction and width calculation until after checking `is_leaf` (e.g., using a short-circuiting block `if is_leaf || { let width = ... }`). This completely avoids unnecessary operations on leaf nodes, yielding a measurable performance boost.
 
-## 2026-06-05 - Barnes-Hut direct division instead of `inv_dist` multiplication
-**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), the inverse distance calculation (`let inv_dist = 1.0 / dist_sq.sqrt()`) followed by multiplication (`let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist`) is mathematically equivalent to `let dist = dist_sq.sqrt(); let force_over_dist = -REPULSION * node.mass / (dist * dist_sq);`
-**Action:** Use direct division `let force_over_dist = -REPULSION * node.mass / (dist * dist_sq)` instead of multiple multiplications. It provides a measurable performance boost on some architectures by reducing the number of instructions.
+## 2026-06-04 - Barnes-Hut Layout Math Optimization
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`). Additionally, deferring the quadrant bounds subtraction and width calculation until after checking `is_leaf` (e.g., using a short-circuiting block `if is_leaf || { let width = ... }`) completely avoids unnecessary floating-point operations and tuple unpacking on leaf nodes.
+**Action:** When computing normalized vector adjustments that divide by magnitude in hot paths, consider if a single division and algebraic simplification is faster than calculating the inverse magnitude and multiplying multiple times. Always look for opportunities to defer expensive tuple unpacking or calculations using short-circuiting boolean logic in hot loops.
