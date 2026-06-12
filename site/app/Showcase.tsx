@@ -315,13 +315,18 @@ export default function Showcase() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDetailsOpen(false);
-        setDrawerOpen(false);
+        if (drawerOpen) {
+          setDrawerOpen(false);
+        } else if (detailsOpen) {
+          setDetailsOpen(false);
+        } else if (selectedId) {
+          setSelectedId(null);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [drawerOpen, detailsOpen, selectedId]);
 
   return (
     <main className="atlas-shell">
