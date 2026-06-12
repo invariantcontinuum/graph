@@ -647,8 +647,48 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       requestRender();
     };
 
+    const handleHoverOnly = (local: { x: number, y: number }) => {
+      // Hovering without a button pressed
+      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+      if (hoveredId !== undefined) {
+        canvas.style.cursor = hoveredId ? "pointer" : "default";
+        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+      }
+    };
+
+    const handleSinglePointerMove = (local: { x: number, y: number }, mode: "drag" | "pan") => {
+      if (mode === "drag") {
+        engineRef.current?.handle_node_drag_move(local.x, local.y);
+        flushWorkerMessages();
+      } else if (mode === "pan") {
+        engineRef.current?.handle_pan_move(local.x, local.y);
+        // Hover updates only while panning (or hovering without a button).
+        const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+        if (hoveredId !== undefined) {
+          canvas.style.cursor = hoveredId ? "pointer" : "default";
+          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+        }
+      }
+    };
+
+    const handlePinchMove = () => {
+      const d = pinchDist();
+      const c = centroid();
+      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
+      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
+      // Invert via -log so a growing distance zooms in.
+      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
+      if (lastCentroid) {
+        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
+        engineRef.current?.handle_pan_move(c.x, c.y);
+        engineRef.current?.handle_pan_end();
+      }
+      lastPinchDist = d;
+      lastCentroid = c;
+    };
+
     const onMove = (e: PointerEvent) => {
-      const local = toLocalPointer(e.clientX, e.clientY);
+      const local = toLocal(e.clientX, e.clientY);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
@@ -659,7 +699,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
-      if (active.size === 1) {
+      if (active.size === 1 && singleMode) {
         handleSinglePointerMove(local, singleMode);
       } else if (active.size === 2) {
         handlePinchMove();
