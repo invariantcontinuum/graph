@@ -90,11 +90,15 @@ impl QuadNode {
 
             // ⚡ Bolt: Inline can_approximate to avoid method call overhead and pre-calculate width^2
             let is_leaf = node.children.is_none();
-            let (x_min, _, x_max, _) = node.bounds;
-            let width = x_max - x_min;
 
-            if is_leaf || (width * width) < THETA_SQ * dist_sq {
-                // ⚡ Bolt: Compute a standard square root and use division instead of inverse square root.
+            // ⚡ Bolt: Defer coordinate bounds extraction and width calculation until after evaluating `is_leaf`.
+            // This short-circuits expensive memory reads and multiplication for leaf nodes.
+            if is_leaf || {
+                let (x_min, _, x_max, _) = node.bounds;
+                let width = x_max - x_min;
+                (width * width) < THETA_SQ * dist_sq
+            } {
+                // ⚡ Bolt: Replace inverse square root and multiple multiplications with a standard sqrt and a single division.
                 let dist = dist_sq.sqrt();
                 let force_over_dist = -REPULSION * node.mass / (dist_sq * dist);
                 fx += force_over_dist * dx;
