@@ -303,7 +303,8 @@ export default function Showcase() {
     graphRef.current?.focusFit(selectedId, 72);
   }, [selectedId]);
 
-  const openNodeDetails = useCallback((node: NodeData) => {
+  const openNodeDetails = useCallback((node: NodeData | null) => {
+    if (!node) return;
     setSelectedId(node.id);
     setDetailsOpen(true);
   }, []);

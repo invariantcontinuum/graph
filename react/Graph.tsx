@@ -25,7 +25,7 @@ export interface GraphProps {
   theme?: Record<string, unknown>;
   layout?: LayoutType;
   filter?: GraphFilter | null;
-  onNodeClick?: (node: NodeData) => void;
+  onNodeClick?: (node: NodeData | null) => void;
   /** Fires when the user clicks on empty canvas (no node hit). Hosts can use
    *  this to clear a spotlight selection without the user having to hit Esc
    *  — legacy Cytoscape behavior. */
@@ -410,12 +410,24 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
+  const flushWorkerMessages = useCallback(() => {
+    const raw = engineRef.current?.drain_worker_messages();
+    if (!raw || !workerRef.current) return;
+    // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
+    // which deserializes into a JS array of message objects.
+    const msgs = Array.isArray(raw) ? raw : [];
+    for (const msg of msgs) {
+      workerRef.current.postMessage(msg);
+    }
+  }, []);
+
   usePointerController({
     canvasRef,
     engineRef,
     workerRef,
     callbacksRef,
     nodeFromId,
+    flushWorkerMessages,
     requestRender,
     draggingNodeRef,
   });
