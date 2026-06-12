@@ -142,6 +142,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
 
-## 2026-06-03 - Optimize Inverse Distance Cubed in Force Layout
-**Learning:** Calculating an inverse square root (`1.0 / dist_sq.sqrt()`) and then cubing it (`inv_dist * inv_dist * inv_dist`) is measurably slower and slightly less precise than calculating the regular square root (`dist_sq.sqrt()`) and dividing once (`1.0 / (dist * dist_sq)`).
-**Action:** When computing geometric forces over distance cubed (like Barnes-Hut repulsion), prefer `1.0 / (dist * dist_sq)` over cubing the inverse distance. This completely bypasses the need to evaluate 3 independent float multiplications, leading to ~5-8% faster layout computation on a 1k-node graph.
+## 2026-06-03 - Optimize Geometric Distance Math
+**Learning:** In Rust hot paths involving geometric inverse square distances (e.g., force computation), calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`).
+**Action:** When working in tight numeric loops, prefer mathematical simplifications that minimize the number of floating-point division and multiplication operations.
