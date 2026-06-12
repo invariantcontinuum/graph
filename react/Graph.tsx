@@ -647,8 +647,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       requestRender();
     };
 
-    const handleHoverOnly = (local: { x: number, y: number }) => {
-      // Hovering without a button pressed
+    const handleHoverOnly = (local: { x: number; y: number }) => {
       const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
       if (hoveredId !== undefined) {
         canvas.style.cursor = hoveredId ? "pointer" : "default";
@@ -656,22 +655,18 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }
     };
 
-    const handleSinglePointerMove = (local: { x: number, y: number }, mode: "drag" | "pan") => {
+    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan") => {
       if (mode === "drag") {
         engineRef.current?.handle_node_drag_move(local.x, local.y);
         flushWorkerMessages();
       } else if (mode === "pan") {
         engineRef.current?.handle_pan_move(local.x, local.y);
         // Hover updates only while panning (or hovering without a button).
-        const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-        if (hoveredId !== undefined) {
-          canvas.style.cursor = hoveredId ? "pointer" : "default";
-          callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-        }
+        handleHoverOnly(local);
       }
     };
 
-    const handlePinchMove = () => {
+    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
       const d = pinchDist();
       const c = centroid();
       const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
@@ -692,6 +687,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const existing = active.get(e.pointerId);
 
       if (!existing) {
+        // Hovering without a button pressed
         handleHoverOnly(local);
         requestRender();
         return;
@@ -702,7 +698,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       if (active.size === 1 && singleMode) {
         handleSinglePointerMove(local, singleMode);
       } else if (active.size === 2) {
-        handlePinchMove();
+        handlePinchMove(active);
       }
       requestRender();
     };
