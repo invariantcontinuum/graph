@@ -154,6 +154,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
 **Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
 
-## 2026-06-11 - Extract Pointer Logic From Monolithic Components
-**Learning:** Extracting pointer branch logic into custom hooks is not enough to fix cognitive complexity or decouple logic if the helper functions remain inside the hook's monolithic scope. Functions that do not depend on hook lifecycles should be exported as pure, standalone helpers.
-**Action:** When extracting complex React pointer events into hooks, export pure math and discrete branching helpers (e.g., `toLocalPointer`, `handleSinglePointerMove`) separately from the hook itself to reduce cognitive load and facilitate browser-less unit testing.
+## 2026-06-10 - Elide bounds checks in force integrator's hot loop
+**Learning:** In `apply_attractive_edges` in the force integrator, chaining bounds-checked access to vectors can introduce unnecessary overhead in a hot loop that gets called repeatedly for every edge on every tick.
+**Action:** Elide bounds checks using `unsafe { slice.get_unchecked(index) }` and `unsafe { slice.get_unchecked_mut(index) }` when iterating over edges, provided an initial bounds check like `if src >= n || tgt >= n { continue; }` has already proven the indices are valid.
