@@ -144,3 +144,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-01 - [Avoid recalculating quad bounds widths in tree computation]
 **Learning:** In hot loops checking if a node can be approximated in the Barnes-Hut algorithm, the node's geometry was being calculated via bounds array subtraction each time.
 **Action:** When working on force computation steps, eliminate bounds computation on tree traversals by checking leaf nodes first.
+## 2026-06-12 - [Use f32::min/max for faster bounding box calculations]
+**Learning:** When finding the min/max of a flat array of `f32` coordinates (e.g., calculating bounding boxes), using explicit conditional branches (e.g., `if x < x_min`) is significantly slower because standard min/max implementations handle NaN checks efficiently and vectorize better.
+**Action:** Use `.chunks_exact(2)` with standard `f32::min` / `f32::max` when iterating flat arrays of coordinates in hot paths to maximize performance.
