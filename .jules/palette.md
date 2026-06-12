@@ -102,6 +102,7 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
-## 2024-06-02 - Overlay Canvas Accessibility False Positives
-**Learning:** Using `role="presentation"` on decorative `<canvas>` elements that already have `aria-hidden={true}` and `pointerEvents: "none"` triggers redundant accessibility warnings (e.g., SonarCloud `typescript:S6819`). The additional role is unnecessary and flagged as improper semantics.
-**Action:** For supplementary overlay canvases, rely purely on `aria-hidden={true}`, lack of `tabIndex`, and `pointerEvents: "none"` to hide them from the accessibility tree. Omit the `role` attribute entirely.
+
+## 2026-05-29 - Improve Screen Reader Experience for Decorative Canvases
+**Learning:** The previous `role="presentation"` approach for overlay canvases (grid, labels, edges, frames) was triggering accessibility warnings (e.g. SonarCloud `typescript:S6819`). Assistive tech functions best when non-interactive decorative overlay canvases are completely omitted from the accessibility tree, which is adequately handled by `aria-hidden={true}` combined with `pointerEvents: "none"` without redundantly supplying a `role`. Furthermore, the main Graph canvas was using `role="application"` without a documented reason, but `role="region"` along with an `aria-roledescription="graph"` and keyboard shortcut advertisement provides a superior standard interaction model for an interactive custom control surface.
+**Action:** Replaced `role="application"` with `role="region"`, added `aria-roledescription="graph"`, mapped the existing keyboard shortcuts `Escape + -` with `aria-keyshortcuts`, and removed the deprecated `role="presentation"` on the decorative overlays.

@@ -935,7 +935,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="region"
       aria-roledescription="graph"
-      aria-keyshortcuts="Escape Plus Minus Equal"
+      aria-keyshortcuts="Escape -"
       tabIndex={0}
       style={{
         width: "100%",
