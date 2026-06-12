@@ -111,6 +111,6 @@ Browser smoke must cover:
 **Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
 **Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
 
-## 2026-06-09 - Progressive Dismiss for Escape Key
-**Learning:** In complex UIs with multiple active layers (e.g., a drawer, a details modal, and an active canvas selection), pressing the "Escape" key should not aggressively clear all state at once. Users expect a hierarchical, progressive dismiss where only the topmost active layer is closed per keypress.
-**Action:** Implement a progressive dismiss pattern that checks active UI states sequentially (drawer -> modal -> selection) and only dismisses the active state with the highest priority before returning.
+## 2026-06-08 - Escape Key Progressive Dismiss
+**Learning:** Hard-coding the Escape key to close all active panels at once violates user expectations when multiple UI layers (like a drawer and a details modal) are open, especially when an action button advertises "Keyboard shortcut: Escape" to clear a specific selection.
+**Action:** Implement a progressive dismiss pattern in keyboard event handlers. The Escape key should close the most recently opened or top-most layer first (e.g., drawer, then modal) and fall back to clearing underlying state (like node selection) only when no transient UI layers are active.
