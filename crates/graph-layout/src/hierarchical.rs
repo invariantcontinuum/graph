@@ -1,7 +1,7 @@
 use crate::LayoutEngine;
 use graph_core::graph::GraphStore;
 use petgraph::visit::NodeIndexable;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 const LAYER_SPACING: f32 = 148.0;
 const NODE_SPACING: f32 = 188.0;
@@ -19,11 +19,11 @@ impl HierarchicalLayout {
         }
     }
 
-    fn assign_layers(&self, graph: &GraphStore) -> HashMap<String, u32> {
+    fn assign_layers(&self, graph: &GraphStore) -> Vec<u32> {
         let inner = graph.inner();
         let node_count = inner.node_count();
         if node_count == 0 {
-            return HashMap::new();
+            return Vec::new();
         }
 
         // Use NodeIndex-addressed vectors to avoid cloning IDs during traversal.
@@ -63,14 +63,7 @@ impl HierarchicalLayout {
             }
         }
 
-        let mut layers: HashMap<String, u32> = HashMap::new();
-        for idx in inner.node_indices() {
-            if let Some(data) = inner.node_weight(idx) {
-                layers.insert(data.id.clone(), layers_vec[idx.index()]);
-            }
-        }
-
-        layers
+        layers_vec
     }
 }
 
@@ -84,8 +77,12 @@ impl LayoutEngine for HierarchicalLayout {
     fn compute(&mut self, graph: &GraphStore) -> Vec<(String, f32, f32)> {
         let layers = self.assign_layers(graph);
         let mut layer_groups: BTreeMap<u32, Vec<String>> = BTreeMap::new();
-        for (id, layer) in &layers {
-            layer_groups.entry(*layer).or_default().push(id.clone());
+        let inner = graph.inner();
+        for idx in inner.node_indices() {
+            if let Some(data) = inner.node_weight(idx) {
+                let layer = layers[idx.index()];
+                layer_groups.entry(layer).or_default().push(data.id.clone());
+            }
         }
 
         self.positions.clear();

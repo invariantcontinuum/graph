@@ -102,3 +102,15 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+
+## 2026-05-30 - Overlay Accessibility Fix
+**Learning:** The SonarCloud accessibility rule `typescript:S6819` flags `role="presentation"` when used on decorative canvas elements that are already `aria-hidden={true}` and non-interactive. The role is redundant because these overlays have no pointer handlers, no `tabIndex`, and screen readers already ignore them.
+**Action:** Never use `role="presentation"` on supplementary overlay canvases. Omit the role and rely on `aria-hidden={true}` plus CSS `pointerEvents: "none"` to keep them out of the accessibility tree and prevent interaction.
+
+## 2026-06-01 - Showcase Empty States And Tooltips
+**Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
+**Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
+
+## 2026-06-08 - Escape Key Progressive Dismiss
+**Learning:** Hard-coding the Escape key to close all active panels at once violates user expectations when multiple UI layers (like a drawer and a details modal) are open, especially when an action button advertises "Keyboard shortcut: Escape" to clear a specific selection.
+**Action:** Implement a progressive dismiss pattern in keyboard event handlers. The Escape key should close the most recently opened or top-most layer first (e.g., drawer, then modal) and fall back to clearing underlying state (like node selection) only when no transient UI layers are active.
