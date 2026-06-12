@@ -94,9 +94,8 @@ impl QuadNode {
             let width = x_max - x_min;
 
             if is_leaf || (width * width) < THETA_SQ * dist_sq {
-                // ⚡ Bolt: Compute a standard square root and use division instead of inverse square root.
-                let dist = dist_sq.sqrt();
-                let force_over_dist = -REPULSION * node.mass / (dist_sq * dist);
+                let inv_dist = 1.0 / dist_sq.sqrt();
+                let force_over_dist = -REPULSION * node.mass * inv_dist * inv_dist * inv_dist;
                 fx += force_over_dist * dx;
                 fy += force_over_dist * dy;
                 continue;

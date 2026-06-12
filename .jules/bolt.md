@@ -141,6 +141,7 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
-## 2026-05-29 - ChromeDriver 404 Failure during WASM Tests
- **Learning:** ChromeDriver sometimes fails with a 404 error during local headless execution via wasm-bindgen-test-runner.
- **Action:** Rely on the GitHub CI workflow for final validation of wasm test execution as instructed by the playbook.
+
+## 2026-06-07 - Refactor Barnes-Hut Math Operations
+**Learning:** In Rust hot paths involving geometric inverse square distances (e.g., `QuadNode::compute_force`), calculating a standard square root and using a single division is significantly faster in WASM targets than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications.
+**Action:** When computing normalized vector adjustments in WASM hot paths, avoid computing the inverse magnitude (`1.0 / mag`) and multiplying. Instead, compute a standard square root and use a single division.

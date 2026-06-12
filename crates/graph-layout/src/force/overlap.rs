@@ -86,10 +86,9 @@ fn pair_push(x: f32, y: f32, ox: f32, oy: f32, gap_sq: f32) -> (f32, f32) {
     if d_sq >= gap_sq || d_sq <= 0.0001 {
         return (0.0, 0.0);
     }
-    // ⚡ Bolt: Eliminate `.sqrt()` and the two subsequent division ops (`ddx / d`, `ddy / d`)
-    // by using an inverse square root and refactoring the arithmetic to purely use multiplication.
-    // Instead of computing `(MIN_NODE_GAP - d) * 0.5 / d`, we compute `(MIN_NODE_GAP * d_inv - 1.0) * 0.5`
-    let d_inv = 1.0 / d_sq.sqrt();
-    let push_over_d = (MIN_NODE_GAP * d_inv - 1.0) * 0.5;
+    // ⚡ Bolt: WASM execution heavily penalizes the inverse square root approach (`1.0 / dist_sq.sqrt()`).
+    // It is significantly faster to compute a standard square root and use a single division instead.
+    let d = d_sq.sqrt();
+    let push_over_d = (MIN_NODE_GAP - d) * 0.5 / d;
     (ddx * push_over_d, ddy * push_over_d)
 }
