@@ -141,7 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
-
-## 2026-06-04 - Barnes-Hut Layout Math Optimization
-**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), calculating a standard square root and using a single division (`/ (dist * dist_sq)`) is significantly faster than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing multiple subsequent multiplications (`inv_dist * inv_dist * inv_dist`). Additionally, deferring the quadrant bounds subtraction and width calculation until after checking `is_leaf` (e.g., using a short-circuiting block `if is_leaf || { let width = ... }`) completely avoids unnecessary floating-point operations and tuple unpacking on leaf nodes.
-**Action:** When computing normalized vector adjustments that divide by magnitude in hot paths, consider if a single division and algebraic simplification is faster than calculating the inverse magnitude and multiplying multiple times. Always look for opportunities to defer expensive tuple unpacking or calculations using short-circuiting boolean logic in hot loops.
+## 2026-06-04 - Defer layout bound calculation using short-circuit logical blocks
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating condition variables with short-circuit boolean blocks like `is_leaf || { let width = ... }` completely avoids unnecessary floating-point operations and tuple unpacking on leaf nodes.
+**Action:** When a calculation is only needed to satisfy the latter part of an OR conditional (`||`), wrap the calculation in a block to evaluate lazily and avoid needless calculations during loops.
