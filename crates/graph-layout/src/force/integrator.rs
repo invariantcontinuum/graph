@@ -73,6 +73,12 @@ fn restore_pinned(positions: &mut [f32], saved: &[(usize, f32, f32)]) {
 
 fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &mut [(f32, f32)]) {
     let n = positions.len() / 2;
+    // SAFETY: We verify that the forces buffer is large enough before bypassing bounds
+    // checks inside the loop to avoid undefined behavior.
+    assert!(
+        forces.len() >= n,
+        "forces buffer must be at least as large as positions / 2"
+    );
     for &(src, tgt) in edges {
         if src >= n || tgt >= n {
             continue;
@@ -104,7 +110,8 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    if velocities.len() * 2 < positions.len() || forces.len() * 2 < positions.len() {
+    let n = positions.len() / 2;
+    if velocities.len() < n || forces.len() < n {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
