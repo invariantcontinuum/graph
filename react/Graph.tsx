@@ -479,11 +479,14 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }
     };
 
-    const handleSinglePointerMove = (local: { x: number; y: number }) => {
-      if (singleMode === "drag") {
+    const handleSinglePointerMove = (
+      local: { x: number; y: number },
+      mode: "drag" | "pan" | null,
+    ) => {
+      if (mode === "drag") {
         engineRef.current?.handle_node_drag_move(local.x, local.y);
         flushWorkerMessages();
-      } else if (singleMode === "pan") {
+      } else if (mode === "pan") {
         engineRef.current?.handle_pan_move(local.x, local.y);
         // Hover updates only while panning (or hovering without a button).
         handleHoverOnly(local);
@@ -556,7 +559,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
-        handleSinglePointerMove(local);
+        handleSinglePointerMove(local, singleMode);
       } else if (active.size === 2) {
         handlePinchMove();
       }
