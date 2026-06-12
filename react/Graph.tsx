@@ -16,7 +16,7 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerController } from "./usePointerController";
+import { usePointerEvents } from "./usePointerEvents";
 
 export interface GraphProps {
   snapshotUrl?: string;
@@ -421,10 +421,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
-  usePointerController({
+  usePointerEvents({
     canvasRef,
     engineRef,
-    workerRef,
     callbacksRef,
     nodeFromId,
     flushWorkerMessages,
