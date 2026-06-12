@@ -488,6 +488,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         flushWorkerMessages();
       } else if (mode === "pan") {
         engineRef.current?.handle_pan_move(local.x, local.y);
+        // Hover updates only while panning (or hovering without a button).
         handleHoverOnly(local);
       }
     };
