@@ -93,7 +93,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const convergedRef = useRef(false);
   const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
-
+  const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
 
