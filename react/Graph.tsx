@@ -16,7 +16,7 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerController } from "./controllers/usePointerController";
+import { usePointerController } from "./usePointerController";
 
 export interface GraphProps {
   snapshotUrl?: string;
@@ -415,9 +415,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     engineRef,
     workerRef,
     callbacksRef,
-    draggingNodeRef,
     nodeFromId,
     requestRender,
+    draggingNodeRef,
   });
 
   useImperativeHandle(

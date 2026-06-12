@@ -1,43 +1,67 @@
-import { useEffect, MutableRefObject } from "react";
-import type { NodeData } from "./types";
+import { useEffect, MutableRefObject, RefObject } from "react";
+import type { NodeData, GraphStats, LegendSummary } from "./types";
+
+export interface PointerControllerCallbacks {
+  onNodeClick?: (node: NodeData) => void;
+  onBackgroundClick?: () => void;
+  onNodeHover?: (node: NodeData | null) => void;
+  onStatsChange?: (stats: GraphStats) => void;
+  onLegendChange?: (legend: LegendSummary) => void;
+  onPositionsReady?: () => void;
+}
+
+export interface UsePointerControllerProps {
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  engineRef: MutableRefObject<any>;
+  workerRef: MutableRefObject<Worker | null>;
+  callbacksRef: MutableRefObject<PointerControllerCallbacks>;
+  nodeFromId: (id: string) => NodeData;
+  requestRender: () => void;
+  draggingNodeRef: MutableRefObject<string | null>;
+}
 
 export type PointerState = { id: number; x: number; y: number };
 
-export function flushWorkerMessages(
-  engine: any,
-  worker: Worker | null,
-) {
-  const raw = engine?.drain_worker_messages();
-  if (!raw || !worker) return;
-  const msgs = Array.isArray(raw) ? raw : [];
-  for (const msg of msgs) {
-    worker.postMessage(msg);
-  }
+export function toLocalPointer(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+  dpr: number
+): { x: number; y: number } {
+  return {
+    x: (clientX - rect.left) * dpr,
+    y: (clientY - rect.top) * dpr,
+  };
 }
 
-export function toLocalPointer(
-  e: PointerEvent | MouseEvent,
-  canvas: HTMLCanvasElement,
-) {
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  return {
-    x: (e.clientX - rect.left) * dpr,
-    y: (e.clientY - rect.top) * dpr,
-  };
+export function centroid(active: Map<number, PointerState>): { x: number; y: number } {
+  let x = 0;
+  let y = 0;
+  for (const p of active.values()) {
+    x += p.x;
+    y += p.y;
+  }
+  return { x: x / active.size, y: y / active.size };
+}
+
+export function pinchDist(active: Map<number, PointerState>): number {
+  const arr = [...active.values()];
+  const dx = arr[0].x - arr[1].x;
+  const dy = arr[0].y - arr[1].y;
+  return Math.hypot(dx, dy);
 }
 
 export function handleHoverOnly(
   local: { x: number; y: number },
   engine: any,
-  canvas: HTMLCanvasElement,
-  onNodeHover: ((node: NodeData | null) => void) | undefined,
-  nodeFromId: (id: string) => NodeData,
+  canvasStyle: CSSStyleDeclaration,
+  callbacks: PointerControllerCallbacks,
+  nodeFromId: (id: string) => NodeData
 ) {
   const hoveredId = engine?.handle_hover(local.x, local.y);
   if (hoveredId !== undefined) {
-    canvas.style.cursor = hoveredId ? "pointer" : "default";
-    onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+    canvasStyle.cursor = hoveredId ? "pointer" : "default";
+    callbacks.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
   }
 }
 
@@ -45,17 +69,17 @@ export function handleSinglePointerMove(
   local: { x: number; y: number },
   mode: "drag" | "pan" | null,
   engine: any,
-  worker: Worker | null,
-  canvas: HTMLCanvasElement,
-  onNodeHover: ((node: NodeData | null) => void) | undefined,
+  canvasStyle: CSSStyleDeclaration,
+  callbacks: PointerControllerCallbacks,
   nodeFromId: (id: string) => NodeData,
+  flushWorkerMessages: () => void
 ) {
   if (mode === "drag") {
     engine?.handle_node_drag_move(local.x, local.y);
-    flushWorkerMessages(engine, worker);
+    flushWorkerMessages();
   } else if (mode === "pan") {
     engine?.handle_pan_move(local.x, local.y);
-    handleHoverOnly(local, engine, canvas, onNodeHover, nodeFromId);
+    handleHoverOnly(local, engine, canvasStyle, callbacks, nodeFromId);
   }
 }
 
@@ -63,26 +87,10 @@ export function handlePinchMove(
   active: Map<number, PointerState>,
   lastPinchDist: number,
   lastCentroid: { x: number; y: number } | null,
-  engine: any,
-) {
-  function centroid(): { x: number; y: number } {
-    let x = 0;
-    let y = 0;
-    for (const p of active.values()) {
-      x += p.x;
-      y += p.y;
-    }
-    return { x: x / active.size, y: y / active.size };
-  }
-  function pinchDist(): number {
-    const arr = [...active.values()];
-    const dx = arr[0].x - arr[1].x;
-    const dy = arr[0].y - arr[1].y;
-    return Math.hypot(dx, dy);
-  }
-
-  const d = pinchDist();
-  const c = centroid();
+  engine: any
+): { dist: number; centroid: { x: number; y: number } } {
+  const d = pinchDist(active);
+  const c = centroid(active);
   const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
   engine?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
   if (lastCentroid) {
@@ -90,7 +98,7 @@ export function handlePinchMove(
     engine?.handle_pan_move(c.x, c.y);
     engine?.handle_pan_end();
   }
-  return { newPinchDist: d, newCentroid: c };
+  return { dist: d, centroid: c };
 }
 
 export function usePointerController({
@@ -98,22 +106,19 @@ export function usePointerController({
   engineRef,
   workerRef,
   callbacksRef,
-  draggingNodeRef,
   nodeFromId,
   requestRender,
-}: {
-  canvasRef: MutableRefObject<HTMLCanvasElement | null>;
-  engineRef: MutableRefObject<any>;
-  workerRef: MutableRefObject<Worker | null>;
-  callbacksRef: MutableRefObject<{
-    onNodeClick?: (node: NodeData) => void;
-    onBackgroundClick?: () => void;
-    onNodeHover?: (node: NodeData | null) => void;
-  }>;
-  draggingNodeRef: MutableRefObject<string | null>;
-  nodeFromId: (id: string) => NodeData;
-  requestRender: () => void;
-}) {
+  draggingNodeRef,
+}: UsePointerControllerProps) {
+  const flushWorkerMessages = () => {
+    const raw = engineRef.current?.drain_worker_messages();
+    if (!raw || !workerRef.current) return;
+    const msgs = Array.isArray(raw) ? raw : [];
+    for (const msg of msgs) {
+      workerRef.current.postMessage(msg);
+    }
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -125,26 +130,18 @@ export function usePointerController({
     let lastCentroid: { x: number; y: number } | null = null;
     let downPos: { x: number; y: number } | null = null;
 
-    function getPinchDist(): number {
-      const arr = [...active.values()];
-      const dx = arr[0].x - arr[1].x;
-      const dy = arr[0].y - arr[1].y;
-      return Math.hypot(dx, dy);
-    }
-
-    function getCentroid(): { x: number; y: number } {
-      let x = 0;
-      let y = 0;
-      for (const p of active.values()) {
-        x += p.x;
-        y += p.y;
-      }
-      return { x: x / active.size, y: y / active.size };
-    }
+    const getLocalPointer = (e: PointerEvent | MouseEvent) => {
+      return toLocalPointer(
+        e.clientX,
+        e.clientY,
+        canvas.getBoundingClientRect(),
+        window.devicePixelRatio || 1
+      );
+    };
 
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);
-      const local = toLocalPointer(e, canvas);
+      const local = getLocalPointer(e);
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
@@ -153,7 +150,7 @@ export function usePointerController({
           draggingNodeRef.current = nodeId;
           singleMode = "drag";
           downPos = { x: local.x, y: local.y };
-          flushWorkerMessages(engineRef.current, workerRef.current);
+          flushWorkerMessages();
         } else {
           engineRef.current?.handle_pan_start(local.x, local.y);
           singleMode = "pan";
@@ -162,30 +159,30 @@ export function usePointerController({
       } else if (active.size === 2) {
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages(engineRef.current, workerRef.current);
+          flushWorkerMessages();
           draggingNodeRef.current = null;
           suppressNextClick = true;
         } else if (singleMode === "pan") {
           engineRef.current?.handle_pan_end();
         }
         singleMode = null;
-        lastPinchDist = getPinchDist();
-        lastCentroid = getCentroid();
+        lastPinchDist = pinchDist(active);
+        lastCentroid = centroid(active);
       }
       requestRender();
     };
 
     const onMove = (e: PointerEvent) => {
-      const local = toLocalPointer(e, canvas);
+      const local = getLocalPointer(e);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
         handleHoverOnly(
           local,
           engineRef.current,
-          canvas,
-          callbacksRef.current.onNodeHover,
-          nodeFromId,
+          canvas.style,
+          callbacksRef.current,
+          nodeFromId
         );
         requestRender();
         return;
@@ -198,20 +195,15 @@ export function usePointerController({
           local,
           singleMode,
           engineRef.current,
-          workerRef.current,
-          canvas,
-          callbacksRef.current.onNodeHover,
+          canvas.style,
+          callbacksRef.current,
           nodeFromId,
+          flushWorkerMessages
         );
       } else if (active.size === 2) {
-        const { newPinchDist, newCentroid } = handlePinchMove(
-          active,
-          lastPinchDist,
-          lastCentroid,
-          engineRef.current,
-        );
-        lastPinchDist = newPinchDist;
-        lastCentroid = newCentroid;
+        const res = handlePinchMove(active, lastPinchDist, lastCentroid, engineRef.current);
+        lastPinchDist = res.dist;
+        lastCentroid = res.centroid;
       }
       requestRender();
     };
@@ -225,9 +217,9 @@ export function usePointerController({
       if (active.size === 0) {
         if (singleMode === "drag") {
           engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages(engineRef.current, workerRef.current);
+          flushWorkerMessages();
           const movedThreshold = 4;
-          const localUp = toLocalPointer(e, canvas);
+          const localUp = getLocalPointer(e);
           const moved = downPos
             ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
               Math.abs(localUp.y - downPos.y) > movedThreshold
@@ -262,7 +254,7 @@ export function usePointerController({
         return;
       }
       if (draggingNodeRef.current !== null) return;
-      const local = toLocalPointer(e, canvas);
+      const local = getLocalPointer(e);
       const clickedId = engineRef.current?.handle_click(local.x, local.y);
       if (clickedId) {
         callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
@@ -309,13 +301,5 @@ export function usePointerController({
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [
-    canvasRef,
-    engineRef,
-    workerRef,
-    callbacksRef,
-    draggingNodeRef,
-    nodeFromId,
-    requestRender,
-  ]);
+  }, [canvasRef, engineRef, workerRef, callbacksRef, nodeFromId, requestRender, draggingNodeRef]);
 }
