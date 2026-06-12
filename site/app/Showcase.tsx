@@ -69,7 +69,16 @@ const MODE_PALETTES = {
     hullStroke: "rgba(197, 216, 109, 0.24)",
     dimOpacity: 0.13,
     typeFills: ["#102027", "#131f2d", "#1f2116", "#241a25", "#10251e"],
-    edgeColors: ["#c5d86d", "#58a4b0", "#f3a712", "#d45b35", "#8fb339", "#d99c70", "#6ba6ff", "#e7c66b"],
+    edgeColors: [
+      "#c5d86d",
+      "#58a4b0",
+      "#f3a712",
+      "#d45b35",
+      "#8fb339",
+      "#d99c70",
+      "#6ba6ff",
+      "#e7c66b",
+    ],
   },
   light: {
     canvasBg: "#f7f1e6",
@@ -85,24 +94,36 @@ const MODE_PALETTES = {
     hullStroke: "rgba(49, 95, 93, 0.2)",
     dimOpacity: 0.2,
     typeFills: ["#fffdf6", "#f4fbf8", "#f9f6ff", "#fff4e8", "#f3faed"],
-    edgeColors: ["#315f5d", "#456990", "#8d671b", "#a64625", "#657c2d", "#8f6041", "#376f93", "#9a7828"],
+    edgeColors: [
+      "#315f5d",
+      "#456990",
+      "#8d671b",
+      "#a64625",
+      "#657c2d",
+      "#8f6041",
+      "#376f93",
+      "#9a7828",
+    ],
   },
-} satisfies Record<ThemeMode, {
-  canvasBg: string;
-  gridLineColor: string;
-  labelHalo: string;
-  labelColor: string;
-  nodeFill: string;
-  nodeBorder: string;
-  edgeDefault: string;
-  selectionBorder: string;
-  selectionFill: string;
-  hullFill: string;
-  hullStroke: string;
-  dimOpacity: number;
-  typeFills: string[];
-  edgeColors: string[];
-}>;
+} satisfies Record<
+  ThemeMode,
+  {
+    canvasBg: string;
+    gridLineColor: string;
+    labelHalo: string;
+    labelColor: string;
+    nodeFill: string;
+    nodeBorder: string;
+    edgeDefault: string;
+    selectionBorder: string;
+    selectionFill: string;
+    hullFill: string;
+    hullStroke: string;
+    dimOpacity: number;
+    typeFills: string[];
+    edgeColors: string[];
+  }
+>;
 
 function modeAwareOverrides(
   overrides: GraphThemeOverrides,
@@ -144,13 +165,17 @@ function modeAwareOverrides(
     defaultNodeStyle: {
       ...overrides.defaultNodeStyle,
       color: palette.nodeFill,
-      borderColor: overrides.defaultNodeStyle?.borderColor ?? palette.nodeBorder,
+      borderColor:
+        overrides.defaultNodeStyle?.borderColor ?? palette.nodeBorder,
       labelColor: palette.labelColor,
     },
     defaultEdgeStyle: {
       ...overrides.defaultEdgeStyle,
       color: palette.edgeDefault,
-      width: Math.max(overrides.defaultEdgeStyle?.width ?? 1.3, mode === "dark" ? 1.45 : 1.25),
+      width: Math.max(
+        overrides.defaultEdgeStyle?.width ?? 1.3,
+        mode === "dark" ? 1.45 : 1.25,
+      ),
     },
     nodeTypes,
     edgeTypes,
@@ -217,7 +242,10 @@ export default function Showcase() {
   );
 
   const selectedNode = useMemo(
-    () => (selectedId ? snapshot.nodes.find((node) => node.id === selectedId) ?? null : null),
+    () =>
+      selectedId
+        ? (snapshot.nodes.find((node) => node.id === selectedId) ?? null)
+        : null,
     [selectedId, snapshot.nodes],
   );
 
@@ -254,7 +282,9 @@ export default function Showcase() {
 
   const graphDensity = useMemo(() => {
     if (snapshot.nodes.length < 2) return 0;
-    return Math.round((snapshot.edges.length / snapshot.nodes.length) * 100) / 100;
+    return (
+      Math.round((snapshot.edges.length / snapshot.nodes.length) * 100) / 100
+    );
   }, [snapshot.edges.length, snapshot.nodes.length]);
 
   const addNode = useCallback(() => {
@@ -303,7 +333,8 @@ export default function Showcase() {
     graphRef.current?.focusFit(selectedId, 72);
   }, [selectedId]);
 
-  const openNodeDetails = useCallback((node: NodeData) => {
+  const openNodeDetails = useCallback((node: NodeData | null) => {
+    if (!node) return;
     setSelectedId(node.id);
     setDetailsOpen(true);
   }, []);
@@ -315,13 +346,18 @@ export default function Showcase() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDetailsOpen(false);
-        setDrawerOpen(false);
+        if (drawerOpen) {
+          setDrawerOpen(false);
+        } else if (detailsOpen) {
+          setDetailsOpen(false);
+        } else {
+          clearSelection();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [drawerOpen, detailsOpen, clearSelection]);
 
   return (
     <main className="atlas-shell">
@@ -334,6 +370,7 @@ export default function Showcase() {
           type="button"
           className="drawer-toggle"
           aria-label={drawerOpen ? "Close scenario rail" : "Open scenario rail"}
+          title={drawerOpen ? "Close scenario rail" : "Open scenario rail"}
           aria-expanded={drawerOpen}
           aria-controls="scenario-rail"
           onClick={() => setDrawerOpen((open) => !open)}
@@ -350,7 +387,11 @@ export default function Showcase() {
           </div>
         </div>
         <nav className="top-links" aria-label="Project links">
-          <a href="https://github.com/invariantcontinuum/graph" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/invariantcontinuum/graph"
+            target="_blank"
+            rel="noreferrer"
+          >
             GitHub
           </a>
           <span>v{PACKAGE_VERSION}</span>
@@ -418,6 +459,7 @@ export default function Showcase() {
                   type="button"
                   data-active={layout === item}
                   aria-pressed={layout === item}
+                  title={`Set layout to ${item}`}
                   onClick={() => setLayout(item)}
                 >
                   {item}
@@ -431,6 +473,7 @@ export default function Showcase() {
                   type="button"
                   data-active={themeMode === item}
                   aria-pressed={themeMode === item}
+                  title={`Switch to ${item} theme`}
                   onClick={() => setThemeMode(item)}
                 >
                   {item}
@@ -506,27 +549,27 @@ export default function Showcase() {
                 </div>
               </dl>
               <div className="action-grid">
-                <button type="button" onClick={frameSelected}>
+                <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
                   Frame
                 </button>
-                <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                   Center
                 </button>
                 <button
                   type="button"
-                  title="Keyboard shortcut: Escape"
+                  title="Clear selection (Keyboard shortcut: Escape)"
                   aria-keyshortcuts="Escape"
                   onClick={clearSelection}
                 >
                   Clear
                 </button>
-                <button type="button" className="danger-action" onClick={removeSelected}>
+                <button type="button" title="Permanently delete this node" className="danger-action" onClick={removeSelected}>
                   Remove
                 </button>
               </div>
             </>
           ) : (
-            <p className="empty-copy">No active node.</p>
+            <p className="empty-copy">Click a node to view details.</p>
           )}
         </section>
 
@@ -536,11 +579,16 @@ export default function Showcase() {
             <strong>{selectedEdges.length}</strong>
           </div>
           {selectedEdges.length > 0 ? (
-            <ul className="connection-list" aria-label="Selected node connections">
+            <ul
+              className="connection-list"
+              aria-label="Selected node connections"
+            >
               {selectedEdges.map((edge) => {
-                const neighborId = edge.source === selectedNode?.id ? edge.target : edge.source;
+                const neighborId =
+                  edge.source === selectedNode?.id ? edge.target : edge.source;
                 const neighbor =
-                  snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
+                  snapshot.nodes.find((node) => node.id === neighborId)?.name ??
+                  neighborId;
                 return (
                   <li key={edge.id}>
                     <span title={edge.type}>{compactLabel(edge.type)}</span>
@@ -560,14 +608,16 @@ export default function Showcase() {
               })}
             </ul>
           ) : (
-            <p className="empty-copy">No connected edge list.</p>
+            <p className="empty-copy">This node has no connected edges.</p>
           )}
         </section>
 
         <section className="inspector-panel">
           <div className="panel-topline">
             <p>Composition</p>
-            <strong>{legend?.edge_types.length ?? edgeTypes.length} edge types</strong>
+            <strong>
+              {legend?.edge_types.length ?? edgeTypes.length} edge types
+            </strong>
           </div>
           <div className="type-cloud" aria-label="Node type counts">
             {nodeTypes.map((item) => (
@@ -588,17 +638,21 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
-          <button type="button" onClick={() => graphRef.current?.fit(56)}>
+          <button type="button" title="Zoom to fit the entire graph on screen" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
-          <button type="button" onClick={addNode}>
+          <button type="button" title="Add a new test node to the graph" onClick={addNode}>
             Add probe
           </button>
         </section>
       </aside>
 
       {detailsOpen && selectedNode ? (
-        <div className="details-backdrop" role="presentation" onMouseDown={() => setDetailsOpen(false)}>
+        <div
+          className="details-backdrop"
+          role="presentation"
+          onMouseDown={() => setDetailsOpen(false)}
+        >
           <section
             className="node-details-modal"
             role="dialog"
@@ -651,9 +705,13 @@ export default function Showcase() {
               {selectedEdges.length > 0 ? (
                 <ul className="connection-list modal-list">
                   {selectedEdges.map((edge) => {
-                    const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
+                    const neighborId =
+                      edge.source === selectedNode.id
+                        ? edge.target
+                        : edge.source;
                     const neighbor =
-                      snapshot.nodes.find((node) => node.id === neighborId)?.name ?? neighborId;
+                      snapshot.nodes.find((node) => node.id === neighborId)
+                        ?.name ?? neighborId;
                     return (
                       <li key={edge.id}>
                         <span title={edge.type}>{compactLabel(edge.type)}</span>
@@ -674,7 +732,9 @@ export default function Showcase() {
                   })}
                 </ul>
               ) : (
-                <p className="empty-copy">No connected records.</p>
+                <p className="empty-copy">
+                  This record has no adjacent connections.
+                </p>
               )}
             </section>
 
@@ -684,22 +744,24 @@ export default function Showcase() {
                 <strong>{selectedMetaEntries.length}</strong>
               </div>
               {selectedMetaEntries.length > 0 ? (
-                <pre className="meta-block">{formatJson(selectedNode.meta)}</pre>
+                <pre className="meta-block">
+                  {formatJson(selectedNode.meta)}
+                </pre>
               ) : (
                 <p className="empty-copy">No metadata on this node.</p>
               )}
             </section>
 
             <div className="modal-actions">
-              <button type="button" onClick={frameSelected}>
+              <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
                 Frame
               </button>
-              <button type="button" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+              <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
                 type="button"
-                title="Keyboard shortcut: Escape"
+                title="Close dialog (Keyboard shortcut: Escape)"
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
