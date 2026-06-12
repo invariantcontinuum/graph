@@ -6,7 +6,6 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { usePointerController } from "./usePointerController";
 import type {
   GraphSnapshot,
   GraphFilter,
@@ -16,7 +15,7 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerEvents } from "./usePointerEvents";
+import { usePointerController } from "./controllers/usePointerController";
 
 export interface GraphProps {
   snapshotUrl?: string;
@@ -25,7 +24,7 @@ export interface GraphProps {
   theme?: Record<string, unknown>;
   layout?: LayoutType;
   filter?: GraphFilter | null;
-  onNodeClick?: (node: NodeData | null) => void;
+  onNodeClick?: (node: NodeData) => void;
   /** Fires when the user clicks on empty canvas (no node hit). Hosts can use
    *  this to clear a spotlight selection without the user having to hit Esc
    *  — legacy Cytoscape behavior. */
@@ -94,7 +93,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const convergedRef = useRef(false);
   const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
-
+  const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
 
@@ -410,7 +409,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const flushWorkerMessages = useCallback(() => {
+  const flushWorkerMessages = useCallback(function _flushWorkerMessages() {
     const raw = engineRef.current?.drain_worker_messages();
     if (!raw || !workerRef.current) return;
     // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
@@ -421,14 +420,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
-  usePointerEvents({
+  usePointerController({
     canvasRef,
     engineRef,
     callbacksRef,
     nodeFromId,
     flushWorkerMessages,
     requestRender,
-    draggingNodeRef,
   });
 
   useImperativeHandle(
