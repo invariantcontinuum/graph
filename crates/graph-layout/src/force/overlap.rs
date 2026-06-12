@@ -63,12 +63,14 @@ fn compute_push(
             let Some(bucket) = buckets.get(&(key.0 + dx, key.1 + dy)) else {
                 continue;
             };
+            // Use unsafe unchecked array accesses here to optimize since we know
+            // bucket contains valid indices that were pushed in resolve_overlaps.
             for &other_idx in bucket {
                 if other_idx == self_idx {
                     continue;
                 }
-                let (push_x, push_y) =
-                    pair_push(x, y, positions[other_idx].0, positions[other_idx].1, gap_sq);
+                let other_pos = unsafe { positions.get_unchecked(other_idx) };
+                let (push_x, push_y) = pair_push(x, y, other_pos.0, other_pos.1, gap_sq);
                 push_dx += push_x;
                 push_dy += push_y;
             }
