@@ -110,6 +110,7 @@ Browser smoke must cover:
 ## 2026-06-01 - Showcase Empty States And Tooltips
 **Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
 **Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
-## 2026-06-02 - Expose Invisible Zoom Shortcuts
-**Learning:** Invisible canvas interactions like zooming with + and - keys are undiscoverable and can trap keyboard-only users if explicit UI controls are absent. Relying solely on standard keyboard events within the canvas element is insufficient for full accessibility.
-**Action:** Always pair canvas keyboard shortcuts with explicit, visually apparent buttons in the active UI. Use `title` and `aria-keyshortcuts` to advertise the shortcut, avoiding literal key names like '+' to ensure robust screen reader support.
+
+## 2026-06-09 - Progressive Dismiss for Escape Key
+**Learning:** In complex UIs with multiple active layers (e.g., a drawer, a details modal, and an active canvas selection), pressing the "Escape" key should not aggressively clear all state at once. Users expect a hierarchical, progressive dismiss where only the topmost active layer is closed per keypress.
+**Action:** Implement a progressive dismiss pattern that checks active UI states sequentially (drawer -> modal -> selection) and only dismisses the active state with the highest priority before returning.
