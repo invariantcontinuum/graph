@@ -529,13 +529,47 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // Cache-adjusted coordinate helpers. The engine expects canvas-local,
     // DPR-scaled coordinates (matches the wheel + existing drag/hover/click
     // FFI contract), not raw clientX/Y.
-    const toLocalPointer = (clientX: number, clientY: number) => {
+    const toLocalPointer = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       return {
         x: (clientX - rect.left) * dpr,
         y: (clientY - rect.top) * dpr,
       };
+    };
+
+    const handleHoverOnly = (local: { x: number; y: number }) => {
+      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
+      if (hoveredId !== undefined) {
+        canvas.style.cursor = hoveredId ? "pointer" : "default";
+        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
+      }
+    };
+
+    const handleSinglePointerMove = (local: { x: number; y: number }, singleMode: "drag" | "pan" | null) => {
+      if (singleMode === "drag") {
+        engineRef.current?.handle_node_drag_move(local.x, local.y);
+        flushWorkerMessages();
+      } else if (singleMode === "pan") {
+        engineRef.current?.handle_pan_move(local.x, local.y);
+        handleHoverOnly(local);
+      }
+    };
+
+    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
+      const d = pinchDist(activePointers);
+      const c = centroid(activePointers);
+      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
+      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
+      // Invert via -log so a growing distance zooms in.
+      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
+      if (lastCentroid) {
+        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
+        engineRef.current?.handle_pan_move(c.x, c.y);
+        engineRef.current?.handle_pan_end();
+      }
+      lastPinchDist = d;
+      lastCentroid = c;
     };
 
     const active: Map<number, PointerState> = new Map();
@@ -551,17 +585,17 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     // timeout before the synthetic click event runs.
     let downPos: { x: number; y: number } | null = null;
 
-    function centroid(): { x: number; y: number } {
+    function centroid(activePointers: Map<number, PointerState>): { x: number; y: number } {
       let x = 0;
       let y = 0;
-      for (const p of active.values()) {
+      for (const p of activePointers.values()) {
         x += p.x;
         y += p.y;
       }
-      return { x: x / active.size, y: y / active.size };
+      return { x: x / activePointers.size, y: y / activePointers.size };
     }
-    function pinchDist(): number {
-      const arr = [...active.values()];
+    function pinchDist(activePointers: Map<number, PointerState>): number {
+      const arr = [...activePointers.values()];
       const dx = arr[0].x - arr[1].x;
       const dy = arr[0].y - arr[1].y;
       return Math.hypot(dx, dy);
@@ -604,7 +638,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
     const onDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId);
-      const local = toLocalPointer(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
       if (active.size === 1) {
@@ -635,14 +669,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           engineRef.current?.handle_pan_end();
         }
         singleMode = null;
-        const arr = [...active.values()];
-        const dx = arr[0].x - arr[1].x;
-        const dy = arr[0].y - arr[1].y;
-        lastPinchDist = Math.hypot(dx, dy);
-        lastCentroid = {
-          x: (arr[0].x + arr[1].x) / 2,
-          y: (arr[0].y + arr[1].y) / 2,
-        };
+        lastPinchDist = pinchDist(active);
+        lastCentroid = centroid(active);
       }
       requestRender();
     };
@@ -683,7 +711,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     };
 
     const onMove = (e: PointerEvent) => {
-      const local = toLocal(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       const existing = active.get(e.pointerId);
 
       if (!existing) {
@@ -695,7 +723,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
 
       active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
-      if (active.size === 1 && singleMode) {
+      if (active.size === 1) {
         handleSinglePointerMove(local, singleMode);
       } else if (active.size === 2) {
         handlePinchMove(active);
@@ -719,7 +747,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
           // synthetic `click` event that follows would otherwise be
           // swallowed by the draggingNodeRef guard inside onClick.
           const movedThreshold = 4;
-          const localUp = toLocalPointer(e.clientX, e.clientY);
+          const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
           const moved = downPos
             ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
               Math.abs(localUp.y - downPos.y) > movedThreshold
@@ -759,7 +787,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         return;
       }
       if (draggingNodeRef.current !== null) return; // consumed by drag
-      const local = toLocalPointer(e.clientX, e.clientY);
+      const local = toLocalPointer(e.clientX, e.clientY, canvas);
       const clickedId = engineRef.current?.handle_click(local.x, local.y);
       if (clickedId) {
         callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
@@ -907,7 +935,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="region"
       aria-roledescription="graph"
-      aria-keyshortcuts="Escape"
+      aria-keyshortcuts="Escape Plus Minus Equal"
       tabIndex={0}
       style={{
         width: "100%",
