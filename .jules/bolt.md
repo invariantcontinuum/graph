@@ -141,6 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
-## 2026-06-06 - WASM Math Optimization
-**Learning:** In Rust hot paths involving geometric inverse square distances (e.g., pair_push in overlap resolution), calculating a standard square root and using a single division (`(MIN_NODE_GAP - d) / (d * 2.0)`) is significantly faster in WASM than calculating the inverse square root (`1.0 / dist_sq.sqrt()`) and performing subsequent multiplications. WASM execution heavily penalized the inverse square root approach in tests.
-**Action:** Prefer standard square root and division over inverse square root for geometric normalizations in WASM targets.
+## 2026-06-06 - Suppressing text:S8570 lockfile rule and React hook complexity reduction
+**Learning:** For SonarCloud findings regarding missing Cargo.locks in nested workspace manifests, use `sonar.issue.ignore.multicriteria` to suppress it instead of generating multiple dummy lockfiles. The root `Cargo.lock` works perfectly for a Rust workspace. Second, when refactoring a massive hook with inline pointer logic like `onMove`, pure event functions should be extracted and correctly bound.
+**Action:** Created `sonar.issue.ignore.multicriteria.e1.resourceKey=crates/**/Cargo.toml` config. Extracted pointer helpers from `react/Graph.tsx` and prevented duplicating functions using the proper Python regex placement.
