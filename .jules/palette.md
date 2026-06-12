@@ -102,3 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+## 2025-06-08 - Added Empty State and Tooltips
+**Learning:** Adding descriptive title attributes to buttons with terse action names like "Center" and "Frame" improves accessibility and usability. Adding actionable empty state messaging provides clearer guidance to the user than just "No active node." Additionally, the `role="application"` attribute often restricts screen reader functionality, and it is better to use `role="region"` coupled with `aria-roledescription="graph"` and `aria-keyshortcuts` for interactive elements like the Graph canvas.
+**Action:** Do not use `role="application"` or non-interactive roles (like `role="region"`) on `<canvas>` elements with `tabIndex`. Instead, simply rely on the default `<canvas>` semantics and attach appropriate ARIA properties like `aria-roledescription="graph"` and `aria-label`. Ensure tooltips via `title` attributes are included on terse action buttons.
