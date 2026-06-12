@@ -73,6 +73,9 @@ fn restore_pinned(positions: &mut [f32], saved: &[(usize, f32, f32)]) {
 
 fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &mut [(f32, f32)]) {
     let n = positions.len() / 2;
+    // ⚡ Bolt: Provide a safety net and enough context to LLVM so it can
+    // elide bounds checks implicitly, without sacrificing correctness or using unsafe blocks.
+    assert!(forces.len() >= n);
     for &(src, tgt) in edges {
         if src >= n || tgt >= n {
             continue;
@@ -99,7 +102,8 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    if velocities.len() * 2 < positions.len() || forces.len() * 2 < positions.len() {
+    let n = positions.len() / 2;
+    if velocities.len() < n || forces.len() < n {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
