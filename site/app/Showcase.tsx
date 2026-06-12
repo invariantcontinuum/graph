@@ -552,6 +552,7 @@ export default function Showcase() {
                 className="zoom-control"
                 aria-label="Zoom in"
                 title="Zoom in (+)"
+                aria-keyshortcuts="Plus"
                 onClick={zoomIn}
               >
                 +
@@ -561,6 +562,7 @@ export default function Showcase() {
                 className="zoom-control"
                 aria-label="Zoom out"
                 title="Zoom out (-)"
+                aria-keyshortcuts="-"
                 onClick={zoomOut}
               >
                 −
