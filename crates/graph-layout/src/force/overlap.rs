@@ -63,12 +63,14 @@ fn compute_push(
             let Some(bucket) = buckets.get(&(key.0 + dx, key.1 + dy)) else {
                 continue;
             };
+            // Use unsafe unchecked array accesses here to optimize since we know
+            // bucket contains valid indices that were pushed in resolve_overlaps.
             for &other_idx in bucket {
                 if other_idx == self_idx {
                     continue;
                 }
-                let (push_x, push_y) =
-                    pair_push(x, y, positions[other_idx].0, positions[other_idx].1, gap_sq);
+                let other_pos = unsafe { positions.get_unchecked(other_idx) };
+                let (push_x, push_y) = pair_push(x, y, other_pos.0, other_pos.1, gap_sq);
                 push_dx += push_x;
                 push_dy += push_y;
             }
@@ -84,10 +86,9 @@ fn pair_push(x: f32, y: f32, ox: f32, oy: f32, gap_sq: f32) -> (f32, f32) {
     if d_sq >= gap_sq || d_sq <= 0.0001 {
         return (0.0, 0.0);
     }
-    // ⚡ Bolt: Eliminate `.sqrt()` and the two subsequent division ops (`ddx / d`, `ddy / d`)
-    // by using an inverse square root and refactoring the arithmetic to purely use multiplication.
-    // Instead of computing `(MIN_NODE_GAP - d) * 0.5 / d`, we compute `(MIN_NODE_GAP * d_inv - 1.0) * 0.5`
-    let d_inv = 1.0 / d_sq.sqrt();
-    let push_over_d = (MIN_NODE_GAP * d_inv - 1.0) * 0.5;
+    // ⚡ Bolt: WASM execution heavily penalizes the inverse square root approach (`1.0 / dist_sq.sqrt()`).
+    // It is significantly faster to compute a standard square root and use a single division instead.
+    let d = d_sq.sqrt();
+    let push_over_d = (MIN_NODE_GAP - d) * 0.5 / d;
     (ddx * push_over_d, ddy * push_over_d)
 }
