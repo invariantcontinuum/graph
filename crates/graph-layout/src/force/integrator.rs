@@ -73,22 +73,37 @@ fn restore_pinned(positions: &mut [f32], saved: &[(usize, f32, f32)]) {
 
 fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &mut [(f32, f32)]) {
     let n = positions.len() / 2;
+
+    // Explicitly assert capacity before entering the hot loop to prove safety
+    // for the unchecked indexing operations below without incurring per-iteration overhead.
+    assert!(forces.len() >= n, "Forces slice must be at least sized to n");
+
     for &(src, tgt) in edges {
         if src >= n || tgt >= n {
             continue;
         }
-        let src_pos = &positions[src * 2..src * 2 + 2];
-        let tgt_pos = &positions[tgt * 2..tgt * 2 + 2];
-        let dx = tgt_pos[0] - src_pos[0];
-        let dy = tgt_pos[1] - src_pos[1];
+
+        // SAFETY: We verified that src < n and tgt < n above.
+        // n is positions.len() / 2, so src * 2 + 1 and tgt * 2 + 1 are strictly < positions.len().
+        // forces has length n (guaranteed by integrate_step), so src and tgt are < forces.len().
+        let sx = unsafe { *positions.get_unchecked(src * 2) };
+        let sy = unsafe { *positions.get_unchecked(src * 2 + 1) };
+        let tx = unsafe { *positions.get_unchecked(tgt * 2) };
+        let ty = unsafe { *positions.get_unchecked(tgt * 2 + 1) };
+
+        let dx = tx - sx;
+        let dy = ty - sy;
+
         // Mathematically simplify distance calculations (fx = ATTRACTION * dx)
         // to completely bypass expensive .sqrt() and floating-point division operations
         let fx = ATTRACTION * dx;
         let fy = ATTRACTION * dy;
-        let src_force = &mut forces[src];
+
+        let src_force = unsafe { forces.get_unchecked_mut(src) };
         src_force.0 += fx;
         src_force.1 += fy;
-        let tgt_force = &mut forces[tgt];
+
+        let tgt_force = unsafe { forces.get_unchecked_mut(tgt) };
         tgt_force.0 -= fx;
         tgt_force.1 -= fy;
     }
@@ -99,7 +114,8 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    if velocities.len() * 2 < positions.len() || forces.len() * 2 < positions.len() {
+    let n = positions.len() / 2;
+    if velocities.len() < n || forces.len() < n {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;

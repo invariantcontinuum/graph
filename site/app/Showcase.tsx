@@ -316,13 +316,18 @@ export default function Showcase() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDetailsOpen(false);
-        setDrawerOpen(false);
+        if (drawerOpen) {
+          setDrawerOpen(false);
+        } else if (detailsOpen) {
+          setDetailsOpen(false);
+        } else if (selectedId) {
+          setSelectedId(null);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [drawerOpen, detailsOpen, selectedId]);
 
   return (
     <main className="atlas-shell">
@@ -590,6 +595,24 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
+          <button
+            type="button"
+            title="Keyboard shortcut: Plus"
+            aria-label="Zoom in"
+            aria-keyshortcuts="Plus"
+            onClick={() => graphRef.current?.zoomIn()}
+          >
+            Zoom in
+          </button>
+          <button
+            type="button"
+            title="Keyboard shortcut: Minus"
+            aria-label="Zoom out"
+            aria-keyshortcuts="Minus"
+            onClick={() => graphRef.current?.zoomOut()}
+          >
+            Zoom out
+          </button>
           <button type="button" title="Fit the entire graph into view" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
