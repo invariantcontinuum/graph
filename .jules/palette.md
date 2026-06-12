@@ -102,6 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
-## 2026-06-04 - Screen Reader Traps and Redundant Roles
-**Learning:** `role="application"` on canvas elements traps screen reader keyboard navigation, forcing users to use specialized application shortcuts or become stuck. Overlays with `aria-hidden={true}` and `pointerEvents: "none"` do not need `role="presentation"` as they are completely ignored by the accessibility tree; adding it is redundant and can trigger SonarCloud warnings (`typescript:S6819`).
-**Action:** Use `role="region"` with an `aria-roledescription="graph"` and advertise specific global interactive boundaries with `aria-keyshortcuts` (e.g., `Escape` to un-focus) instead of application roles. Omit `role="presentation"` from correctly hidden overlay elements.
+## 2024-06-03 - Empty States & Tooltips UX Polish
+**Learning:** Generic empty states ("No active node") provide poor user guidance, and terse button labels ("Center", "Frame") lack contextual clarity without tooltips. Modifying text and adding title attributes requires precision to avoid breaking keyboard shortcut context (e.g., preserving "Keyboard shortcut: Escape" within the new title).
+**Action:** Always replace passive empty-state language with actionable instructions ("Click a node to view details") and proactively apply title tooltips to compact UI actions to clarify intent and improve accessibility.

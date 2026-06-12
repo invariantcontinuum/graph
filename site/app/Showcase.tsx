@@ -549,10 +549,10 @@ export default function Showcase() {
                 </div>
               </dl>
               <div className="action-grid">
-                <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
+                <button type="button" title="Frame selected node" onClick={frameSelected}>
                   Frame
                 </button>
-                <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+                <button type="button" title="Center selected node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                   Center
                 </button>
                 <button
@@ -563,7 +563,7 @@ export default function Showcase() {
                 >
                   Clear
                 </button>
-                <button type="button" title="Permanently delete this node" className="danger-action" onClick={removeSelected}>
+                <button type="button" title="Remove selected node" className="danger-action" onClick={removeSelected}>
                   Remove
                 </button>
               </div>
@@ -608,7 +608,7 @@ export default function Showcase() {
               })}
             </ul>
           ) : (
-            <p className="empty-copy">This node has no connected edges.</p>
+            <p className="empty-copy">Select a node to view connections.</p>
           )}
         </section>
 
@@ -638,10 +638,10 @@ export default function Showcase() {
         </section>
 
         <section className="inspector-panel controls-panel">
-          <button type="button" title="Zoom to fit the entire graph on screen" onClick={() => graphRef.current?.fit(56)}>
+          <button type="button" title="Fit all nodes in view" onClick={() => graphRef.current?.fit(56)}>
             Fit all
           </button>
-          <button type="button" title="Add a new test node to the graph" onClick={addNode}>
+          <button type="button" title="Add a new probe node" onClick={addNode}>
             Add probe
           </button>
         </section>
@@ -732,9 +732,7 @@ export default function Showcase() {
                   })}
                 </ul>
               ) : (
-                <p className="empty-copy">
-                  This record has no adjacent connections.
-                </p>
+                <p className="empty-copy">Select a node to view connections.</p>
               )}
             </section>
 
@@ -748,20 +746,20 @@ export default function Showcase() {
                   {formatJson(selectedNode.meta)}
                 </pre>
               ) : (
-                <p className="empty-copy">No metadata on this node.</p>
+                <p className="empty-copy">Select a node to view metadata.</p>
               )}
             </section>
 
             <div className="modal-actions">
-              <button type="button" title="Zoom to fit the selected node and its neighbors" onClick={frameSelected}>
+              <button type="button" title="Frame selected node" onClick={frameSelected}>
                 Frame
               </button>
-              <button type="button" title="Pan camera to the center of this node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
+              <button type="button" title="Center selected node" onClick={() => graphRef.current?.panToNode(selectedNode.id)}>
                 Center
               </button>
               <button
                 type="button"
-                title="Close dialog (Keyboard shortcut: Escape)"
+                title="Close (Keyboard shortcut: Escape)"
                 aria-keyshortcuts="Escape"
                 onClick={() => setDetailsOpen(false)}
               >
