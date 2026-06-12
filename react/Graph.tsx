@@ -6,6 +6,7 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
+import { usePointerController } from "./usePointerController";
 import type {
   GraphSnapshot,
   GraphFilter,
@@ -409,23 +410,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const flushWorkerMessages = useCallback(function _flushWorkerMessages() {
-    const raw = engineRef.current?.drain_worker_messages();
-    if (!raw || !workerRef.current) return;
-    // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
-    // which deserializes into a JS array of message objects.
-    const msgs = Array.isArray(raw) ? raw : [];
-    for (const msg of msgs) {
-      workerRef.current.postMessage(msg);
-    }
-  }, []);
-
   usePointerController({
     canvasRef,
     engineRef,
+    workerRef,
     callbacksRef,
+    draggingNodeRef,
     nodeFromId,
-    flushWorkerMessages,
     requestRender,
   });
 
