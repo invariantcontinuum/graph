@@ -141,19 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
-
-## 2026-05-31 - Optimize Inverse Distance Calculation In Barnes-Hut
-**Learning:** In the hot path of the Barnes-Hut layout algorithm, computing a reciprocal square root (`1.0 / dist_sq.sqrt()`) and then cubing it with three consecutive multiplications is slower than the direct equivalent. LLVM without `fast-math` cannot safely reassociate these floating-point operations, so the compiler must emit the operations as written.
-**Action:** When computing geometric inverses in Rust hot paths, prefer calculating a standard square root (`dist_sq.sqrt()`) and performing a single division such as `1.0 / (dist * dist_sq)`.
-
-## 2026-05-30 - Barnes-Hut Bounds And Hierarchical Layer Optimization
-**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating the leaf node condition `node.children.is_none()` before checking the quadrant bounds ratio `(width * width) < THETA_SQ * dist_sq` avoids unnecessary floating-point operations. In `crates/graph-layout/src/hierarchical.rs`, returning assigned layers as a flat `Vec<u32>` indexed by `petgraph::NodeIndex` avoids building and querying a cloned `HashMap<String, u32>`.
-**Action:** Short-circuit expensive math in hot paths with cheap boolean checks. In hierarchical layout algorithms that operate on `petgraph::Graph`, prefer contiguous flat vectors for node-indexed state instead of cloned string-keyed maps.
-
-## 2026-05-30 - Fix TS3776 & Text:S8570
-**Learning:** Extracting pointer branch logic into small local helper functions prevents React event orchestration from ballooning in cognitive complexity without changing pointer behavior. Similarly, SonarCloud multi-criteria ignores cleanly squelch false positive supply-chain warnings for nested workspace lockfiles without creating fake artifacts.
-**Action:** Split `onMove` into `toLocalPointer`, `handleHoverOnly`, `handleSinglePointerMove`, and `handlePinchMove`; update `sonar-project.properties` to suppress `text:S8570` only for nested workspace `Cargo.toml` manifests.
-
-## 2026-06-08 - Elide Bounds Checking in Overlap Bucket Resolution
-**Learning:** In Rust layout hot paths (e.g., nested loops in `crates/graph-layout/src/force/overlap.rs`), bounds checking inside hot loops can be a significant overhead. If you know that an index pulled from a data structure (like values pulled from a spatial hash bucket) is algorithmically guaranteed to be valid, using `unsafe { slice.get_unchecked(index) }` yields measurable performance improvements without sacrificing structural safety.
-**Action:** When a profiler or benchmark shows array indexing as a bottleneck in a hot layout loop, verify the invariant that guarantees index validity and safely elide the bounds check using `get_unchecked`.
+## 2026-05-29 - ChromeDriver 404 Failure during WASM Tests
+ **Learning:** ChromeDriver sometimes fails with a 404 error during local headless execution via wasm-bindgen-test-runner.
+ **Action:** Rely on the GitHub CI workflow for final validation of wasm test execution as instructed by the playbook.
