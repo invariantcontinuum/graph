@@ -102,3 +102,6 @@ Browser smoke must cover:
 - node click, background click, fit all
 - drag behavior when renderer code changes
 - console errors and failed network requests
+## 2024-06-02 - Overlay Canvas Accessibility False Positives
+**Learning:** Using `role="presentation"` on decorative `<canvas>` elements that already have `aria-hidden={true}` and `pointerEvents: "none"` triggers redundant accessibility warnings (e.g., SonarCloud `typescript:S6819`). The additional role is unnecessary and flagged as improper semantics.
+**Action:** For supplementary overlay canvases, rely purely on `aria-hidden={true}`, lack of `tabIndex`, and `pointerEvents: "none"` to hide them from the accessibility tree. Omit the `role` attribute entirely.
