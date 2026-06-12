@@ -110,3 +110,7 @@ Browser smoke must cover:
 ## 2026-06-01 - Showcase Empty States And Tooltips
 **Learning:** Inspector panels that only say "No active node" are less useful than empty states that explain the next action. Main graph controls also benefit from native `title` tooltips when the visible label is short.
 **Action:** Make showcase empty states instructional and add concise native tooltips to controls without cluttering the visible UI.
+
+## 2026-06-11 - Progressive Dismissal for Escape Key
+**Learning:** In complex UIs with multiple overlapping interactive states (like a scenario drawer, node details modal, and selected node state), simultaneously dismissing all states on a single 'Escape' keypress can be jarring and violate user expectations.
+**Action:** Implement a progressive dismiss pattern. For 'Escape', check states in reverse z-index or interaction order (e.g., close drawer first, then details modal, then clear selection), allowing users to hierarchically back out of interactions without aggressively clearing all underlying state.
