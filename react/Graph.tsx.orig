@@ -6,7 +6,6 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { usePointerController } from "./usePointerController";
 import type {
   GraphSnapshot,
   GraphFilter,
@@ -16,7 +15,7 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerEvents } from "./usePointerEvents";
+import { usePointerController } from "./controllers/usePointerController";
 
 export interface GraphProps {
   snapshotUrl?: string;
@@ -25,7 +24,7 @@ export interface GraphProps {
   theme?: Record<string, unknown>;
   layout?: LayoutType;
   filter?: GraphFilter | null;
-  onNodeClick?: (node: NodeData | null) => void;
+  onNodeClick?: (node: NodeData) => void;
   /** Fires when the user clicks on empty canvas (no node hit). Hosts can use
    *  this to clear a spotlight selection without the user having to hit Esc
    *  — legacy Cytoscape behavior. */
@@ -59,90 +58,8 @@ export interface GraphHandle {
     cb: (m: { positions: Float32Array; vpMatrix: Float32Array }) => void,
   ) => () => void;
   subscribeEdges: (
-    cb: (e: {
-      edgeData: Float32Array;
-      focusIdx: number;
-      edgeTypeKeys: string[];
-    }) => void,
+    cb: (e: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys: string[] }) => void,
   ) => () => void;
-}
-
-
-// Pure pointer event helpers
-
-export function toLocalPointer(clientX: number, clientY: number, canvas: HTMLCanvasElement): { x: number, y: number } {
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  return {
-    x: (clientX - rect.left) * dpr,
-    y: (clientY - rect.top) * dpr,
-  };
-}
-
-export function handleHoverOnly(
-  localX: number,
-  localY: number,
-  engine: any,
-  canvas: HTMLCanvasElement,
-  callbacks: { onNodeHover?: (node: any | null) => void },
-  nodeFromId: (id: string) => any
-): void {
-  const hoveredId = engine?.handle_hover(localX, localY);
-  if (hoveredId !== undefined) {
-    canvas.style.cursor = hoveredId ? "pointer" : "default";
-    callbacks.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-  }
-}
-
-export function handleSinglePointerMove(
-  localX: number,
-  localY: number,
-  singleMode: "drag" | "pan" | null,
-  engine: any,
-  canvas: HTMLCanvasElement,
-  callbacks: { onNodeHover?: (node: any | null) => void },
-  nodeFromId: (id: string) => any,
-  flushWorkerMessages: () => void
-): void {
-  if (singleMode === "drag") {
-    engine?.handle_node_drag_move(localX, localY);
-    flushWorkerMessages();
-  } else if (singleMode === "pan") {
-    engine?.handle_pan_move(localX, localY);
-    handleHoverOnly(localX, localY, engine, canvas, callbacks, nodeFromId);
-  }
-}
-
-export function handlePinchMove(
-  activePointers: Map<number, { id: number; x: number; y: number }>,
-  lastPinchDist: number,
-  lastCentroid: { x: number; y: number } | null,
-  engine: any
-): { dist: number; centroid: { x: number; y: number } } {
-  const arr = [...activePointers.values()];
-  const dx = arr[0].x - arr[1].x;
-  const dy = arr[0].y - arr[1].y;
-  const dist = Math.hypot(dx, dy);
-
-  let cx = 0;
-  let cy = 0;
-  for (const p of activePointers.values()) {
-    cx += p.x;
-    cy += p.y;
-  }
-  cx /= activePointers.size;
-  cy /= activePointers.size;
-  const centroid = { x: cx, y: cy };
-
-  const deltaZoom = dist / Math.max(lastPinchDist, 1e-3);
-  engine?.handle_zoom(-Math.log(deltaZoom), centroid.x, centroid.y);
-  if (lastCentroid) {
-    engine?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-    engine?.handle_pan_move(centroid.x, centroid.y);
-    engine?.handle_pan_end();
-  }
-
-  return { dist, centroid };
 }
 
 export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
@@ -174,27 +91,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   const workerRef = useRef<Worker | null>(null);
   const rafRef = useRef<number>(0);
   const convergedRef = useRef(false);
-  const callbacksRef = useRef({
-    onNodeClick,
-    onBackgroundClick,
-    onNodeHover,
-    onStatsChange,
-    onLegendChange,
-    onPositionsReady,
-  });
+  const callbacksRef = useRef({ onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
-
+  const draggingNodeRef = useRef<string | null>(null);
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
 
-  callbacksRef.current = {
-    onNodeClick,
-    onBackgroundClick,
-    onNodeHover,
-    onStatsChange,
-    onLegendChange,
-    onPositionsReady,
-  };
+  callbacksRef.current = { onNodeClick, onBackgroundClick, onNodeHover, onStatsChange, onLegendChange, onPositionsReady };
 
   /* Restart the RAF render loop. Called after every camera-mutating
    * interaction (zoom/pan/fit/drag) because the loop exits when
@@ -244,9 +147,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const engine = new mainWasm.RenderEngine(canvas);
       engineRef.current = engine;
 
-      const worker = new Worker(new URL("./worker.ts", import.meta.url), {
-        type: "module",
-      });
+      const worker = new Worker(
+        new URL("./worker.ts", import.meta.url),
+        { type: "module" }
+      );
       workerRef.current = worker;
 
       worker.onmessage = (e: MessageEvent<WorkerOutMessage>) => {
@@ -458,8 +362,9 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     if (!canvas) return;
     const sendRatio = () => {
       const rect = canvas.getBoundingClientRect();
-      const ratio =
-        rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 1.77;
+      const ratio = rect.width > 0 && rect.height > 0
+        ? rect.width / rect.height
+        : 1.77;
       workerRef.current?.postMessage({ type: "set_viewport", ratio });
     };
     sendRatio();
@@ -496,7 +401,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       engineRef.current?.handle_zoom(
         e.deltaY,
         (e.clientX - rect.left) * dpr,
-        (e.clientY - rect.top) * dpr,
+        (e.clientY - rect.top) * dpr
       );
       requestRender();
     };
@@ -504,7 +409,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     return () => canvas.removeEventListener("wheel", handler);
   }, [requestRender]);
 
-  const flushWorkerMessages = useCallback(() => {
+  const flushWorkerMessages = useCallback(function _flushWorkerMessages() {
     const raw = engineRef.current?.drain_worker_messages();
     if (!raw || !workerRef.current) return;
     // drain_worker_messages returns a JsValue serialized from Vec<serde_json::Value>,
@@ -515,331 +420,14 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
-  // Pointer + pinch-zoom handling. Replaces the old mouse-only listeners with
-  // unified pointer events that cover mouse, touch, and pen. Single pointer →
-  // node-drag OR pan OR hover (depending on hit test). Two pointers → pinch
-  // zoom + centroid pan. `touch-action: none` on the canvas prevents the
-  // browser from hijacking touch gestures (scroll, double-tap zoom).
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    type PointerState = { id: number; x: number; y: number };
-
-    // Cache-adjusted coordinate helpers. The engine expects canvas-local,
-    // DPR-scaled coordinates (matches the wheel + existing drag/hover/click
-    // FFI contract), not raw clientX/Y.
-    const toLocalPointer = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      return {
-        x: (clientX - rect.left) * dpr,
-        y: (clientY - rect.top) * dpr,
-      };
-    };
-
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, singleMode: "drag" | "pan" | null) => {
-      if (singleMode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        flushWorkerMessages();
-      } else if (singleMode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
-      const d = pinchDist(activePointers);
-      const c = centroid(activePointers);
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
-    };
-
-    const active: Map<number, PointerState> = new Map();
-    // Track whether the current single-pointer gesture is dragging a node,
-    // panning the camera, or neither (pre-hit-test state). Resets on release.
-    let singleMode: "drag" | "pan" | null = null;
-    let suppressNextClick = false;
-    let lastPinchDist = 0;
-    let lastCentroid: { x: number; y: number } | null = null;
-    // Records the local pointerdown position so onUp can distinguish a pure
-    // click (no movement) from a drag. Without this, a click-on-node never
-    // fires onNodeClick because onUp always installs the click-suppression
-    // timeout before the synthetic click event runs.
-    let downPos: { x: number; y: number } | null = null;
-
-    function centroid(activePointers: Map<number, PointerState>): { x: number; y: number } {
-      let x = 0;
-      let y = 0;
-      for (const p of activePointers.values()) {
-        x += p.x;
-        y += p.y;
-      }
-      return { x: x / activePointers.size, y: y / activePointers.size };
-    }
-    function pinchDist(activePointers: Map<number, PointerState>): number {
-      const arr = [...activePointers.values()];
-      const dx = arr[0].x - arr[1].x;
-      const dy = arr[0].y - arr[1].y;
-      return Math.hypot(dx, dy);
-    }
-
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan" | null) => {
-      if (mode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        pumpWorkerMessages();
-      } else if (mode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        // Hover updates only while panning (or hovering without a button).
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = () => {
-      const d = pinchDist();
-      const c = centroid();
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
-    };
-
-    const onDown = (e: PointerEvent) => {
-      canvas.setPointerCapture(e.pointerId);
-      const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
-
-      if (active.size === 1) {
-        // Hit-test: if the pointer lands on a node, start a node-drag;
-        // otherwise start a camera pan.
-        const nodeId = engineRef.current?.handle_node_drag_start(
-          local.x,
-          local.y,
-        );
-        if (nodeId) {
-          draggingNodeRef.current = nodeId;
-          singleMode = "drag";
-          downPos = { x: local.x, y: local.y };
-          flushWorkerMessages();
-        } else {
-          engineRef.current?.handle_pan_start(local.x, local.y);
-          singleMode = "pan";
-          downPos = null;
-        }
-      } else if (active.size === 2) {
-        // Second pointer joined — end any single-pointer gesture and begin pinch.
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages();
-          draggingNodeRef.current = null;
-          suppressNextClick = true;
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_end();
-        }
-        singleMode = null;
-        lastPinchDist = pinchDist(active);
-        lastCentroid = centroid(active);
-      }
-      requestRender();
-    };
-
-    const handleHoverOnly = (local: { x: number; y: number }) => {
-      const hoveredId = engineRef.current?.handle_hover(local.x, local.y);
-      if (hoveredId !== undefined) {
-        canvas.style.cursor = hoveredId ? "pointer" : "default";
-        callbacksRef.current.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
-      }
-    };
-
-    const handleSinglePointerMove = (local: { x: number; y: number }, mode: "drag" | "pan") => {
-      if (mode === "drag") {
-        engineRef.current?.handle_node_drag_move(local.x, local.y);
-        flushWorkerMessages();
-      } else if (mode === "pan") {
-        engineRef.current?.handle_pan_move(local.x, local.y);
-        // Hover updates only while panning (or hovering without a button).
-        handleHoverOnly(local);
-      }
-    };
-
-    const handlePinchMove = (activePointers: Map<number, PointerState>) => {
-      const d = pinchDist();
-      const c = centroid();
-      const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-      // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-      // Invert via -log so a growing distance zooms in.
-      engineRef.current?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-      if (lastCentroid) {
-        engineRef.current?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-        engineRef.current?.handle_pan_move(c.x, c.y);
-        engineRef.current?.handle_pan_end();
-      }
-      lastPinchDist = d;
-      lastCentroid = c;
-    };
-
-    const onMove = (e: PointerEvent) => {
-      const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      const existing = active.get(e.pointerId);
-
-      if (!existing) {
-        // Hovering without a button pressed
-        handleHoverOnly(local);
-        requestRender();
-        return;
-      }
-
-      active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
-
-      if (active.size === 1) {
-        handleSinglePointerMove(local, singleMode);
-      } else if (active.size === 2) {
-        handlePinchMove(active);
-      }
-      requestRender();
-    };
-
-    const onUp = (e: PointerEvent) => {
-      if (canvas.hasPointerCapture(e.pointerId)) {
-        canvas.releasePointerCapture(e.pointerId);
-      }
-      active.delete(e.pointerId);
-
-      if (active.size === 0) {
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages();
-          // A "click on node" also begins with a drag-start (because the
-          // pointer-down hit-tested a node). If the pointer never moved
-          // beyond the threshold, fire onNodeClick directly here — the
-          // synthetic `click` event that follows would otherwise be
-          // swallowed by the draggingNodeRef guard inside onClick.
-          const movedThreshold = 4;
-          const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
-          const moved = downPos
-            ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
-              Math.abs(localUp.y - downPos.y) > movedThreshold
-            : false;
-          const pickedId = draggingNodeRef.current;
-          if (!moved && pickedId) {
-            callbacksRef.current.onNodeClick?.(nodeFromId(pickedId));
-            suppressNextClick = true;
-          }
-          // Clear on next tick to suppress the synthetic click that fires
-          // immediately after pointerup on the same element.
-          setTimeout(() => {
-            draggingNodeRef.current = null;
-          }, 0);
-          downPos = null;
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_end();
-        }
-        singleMode = null;
-        lastCentroid = null;
-        lastPinchDist = 0;
-      } else if (active.size === 1) {
-        // Transitioned from pinch back to single pointer — resume panning from
-        // the remaining pointer. Treat as a new pan gesture (not a drag).
-        const only = [...active.values()][0];
-        engineRef.current?.handle_pan_start(only.x, only.y);
-        singleMode = "pan";
-        // The next click would be a pinch-release → suppress.
-        suppressNextClick = true;
-      }
-      requestRender();
-    };
-
-    const onClick = (e: MouseEvent) => {
-      if (suppressNextClick) {
-        suppressNextClick = false;
-        return;
-      }
-      if (draggingNodeRef.current !== null) return; // consumed by drag
-      const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      const clickedId = engineRef.current?.handle_click(local.x, local.y);
-      if (clickedId) {
-        callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
-      } else {
-        // Clicking empty canvas clears spotlight — Cytoscape parity. Hosts
-        // that wire `onBackgroundClick` to `setSelectedNodeId(null)` get the
-        // full escape-without-keyboard behavior users expect on touch
-        // devices where there is no Esc key.
-        callbacksRef.current.onBackgroundClick?.();
-      }
-      requestRender();
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept shortcuts like Ctrl+C or Cmd+R
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-      let handled = false;
-      if (e.key === "Escape") {
-        callbacksRef.current.onBackgroundClick?.();
-        handled = true;
-      } else if (e.key === "+" || e.key === "=") {
-        engineRef.current?.zoom_in();
-        requestRender();
-        handled = true;
-      } else if (e.key === "-" || e.key === "_") {
-        engineRef.current?.zoom_out();
-        requestRender();
-        handled = true;
-      }
-
-      if (handled) {
-        e.preventDefault();
-      }
-    };
-
-    canvas.style.touchAction = "none";
-    canvas.addEventListener("pointerdown", onDown);
-    canvas.addEventListener("pointermove", onMove);
-    canvas.addEventListener("pointerup", onUp);
-    canvas.addEventListener("pointercancel", onUp);
-    canvas.addEventListener("click", onClick);
-    canvas.addEventListener("keydown", onKeyDown);
-    return () => {
-      canvas.removeEventListener("pointerdown", onDown);
-      canvas.removeEventListener("pointermove", onMove);
-      canvas.removeEventListener("pointerup", onUp);
-      canvas.removeEventListener("pointercancel", onUp);
-      canvas.removeEventListener("click", onClick);
-      canvas.removeEventListener("keydown", onKeyDown);
-    };
-  }, [nodeFromId, flushWorkerMessages, requestRender]);
+  usePointerController({
+    canvasRef,
+    engineRef,
+    callbacksRef,
+    nodeFromId,
+    flushWorkerMessages,
+    requestRender,
+  });
 
   useImperativeHandle(
     ref,
@@ -862,10 +450,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // automatically in the positions handler, so no explicit call here.
         convergedRef.current = false;
         pendingFitRef.current = true;
-        workerRef.current?.postMessage({
-          type: "set_layout",
-          layout: nextLayout,
-        });
+        workerRef.current?.postMessage({ type: "set_layout", layout: nextLayout });
       },
       setTheme: (nextTheme) => {
         engineRef.current?.set_theme(nextTheme);
@@ -886,10 +471,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       },
       subscribeFrame: (cb) => {
         // Wrap the high-level callback in the low-level one the engine expects.
-        const wrapped = (obj: {
-          positions: Float32Array;
-          vpMatrix: Float32Array;
-        }) =>
+        const wrapped = (obj: { positions: Float32Array; vpMatrix: Float32Array }) =>
           // Engine side uses WASM-memory-backed typed arrays for frame callbacks.
           // Copy into detached JS-owned buffers before handing off so downstream
           // consumers can safely retain the arrays across frames (drag/layout
@@ -909,17 +491,11 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         // Copy edgeData into a detached JS-owned buffer before handing off so
         // the overlay can safely retain it across frames without aliasing the
         // WASM linear-memory view (which may be invalidated on the next tick).
-        const wrapped = (obj: {
-          edgeData: Float32Array;
-          focusIdx: number;
-          edgeTypeKeys?: string[];
-        }) =>
+        const wrapped = (obj: { edgeData: Float32Array; focusIdx: number; edgeTypeKeys?: string[] }) =>
           cb({
             edgeData: new Float32Array(obj.edgeData),
             focusIdx: obj.focusIdx,
-            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys)
-              ? [...obj.edgeTypeKeys]
-              : [],
+            edgeTypeKeys: Array.isArray(obj.edgeTypeKeys) ? [...obj.edgeTypeKeys] : [],
           });
         const idx = engineRef.current.subscribe_edges(wrapped);
         return () => engineRef.current?.unsubscribe_edges(idx);
@@ -935,7 +511,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="region"
       aria-roledescription="graph"
-      aria-keyshortcuts="Escape -"
+      aria-keyshortcuts="Escape + -"
       tabIndex={0}
       style={{
         width: "100%",
@@ -943,7 +519,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         display: "block",
         touchAction: "none",
         outline: "none", // Prevent default browser outline
-        ...style,
+        ...style
       }}
       onFocus={(e) => {
         // Add focus-visible style polyfill for accessibility
