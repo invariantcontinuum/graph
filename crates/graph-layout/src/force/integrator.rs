@@ -108,7 +108,8 @@ fn integrate_positions(
     velocities: &mut [(f32, f32)],
     forces: &[(f32, f32)],
 ) -> f32 {
-    if velocities.len() * 2 < positions.len() || forces.len() * 2 < positions.len() {
+    let n = positions.len() / 2;
+    if velocities.len() < n || forces.len() < n {
         return 0.0;
     }
     let mut max_velocity_sq = 0.0_f32;
