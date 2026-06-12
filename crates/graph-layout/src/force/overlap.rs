@@ -63,8 +63,9 @@ fn compute_push(
             let Some(bucket) = buckets.get(&(key.0 + dx, key.1 + dy)) else {
                 continue;
             };
-            for i in 0..bucket.len() {
-                let other_idx = unsafe { *bucket.get_unchecked(i) };
+            // Use unsafe unchecked array accesses here to optimize since we know
+            // bucket contains valid indices that were pushed in resolve_overlaps.
+            for &other_idx in bucket {
                 if other_idx == self_idx {
                     continue;
                 }
