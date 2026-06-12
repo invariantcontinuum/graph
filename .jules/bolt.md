@@ -141,3 +141,6 @@ wasm-pack test --headless --chrome crates/graph-main-wasm
 
 If local ChromeDriver fails for environment reasons, do not hide it. Record the
 failure and confirm the GitHub WASM Browser Tests run passes.
+## 2026-06-04 - Defer layout bound calculation using short-circuit logical blocks
+**Learning:** In the Barnes-Hut layout approximation (`crates/graph-layout/src/force/barnes_hut.rs`), evaluating condition variables with short-circuit boolean blocks like `is_leaf || { let width = ... }` completely avoids unnecessary floating-point operations and tuple unpacking on leaf nodes.
+**Action:** When a calculation is only needed to satisfy the latter part of an OR conditional (`||`), wrap the calculation in a block to evaluate lazily and avoid needless calculations during loops.
