@@ -209,18 +209,10 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     for chunk in positions_flat.chunks_exact(2) {
         let x = chunk[0];
         let y = chunk[1];
-        if x < x_min {
-            x_min = x;
-        }
-        if y < y_min {
-            y_min = y;
-        }
-        if x > x_max {
-            x_max = x;
-        }
-        if y > y_max {
-            y_max = y;
-        }
+        x_min = x_min.min(x);
+        y_min = y_min.min(y);
+        x_max = x_max.max(x);
+        y_max = y_max.max(y);
     }
     (x_min - pad, y_min - pad, x_max + pad, y_max + pad)
 }
