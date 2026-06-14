@@ -11,3 +11,7 @@ coverage/
 # Publish workflow writes its own in CI; locally, consumers install via
 # ~/.npmrc or per-checkout `.npmrc` that stays on disk only.
 .npmrc
+
+# Local-only invariant documentation tree; agents generate this but it must
+# never be committed (see AGENTS.md).
+docs/

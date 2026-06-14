@@ -14,7 +14,7 @@ import {
 } from "@invariantcontinuum/graph/react";
 import { PRESETS, presetBySlug, type Preset } from "./presets";
 
-const PACKAGE_VERSION = "0.2.11";
+const PACKAGE_VERSION = "0.2.12";
 
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -458,7 +458,7 @@ export default function Showcase() {
         <section className="rail-panel" aria-label="Package release">
           <p className="panel-label">Released package</p>
           <strong>@invariantcontinuum/graph</strong>
-          <span>0.2.11 pinned in this site</span>
+          <span>0.2.12 pinned in this site</span>
         </section>
       </aside>
 
