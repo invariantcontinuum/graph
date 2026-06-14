@@ -16,7 +16,7 @@ import type {
   WorkerOutMessage,
   LegendSummary,
 } from "./types";
-import { usePointerController } from "./pointer/usePointerController";
+import { usePointerController } from "./usePointerController";
 export interface GraphProps {
   snapshotUrl?: string;
   wsUrl?: string;
@@ -438,21 +438,15 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
-  // Pointer + pinch-zoom handling. Replaces the old mouse-only listeners with
-  // unified pointer events that cover mouse, touch, and pen. Single pointer →
-  // node-drag OR pan OR hover (depending on hit test). Two pointers → pinch
-  // zoom + centroid pan. `touch-action: none` on the canvas prevents the
-  // browser from hijacking touch gestures (scroll, double-tap zoom).
-  usePointerController(
+  usePointerController({
     canvasRef,
     engineRef,
     callbacksRef,
     nodeFromId,
+    draggingNodeRef,
     flushWorkerMessages,
     requestRender,
-    draggingNodeRef
-  );
-
+  });
 
   useImperativeHandle(
     ref,
