@@ -206,6 +206,7 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     let mut y_max = f32::MIN;
     // ⚡ Bolt: Using chunks_exact(2) allows the compiler to elide bounds checks
     // and vectorizing operations when possible, providing a performance win.
+    // Standard f32::min/max handle NaNs efficiently and vectorize better than branches.
     for chunk in positions_flat.chunks_exact(2) {
         let x = chunk[0];
         let y = chunk[1];
