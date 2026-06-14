@@ -1,0 +1,50 @@
+npm warn exec The following package was not found and will be installed: serve@14.2.6
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 200 in 277 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/media/36966cca54120369-s.p.woff2
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/css/dec7548d9dc8832a.css
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/media/37786be940ec402b-s.p.woff2
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/media/98e207f02528a563-s.p.woff2
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/media/d3ebbfd689654d3a-s.p.woff2
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/media/db96af6b531dc71f-s.p.woff2
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 9 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 9 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 9 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 9 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 10 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 10 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/chunks/webpack-c34588a1dcdfb7a0.js
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/chunks/ed64ccb0-b7d2b5246d18ca7e.js
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/chunks/128-8143b486d44c4875.js
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/chunks/main-app-92b3209e4c9f22a7.js
+ HTTP  6/13/2026 8:29:50 PM ::1 GET /graph/_next/static/chunks/app/page-98ac49b75d16e598.js
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 6 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 6 ms
+ HTTP  6/13/2026 8:29:50 PM ::1 Returned 404 in 6 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 200 in 1 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/media/36966cca54120369-s.p.woff2
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 2 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/css/dec7548d9dc8832a.css
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/media/37786be940ec402b-s.p.woff2
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/media/98e207f02528a563-s.p.woff2
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/media/d3ebbfd689654d3a-s.p.woff2
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/media/db96af6b531dc71f-s.p.woff2
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/chunks/webpack-c34588a1dcdfb7a0.js
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 8 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 7 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 5 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/chunks/ed64ccb0-b7d2b5246d18ca7e.js
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/chunks/128-8143b486d44c4875.js
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/chunks/main-app-92b3209e4c9f22a7.js
+ HTTP  6/13/2026 8:30:07 PM ::1 GET /graph/_next/static/chunks/app/page-98ac49b75d16e598.js
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 1 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 3 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 2 ms
+ HTTP  6/13/2026 8:30:07 PM ::1 Returned 404 in 3 ms
