@@ -130,9 +130,7 @@ fn integrate_positions(
         vel.1 = (vel.1 + fy) * DAMPING;
 
         let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
-        if v_sq > max_velocity_sq {
-            max_velocity_sq = v_sq;
-        }
+        max_velocity_sq = max_velocity_sq.max(v_sq);
 
         pos[0] += vel.0;
         pos[1] += vel.1;
