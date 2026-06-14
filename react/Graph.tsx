@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+
   useState,
   useImperativeHandle,
   forwardRef,
@@ -541,7 +542,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       role="region"
       aria-roledescription="graph"
-      aria-keyshortcuts="Escape -"
+      aria-keyshortcuts="Escape Plus Minus"
       tabIndex={0}
       style={{
         width: "100%",
