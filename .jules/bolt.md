@@ -147,3 +147,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-12 - [Use f32::min/max for faster bounding box calculations]
 **Learning:** When finding the min/max of a flat array of `f32` coordinates (e.g., calculating bounding boxes), using explicit conditional branches (e.g., `if x < x_min`) is significantly slower because standard min/max implementations handle NaN checks efficiently and vectorize better.
 **Action:** Use `.chunks_exact(2)` with standard `f32::min` / `f32::max` when iterating flat arrays of coordinates in hot paths to maximize performance.
+## 2026-06-16 - [Cache theme conversions to prevent GC churn]
+**Learning:** In the React bridge, converting deep `GraphTheme` objects to the engine format on every render (or when `useMemo` drops the identity) causes unnecessary allocation and garbage collection.
+**Action:** Use a module-level cache for pure configuration conversion functions (e.g. `graphThemeToEngineJson`) to memoize the output based on the input object reference, saving CPU cycles and memory.
