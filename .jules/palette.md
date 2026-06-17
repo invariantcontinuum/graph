@@ -110,3 +110,7 @@ Browser smoke must cover:
 ## 2026-05-30 - Prevent ARIA keyshortcuts parsing ambiguity
 **Learning:** Screen readers often use space to separate distinct keyboard shortcuts and `+` to denote simultaneous key combinations (e.g., `Shift+A`). When advertising a literal `+` or space as a keyboard shortcut, using the literal characters in `aria-keyshortcuts` creates parsing ambiguity and fails to read correctly for users. The string 'Plus' should be used instead of '+' in `aria-keyshortcuts`.
 **Action:** Used the text 'Plus' when adding `aria-keyshortcuts` to the zoom-in controls.
+
+## 2026-06-01 - Provide Context-Aware Empty States
+**Learning:** Reusing generic default prompt copy in empty state UI can cause conflicting instructions. In the ConnectionList component, if a node with no connections is selected, it would still show "Select a node to view connections" instead of indicating there are no connections.
+**Action:** Use context-aware logic to pass specific empty-state messages based on the current selection state (e.g. passing "No connected edges" if a node is already active).

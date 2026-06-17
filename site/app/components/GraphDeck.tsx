@@ -42,6 +42,7 @@ export function GraphDeck({
             value={layout}
             options={["force", "hierarchical", "grid"]}
             onChange={onLayoutChange}
+            format={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
           />
           <SegmentedControl<ThemeMode>
             label="Theme"
