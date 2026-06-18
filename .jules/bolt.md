@@ -147,3 +147,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-12 - [Use f32::min/max for faster bounding box calculations]
 **Learning:** When finding the min/max of a flat array of `f32` coordinates (e.g., calculating bounding boxes), using explicit conditional branches (e.g., `if x < x_min`) is significantly slower because standard min/max implementations handle NaN checks efficiently and vectorize better.
 **Action:** Use `.chunks_exact(2)` with standard `f32::min` / `f32::max` when iterating flat arrays of coordinates in hot paths to maximize performance.
+## 2026-06-18 - [Reuse vector allocation for pinned nodes during integration]
+**Learning:** In the Barnes-Hut integrator, `snapshot_pinned` allocated a new vector on every layout tick. By hoisting this vector to the layout state, we avoid repeated allocations.
+**Action:** Reuse a `Vec<(usize, f32, f32)>` inside the `ForceLayout` struct and pass it mutably into `integrate_step` across ticks.

@@ -89,3 +89,141 @@ export function handlePinchMove(
   }
   return { d, c };
 }
+
+export function handlePointerDown(
+  e: PointerEvent,
+  canvas: HTMLCanvasElement,
+  active: Map<number, PointerState>,
+  engine: any,
+  draggingNodeRef: React.MutableRefObject<string | null>,
+  flushWorkerMessages: () => void,
+) {
+  canvas.setPointerCapture(e.pointerId);
+  const local = toLocalPointer(e.clientX, e.clientY, canvas);
+  active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
+
+  let newSingleMode: "drag" | "pan" | null = null;
+  let newDownPos: { x: number; y: number } | null = null;
+  let newPinchDist = 0;
+  let newCentroid: { x: number; y: number } | null = null;
+  let suppressNextClick = false;
+
+  if (active.size === 1) {
+    // Hit-test: if the pointer lands on a node, start a node-drag;
+    // otherwise start a camera pan.
+    const nodeId = engine?.handle_node_drag_start(local.x, local.y);
+    if (nodeId) {
+      draggingNodeRef.current = nodeId;
+      newSingleMode = "drag";
+      newDownPos = { x: local.x, y: local.y };
+      flushWorkerMessages();
+    } else {
+      engine?.handle_pan_start(local.x, local.y);
+      newSingleMode = "pan";
+    }
+  } else if (active.size === 2) {
+    // Second pointer joined — end any single-pointer gesture and begin pinch.
+    const currentMode = draggingNodeRef.current ? "drag" : "pan"; // Approximation of singleMode
+    if (currentMode === "drag" && draggingNodeRef.current) {
+      engine?.handle_node_drag_end();
+      flushWorkerMessages();
+      draggingNodeRef.current = null;
+      suppressNextClick = true;
+    } else {
+      engine?.handle_pan_end();
+    }
+    newPinchDist = pinchDist(active);
+    newCentroid = centroid(active);
+  }
+
+  return { newSingleMode, newDownPos, newPinchDist, newCentroid, suppressNextClick };
+}
+
+export function handlePointerUp(
+  e: PointerEvent,
+  canvas: HTMLCanvasElement,
+  active: Map<number, PointerState>,
+  engine: any,
+  singleMode: "drag" | "pan" | null,
+  downPos: { x: number; y: number } | null,
+  draggingNodeRef: React.MutableRefObject<string | null>,
+  callbacks: {
+    onNodeClick?: (node: any) => void;
+  },
+  nodeFromId: (id: string) => any,
+  flushWorkerMessages: () => void,
+) {
+  if (canvas.hasPointerCapture(e.pointerId)) {
+    canvas.releasePointerCapture(e.pointerId);
+  }
+  active.delete(e.pointerId);
+
+  let newSingleMode = singleMode;
+  let newSuppressNextClick = false;
+
+  if (active.size === 0) {
+    if (singleMode === "drag") {
+      engine?.handle_node_drag_end();
+      flushWorkerMessages();
+      // A "click on node" also begins with a drag-start (because the
+      // pointer-down hit-tested a node). If the pointer never moved
+      // beyond the threshold, fire onNodeClick directly here — the
+      // synthetic `click` event that follows would otherwise be
+      // swallowed by the draggingNodeRef guard inside onClick.
+      const movedThreshold = 4;
+      const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
+      const moved = downPos
+        ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
+          Math.abs(localUp.y - downPos.y) > movedThreshold
+        : false;
+      const pickedId = draggingNodeRef.current;
+      if (!moved && pickedId) {
+        callbacks.onNodeClick?.(nodeFromId(pickedId));
+        newSuppressNextClick = true;
+      }
+      // Clear on next tick to suppress the synthetic click that fires
+      // immediately after pointerup on the same element.
+      setTimeout(() => {
+        draggingNodeRef.current = null;
+      }, 0);
+    } else if (singleMode === "pan") {
+      engine?.handle_pan_end();
+    }
+    newSingleMode = null;
+  } else if (active.size === 1) {
+    // Transitioned from pinch back to single pointer — resume panning from
+    // the remaining pointer. Treat as a new pan gesture (not a drag).
+    const only = [...active.values()][0];
+    engine?.handle_pan_start(only.x, only.y);
+    newSingleMode = "pan";
+    // The next click would be a pinch-release → suppress.
+    newSuppressNextClick = true;
+  }
+
+  return { newSingleMode, newSuppressNextClick };
+}
+
+export function handleClick(
+  e: MouseEvent,
+  canvas: HTMLCanvasElement,
+  engine: any,
+  draggingNodeRef: React.MutableRefObject<string | null>,
+  callbacks: {
+    onNodeClick?: (node: any) => void;
+    onBackgroundClick?: () => void;
+  },
+  nodeFromId: (id: string) => any,
+) {
+  if (draggingNodeRef.current !== null) return; // consumed by drag
+  const local = toLocalPointer(e.clientX, e.clientY, canvas);
+  const clickedId = engine?.handle_click(local.x, local.y);
+  if (clickedId) {
+    callbacks.onNodeClick?.(nodeFromId(clickedId));
+  } else {
+    // Clicking empty canvas clears spotlight — Cytoscape parity. Hosts
+    // that wire `onBackgroundClick` to `setSelectedNodeId(null)` get the
+    // full escape-without-keyboard behavior users expect on touch
+    // devices where there is no Esc key.
+    callbacks.onBackgroundClick?.();
+  }
+}

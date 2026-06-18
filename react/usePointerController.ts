@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
 import {
   toLocalPointer,
-  centroid,
-  pinchDist,
   handleHoverOnly,
   handleSinglePointerMove,
   handlePinchMove,
+  handlePointerDown,
+  handlePointerUp,
+  handleClick,
   PointerState,
 } from "./pointerUtils";
 
@@ -50,41 +51,15 @@ export function usePointerController({
     let downPos: { x: number; y: number } | null = null;
 
     const onDown = (e: PointerEvent) => {
-      canvas.setPointerCapture(e.pointerId);
-      const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
-
-      if (active.size === 1) {
-        // Hit-test: if the pointer lands on a node, start a node-drag;
-        // otherwise start a camera pan.
-        const nodeId = engineRef.current?.handle_node_drag_start(
-          local.x,
-          local.y,
-        );
-        if (nodeId) {
-          draggingNodeRef.current = nodeId;
-          singleMode = "drag";
-          downPos = { x: local.x, y: local.y };
-          flushWorkerMessages();
-        } else {
-          engineRef.current?.handle_pan_start(local.x, local.y);
-          singleMode = "pan";
-          downPos = null;
-        }
-      } else if (active.size === 2) {
-        // Second pointer joined — end any single-pointer gesture and begin pinch.
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages();
-          draggingNodeRef.current = null;
-          suppressNextClick = true;
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_end();
-        }
+      const res = handlePointerDown(e, canvas, active, engineRef.current, draggingNodeRef, flushWorkerMessages);
+      if (res.newSingleMode !== null) singleMode = res.newSingleMode;
+      if (res.newDownPos !== null || singleMode === "pan") downPos = res.newDownPos;
+      if (active.size === 2) {
         singleMode = null;
-        lastPinchDist = pinchDist(active);
-        lastCentroid = centroid(active);
+        lastPinchDist = res.newPinchDist;
+        lastCentroid = res.newCentroid;
       }
+      if (res.suppressNextClick) suppressNextClick = true;
       requestRender();
     };
 
@@ -112,51 +87,24 @@ export function usePointerController({
     };
 
     const onUp = (e: PointerEvent) => {
-      if (canvas.hasPointerCapture(e.pointerId)) {
-        canvas.releasePointerCapture(e.pointerId);
-      }
-      active.delete(e.pointerId);
-
+      const res = handlePointerUp(
+        e,
+        canvas,
+        active,
+        engineRef.current,
+        singleMode,
+        downPos,
+        draggingNodeRef,
+        callbacksRef.current,
+        nodeFromId,
+        flushWorkerMessages
+      );
+      singleMode = res.newSingleMode;
+      if (res.newSuppressNextClick) suppressNextClick = true;
       if (active.size === 0) {
-        if (singleMode === "drag") {
-          engineRef.current?.handle_node_drag_end();
-          flushWorkerMessages();
-          // A "click on node" also begins with a drag-start (because the
-          // pointer-down hit-tested a node). If the pointer never moved
-          // beyond the threshold, fire onNodeClick directly here — the
-          // synthetic `click` event that follows would otherwise be
-          // swallowed by the draggingNodeRef guard inside onClick.
-          const movedThreshold = 4;
-          const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
-          const moved = downPos
-            ? Math.abs(localUp.x - downPos.x) > movedThreshold ||
-              Math.abs(localUp.y - downPos.y) > movedThreshold
-            : false;
-          const pickedId = draggingNodeRef.current;
-          if (!moved && pickedId) {
-            callbacksRef.current.onNodeClick?.(nodeFromId(pickedId));
-            suppressNextClick = true;
-          }
-          // Clear on next tick to suppress the synthetic click that fires
-          // immediately after pointerup on the same element.
-          setTimeout(() => {
-            draggingNodeRef.current = null;
-          }, 0);
-          downPos = null;
-        } else if (singleMode === "pan") {
-          engineRef.current?.handle_pan_end();
-        }
-        singleMode = null;
         lastCentroid = null;
         lastPinchDist = 0;
-      } else if (active.size === 1) {
-        // Transitioned from pinch back to single pointer — resume panning from
-        // the remaining pointer. Treat as a new pan gesture (not a drag).
-        const only = [...active.values()][0];
-        engineRef.current?.handle_pan_start(only.x, only.y);
-        singleMode = "pan";
-        // The next click would be a pinch-release → suppress.
-        suppressNextClick = true;
+        downPos = null;
       }
       requestRender();
     };
@@ -166,18 +114,7 @@ export function usePointerController({
         suppressNextClick = false;
         return;
       }
-      if (draggingNodeRef.current !== null) return; // consumed by drag
-      const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      const clickedId = engineRef.current?.handle_click(local.x, local.y);
-      if (clickedId) {
-        callbacksRef.current.onNodeClick?.(nodeFromId(clickedId));
-      } else {
-        // Clicking empty canvas clears spotlight — Cytoscape parity. Hosts
-        // that wire `onBackgroundClick` to `setSelectedNodeId(null)` get the
-        // full escape-without-keyboard behavior users expect on touch
-        // devices where there is no Esc key.
-        callbacksRef.current.onBackgroundClick?.();
-      }
+      handleClick(e, canvas, engineRef.current, draggingNodeRef, callbacksRef.current, nodeFromId);
       requestRender();
     };
 
