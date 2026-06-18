@@ -122,7 +122,7 @@ export function InspectorRail({
       </section>
 
       <section className="inspector-panel controls-panel">
-        <button type="button" title="Fit all nodes in view" onClick={onFitAll}>
+        <button type="button" title="Fit all nodes in view (F)" aria-keyshortcuts="F" onClick={onFitAll}>
           Fit all
         </button>
         <button type="button" title="Add a new probe node" onClick={onAddProbe}>
