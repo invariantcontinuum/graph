@@ -89,3 +89,132 @@ export function handlePinchMove(
   }
   return { d, c };
 }
+
+
+export interface GestureState {
+  singleMode: "drag" | "pan" | null;
+  suppressNextClick: boolean;
+  lastPinchDist: number;
+  lastCentroid: { x: number; y: number } | null;
+  downPos: { x: number; y: number } | null;
+}
+
+
+export function handlePointerDown(
+  e: PointerEvent,
+  canvas: HTMLCanvasElement,
+  active: Map<number, PointerState>,
+  engine: any,
+  draggingNodeRef: { current: string | null },
+  state: GestureState,
+  flushWorkerMessages: () => void,
+) {
+  canvas.setPointerCapture(e.pointerId);
+  const local = toLocalPointer(e.clientX, e.clientY, canvas);
+  active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
+
+  if (active.size === 1) {
+    const nodeId = engine?.handle_node_drag_start(local.x, local.y);
+    if (nodeId) {
+      draggingNodeRef.current = nodeId;
+      state.singleMode = "drag";
+      state.downPos = { x: local.x, y: local.y };
+      flushWorkerMessages();
+    } else {
+      engine?.handle_pan_start(local.x, local.y);
+      state.singleMode = "pan";
+      state.downPos = null;
+    }
+  } else if (active.size === 2) {
+    if (state.singleMode === "drag") {
+      engine?.handle_node_drag_end();
+      flushWorkerMessages();
+      draggingNodeRef.current = null;
+      state.suppressNextClick = true;
+    } else if (state.singleMode === "pan") {
+      engine?.handle_pan_end();
+    }
+    state.singleMode = null;
+    state.lastPinchDist = pinchDist(active);
+    state.lastCentroid = centroid(active);
+  }
+}
+
+
+export function handlePointerUp(
+  e: PointerEvent,
+  canvas: HTMLCanvasElement,
+  active: Map<number, PointerState>,
+  engine: any,
+  draggingNodeRef: { current: string | null },
+  state: GestureState,
+  callbacks: {
+    onNodeClick?: (node: any) => void;
+  },
+  nodeFromId: (id: string) => any,
+  flushWorkerMessages: () => void,
+) {
+  if (canvas.hasPointerCapture(e.pointerId)) {
+    canvas.releasePointerCapture(e.pointerId);
+  }
+  active.delete(e.pointerId);
+
+  if (active.size === 0) {
+    if (state.singleMode === "drag") {
+      engine?.handle_node_drag_end();
+      flushWorkerMessages();
+      const movedThreshold = 4;
+      const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
+      const moved = state.downPos
+        ? Math.abs(localUp.x - state.downPos.x) > movedThreshold ||
+          Math.abs(localUp.y - state.downPos.y) > movedThreshold
+        : false;
+      const pickedId = draggingNodeRef.current;
+      if (!moved && pickedId) {
+        callbacks.onNodeClick?.(nodeFromId(pickedId));
+        state.suppressNextClick = true;
+      }
+      setTimeout(() => {
+        draggingNodeRef.current = null;
+      }, 0);
+      state.downPos = null;
+    } else if (state.singleMode === "pan") {
+      engine?.handle_pan_end();
+    }
+    state.singleMode = null;
+    state.lastCentroid = null;
+    state.lastPinchDist = 0;
+  } else if (active.size === 1) {
+    const only = [...active.values()][0];
+    engine?.handle_pan_start(only.x, only.y);
+    state.singleMode = "pan";
+    state.suppressNextClick = true;
+  }
+}
+
+
+export function handleClick(
+  e: MouseEvent,
+  canvas: HTMLCanvasElement,
+  engine: any,
+  draggingNodeRef: { current: string | null },
+  state: GestureState,
+  callbacks: {
+    onNodeClick?: (node: any) => void;
+    onBackgroundClick?: () => void;
+  },
+  nodeFromId: (id: string) => any,
+) {
+  if (state.suppressNextClick) {
+    state.suppressNextClick = false;
+    return;
+  }
+  if (draggingNodeRef.current !== null) return;
+  const local = toLocalPointer(e.clientX, e.clientY, canvas);
+  const clickedId = engine?.handle_click(local.x, local.y);
+  if (clickedId) {
+    callbacks.onNodeClick?.(nodeFromId(clickedId));
+  } else {
+    callbacks.onBackgroundClick?.();
+  }
+}
