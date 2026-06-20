@@ -187,13 +187,10 @@ impl QuadNode {
         let (x_min, y_min, x_max, y_max) = self.bounds;
         let mx = (x_min + x_max) * 0.5;
         let my = (y_min + y_max) * 0.5;
-        if x < mx {
-            if y < my { 0 } else { 2 }
-        } else if y < my {
-            1
-        } else {
-            3
-        }
+        // ⚡ Bolt: Unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
+        // Replacing nested `if/else` blocks with branchless bitwise operations yields
+        // measurable execution speedups for unpredictable coordinate classification.
+        ((x >= mx) as usize) | (((y >= my) as usize) << 1)
     }
 }
 
