@@ -110,3 +110,6 @@ Browser smoke must cover:
 ## 2026-05-30 - Prevent ARIA keyshortcuts parsing ambiguity
 **Learning:** Screen readers often use space to separate distinct keyboard shortcuts and `+` to denote simultaneous key combinations (e.g., `Shift+A`). When advertising a literal `+` or space as a keyboard shortcut, using the literal characters in `aria-keyshortcuts` creates parsing ambiguity and fails to read correctly for users. The string 'Plus' should be used instead of '+' in `aria-keyshortcuts`.
 **Action:** Used the text 'Plus' when adding `aria-keyshortcuts` to the zoom-in controls.
+## 2024-06-20 - Screen readers ignore aria-label on generic divs without roles
+**Learning:** Found an accessibility issue pattern in `GraphDeck.tsx` (`mode-cluster`, `metrics-strip`) and `TypeCloud.tsx` where generic `<div>` elements were given an `aria-label` but lacked an ARIA role. Screen readers typically ignore `aria-label` on non-semantic container elements unless paired with a role, making those labels invisible to assistive technologies.
+**Action:** Always pair `aria-label` with a semantic structural role (e.g., `role="group"` or `role="region"`) when applying labels to `<div>` or `<span>` containers that group related UI elements.

@@ -19,6 +19,7 @@ export function TypeCloud({
   return (
     <div
       className={`type-cloud ${variant === "muted" ? "muted-cloud" : ""}`}
+      role="group"
       aria-label={label}
     >
       {visible.map((item) => (
