@@ -109,6 +109,7 @@ export function InspectorRail({
           selectedId={selectedNode?.id ?? null}
           nodes={snapshot.nodes}
           onSelect={onSelectNeighbor}
+          emptyCopy={selectedNode ? "No connected edges." : undefined}
         />
       </section>
 

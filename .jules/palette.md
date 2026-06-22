@@ -110,3 +110,11 @@ Browser smoke must cover:
 ## 2026-05-30 - Prevent ARIA keyshortcuts parsing ambiguity
 **Learning:** Screen readers often use space to separate distinct keyboard shortcuts and `+` to denote simultaneous key combinations (e.g., `Shift+A`). When advertising a literal `+` or space as a keyboard shortcut, using the literal characters in `aria-keyshortcuts` creates parsing ambiguity and fails to read correctly for users. The string 'Plus' should be used instead of '+' in `aria-keyshortcuts`.
 **Action:** Used the text 'Plus' when adding `aria-keyshortcuts` to the zoom-in controls.
+
+## 2026-05-31 - Semantic Roles for aria-label on generic containers
+**Learning:** Adding `aria-label` to generic non-semantic elements like `<div>` or `<span>` will be ignored by many screen readers unless paired with an appropriate ARIA role. Using `role="group"` gives the container semantic meaning, allowing screen readers to reliably announce the group's label when a user navigates into it.
+**Action:** Added `role="group"` to the `mode-cluster`, `metrics-strip` in `GraphDeck.tsx` and `type-cloud` in `TypeCloud.tsx` which had `aria-label`s on generic `div` containers.
+
+## 2026-05-31 - Contextual Empty States in Shared Components
+**Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
+**Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
