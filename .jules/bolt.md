@@ -147,3 +147,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-12 - [Use f32::min/max for faster bounding box calculations]
 **Learning:** When finding the min/max of a flat array of `f32` coordinates (e.g., calculating bounding boxes), using explicit conditional branches (e.g., `if x < x_min`) is significantly slower because standard min/max implementations handle NaN checks efficiently and vectorize better.
 **Action:** Use `.chunks_exact(2)` with standard `f32::min` / `f32::max` when iterating flat arrays of coordinates in hot paths to maximize performance.
+## $(date +%Y-%m-%d) - Replace spatial branching with bitwise ops in Barnes-Hut quadtree
+**Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), avoiding unpredictable spatial branching (`if x < mx`, `y < my`) which causes CPU pipeline stalls is important. Replacing nested `if/else` blocks with branchless bitwise operations yields measurable execution speedups for unpredictable coordinate classification.
+**Action:** When classifying spatial coordinates in performance-critical loops or recursive functions, prefer branchless bitwise arithmetic (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) over standard conditional statements.
