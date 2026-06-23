@@ -129,3 +129,7 @@ Browser smoke must cover:
 ## 2026-06-01 - Provide Context-Aware Empty States
 **Learning:** Reusing generic default prompt copy in empty state UI can cause conflicting instructions. In the ConnectionList component, if a node with no connections is selected, it would still show "Select a node to view connections" instead of indicating there are no connections.
 **Action:** Use context-aware logic to pass specific empty-state messages based on the current selection state (e.g. passing "No connected edges" if a node is already active).
+
+## 2026-06-21 - [Ensure ARIA labels are read on non-semantic container elements]
+**Learning:** Screen readers typically ignore `aria-label` attributes on non-semantic container elements (like `<div>` or `<span>`) unless they are assigned an explicit ARIA role that supports naming.
+**Action:** Always pair `aria-label` with an appropriate semantic role (e.g., `role="group"`, `role="region"`, or `role="navigation"`) when applying labels to structural `<div>` or `<span>` containers that group related UI elements.
