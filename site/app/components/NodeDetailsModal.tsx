@@ -144,12 +144,13 @@ export function NodeDetailsModal({
         </section>
 
         <div className="modal-actions">
-          <button type="button" title="Frame selected node" onClick={onFrameSelected}>
+          <button type="button" title="Frame selected node" aria-label="Frame selected node" onClick={onFrameSelected}>
             Frame
           </button>
           <button
             type="button"
             title="Center selected node"
+            aria-label="Center selected node"
             onClick={() => graphRef.current?.panToNode(node.id)}
           >
             Center
@@ -157,6 +158,7 @@ export function NodeDetailsModal({
           <button
             type="button"
             title="Close (Escape)"
+            aria-label="Close (Escape)"
             aria-keyshortcuts="Escape"
             onClick={onClose}
           >
