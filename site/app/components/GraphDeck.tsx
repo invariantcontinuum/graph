@@ -29,12 +29,11 @@ export function GraphDeck({
   onThemeModeChange,
 }: GraphDeckProps) {
   return (
-    <section className="graph-deck" aria-label="Interactive graph showcase">
+    <section className="graph-deck" aria-label="Graph viewer">
       <div className="deck-head">
         <div className="deck-intro">
           <p className="scenario-eyebrow">{preset.subtitle}</p>
           <h1>{preset.title}</h1>
-          <p>{preset.essay}</p>
         </div>
         <div className="mode-cluster" role="group" aria-label="Graph display controls">
           <SegmentedControl<LayoutType>
@@ -56,21 +55,25 @@ export function GraphDeck({
 
       <div className="metrics-strip" role="group" aria-label="Graph metrics">
         <MetricCard
-          label="nodes"
+          label="Nodes"
           value={stats?.nodeCount ?? snapshot.nodes.length}
-          title="Total nodes in the current graph"
+          title="Total nodes"
         />
         <MetricCard
-          label="edges"
+          label="Edges"
           value={stats?.edgeCount ?? snapshot.edges.length}
-          title="Total edges in the current graph"
+          title="Total edges"
         />
         <MetricCard
-          label="types"
+          label="Types"
           value={nodeTypeCount}
-          title="Distinct node types"
+          title="Node types"
         />
-        <MetricCard label="density" value={graphDensity} title="Edges per node (graph density)" />
+        <MetricCard
+          label="Density"
+          value={graphDensity}
+          title="Edges per node"
+        />
       </div>
 
       {children}

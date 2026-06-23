@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { createRequire } from "node:module";
+
+const req = createRequire(import.meta.url);
+// Read the installed package version at build time so NEXT_PUBLIC_GRAPH_VERSION
+// is always accurate without manual updates.
+const graphPkg = req("../package.json") as { version: string };
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_GRAPH_VERSION: graphPkg.version,
+  },
   output: 'export',
   outputFileTracingRoot: path.join(process.cwd(), ".."),
   basePath: '/graph',

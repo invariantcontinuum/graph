@@ -19,7 +19,8 @@ import { NodeDetailsModal } from "./components/NodeDetailsModal";
 import { ScenarioRail } from "./components/ScenarioRail";
 import { Topbar } from "./components/Topbar";
 
-const PACKAGE_VERSION = "0.2.13";
+// Injected at build time by next.config.ts from the installed package manifest.
+const PACKAGE_VERSION = process.env.NEXT_PUBLIC_GRAPH_VERSION ?? "0.2.13";
 
 function withMeta(snapshot: GraphSnapshot): GraphSnapshot {
   return {
@@ -338,10 +339,13 @@ export default function Showcase() {
   }, []);
 
   const handlePositionsReady = useCallback(() => {
+    setIsLoading(false);
     refit(56);
   }, [refit]);
 
   const handleGraphReady = useCallback(() => {
+    // onReady only fires on initial WASM mount; loading is cleared by onPositionsReady
+    // so it also fires after every snapshot swap.
     setIsLoading(false);
   }, []);
 
