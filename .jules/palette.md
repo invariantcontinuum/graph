@@ -133,3 +133,11 @@ Browser smoke must cover:
 ## 2026-06-21 - [Ensure ARIA labels are read on non-semantic container elements]
 **Learning:** Screen readers typically ignore `aria-label` attributes on non-semantic container elements (like `<div>` or `<span>`) unless they are assigned an explicit ARIA role that supports naming.
 **Action:** Always pair `aria-label` with an appropriate semantic role (e.g., `role="group"`, `role="region"`, or `role="navigation"`) when applying labels to structural `<div>` or `<span>` containers that group related UI elements.
+
+## 2026-05-31 - Semantic Roles for aria-label on generic containers
+**Learning:** Adding `aria-label` to generic non-semantic elements like `<div>` or `<span>` will be ignored by many screen readers unless paired with an appropriate ARIA role. Using `role="group"` gives the container semantic meaning, allowing screen readers to reliably announce the group's label when a user navigates into it.
+**Action:** Added `role="group"` to the `mode-cluster`, `metrics-strip` in `GraphDeck.tsx` and `type-cloud` in `TypeCloud.tsx` which had `aria-label`s on generic `div` containers.
+
+## 2026-05-31 - Contextual Empty States in Shared Components
+**Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
+**Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
