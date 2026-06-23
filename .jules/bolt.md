@@ -154,3 +154,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-17 - [Memoize theme configuration conversion to prevent useMemo identity drops]
 **Learning:** In the React bridge, creating a new theme conversion object on every render invalidates identity in hooks that depend on it, resulting in excessive churn and deep re-computation. By using a module-level WeakMap cache, the conversion result is preserved across hook evaluations for identical `GraphTheme` instances.
 **Action:** When extracting functions for configuring dependencies, employ a module-level `WeakMap` cache matching arguments to converted results so they safely endure the React render cycle without garbage collection.
+
+## 2026-06-18 - [Reuse vector allocation for pinned nodes during integration]
+**Learning:** In the Barnes-Hut integrator, `snapshot_pinned` allocated a new vector on every layout tick. By hoisting this vector to the layout state, we avoid repeated allocations.
+**Action:** Reuse a `Vec<(usize, f32, f32)>` inside the `ForceLayout` struct and pass it mutably into `integrate_step` across ticks.

@@ -30,6 +30,7 @@ pub struct ForceLayout {
     positions_flat: Vec<f32>,
     forces_vec: Vec<(f32, f32)>,
     overlap_buckets: HashMap<(i32, i32), Vec<usize>>,
+    saved_pinned: Vec<(usize, f32, f32)>,
 
     edge_count_cache: usize,
     converged: bool,
@@ -47,6 +48,7 @@ impl ForceLayout {
             positions_flat: Vec::new(),
             forces_vec: Vec::new(),
             overlap_buckets: HashMap::new(),
+            saved_pinned: Vec::new(),
 
             edge_count_cache: 0,
             converged: false,
@@ -116,6 +118,7 @@ impl ForceLayout {
             &mut self.velocities_vec,
             &mut self.forces_vec,
             pinned,
+            &mut self.saved_pinned,
         );
         max_velocity_sq >= MIN_VELOCITY * MIN_VELOCITY
     }
@@ -196,6 +199,7 @@ impl LayoutEngine for ForceLayout {
             &mut self.velocities_vec,
             &mut self.forces_vec,
             &empty_pinned,
+            &mut self.saved_pinned,
         );
         unflatten_positions(&self.positions_flat, &mut self.positions_vec);
 
@@ -332,7 +336,18 @@ mod tests {
         let mut pinned = HashSet::new();
         pinned.insert(0);
 
-        layout.step_with_pins(&mut positions, &edges, &pinned);
+        layout.velocities_vec.resize(2, (0.0, 0.0));
+        layout.forces_vec.resize(2, (0.0, 0.0));
+
+        let mut saved_pinned = Vec::new();
+        let _ = integrate_step(
+            &mut positions,
+            &edges,
+            &mut layout.velocities_vec,
+            &mut layout.forces_vec,
+            &pinned,
+            &mut saved_pinned,
+        );
 
         assert!(
             (positions[0]).abs() < 1e-4,
