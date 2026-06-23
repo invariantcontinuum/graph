@@ -126,7 +126,7 @@ export function InspectorRail({
       </section>
 
       <section className="inspector-panel controls-panel" aria-label="Graph controls">
-        <button type="button" title="Fit all nodes in view" aria-label="Fit all nodes in view" onClick={onFitAll}>
+        <button type="button" title="Fit all nodes in view (F)" aria-label="Fit all nodes in view" aria-keyshortcuts="F" onClick={onFitAll}>
           Fit all
         </button>
         <button type="button" title="Add a new probe node" aria-label="Add probe node" onClick={onAddProbe}>
