@@ -166,3 +166,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-20 - [Use branchless bitwise operations for quadtree quadrant classification]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
+
+## 2026-06-21 - [Branchless Quadtree Initialization]
+**Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
+**Action:** Replace nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) to avoid stalls and yield measurable execution speedups.
