@@ -37,7 +37,7 @@ export function InspectorRail({
 }: InspectorRailProps) {
   return (
     <aside className="insight-rail" aria-label="Graph inspector">
-      <section className="inspector-panel selected-panel">
+      <section className="inspector-panel selected-panel" aria-label="Selected node details">
         <div className="panel-topline">
           <p>Selection</p>
           <strong title={selectedNode?.id ?? undefined}>
@@ -66,12 +66,13 @@ export function InspectorRail({
               </div>
             </dl>
             <div className="action-grid">
-              <button type="button" title="Frame selected node" onClick={onFrameSelected}>
+              <button type="button" title="Frame selected node" aria-label="Frame selected node" onClick={onFrameSelected}>
                 Frame
               </button>
               <button
                 type="button"
                 title="Center selected node"
+                aria-label="Center selected node"
                 onClick={() => graphRef.current?.panToNode(selectedNode.id)}
               >
                 Center
@@ -79,6 +80,7 @@ export function InspectorRail({
               <button
                 type="button"
                 title="Clear selection (Escape)"
+                aria-label="Clear selection (Escape)"
                 aria-keyshortcuts="Escape"
                 onClick={onClearSelection}
               >
@@ -87,6 +89,7 @@ export function InspectorRail({
               <button
                 type="button"
                 title="Remove selected node"
+                aria-label="Remove selected node"
                 className="danger-action"
                 onClick={onRemoveSelected}
               >
@@ -99,7 +102,7 @@ export function InspectorRail({
         )}
       </section>
 
-      <section className="inspector-panel">
+      <section className="inspector-panel" aria-label="Connected edges">
         <div className="panel-topline">
           <p>Connections</p>
           <strong>{selectedEdgeCount}</strong>
@@ -113,7 +116,7 @@ export function InspectorRail({
         />
       </section>
 
-      <section className="inspector-panel">
+      <section className="inspector-panel" aria-label="Graph composition">
         <div className="panel-topline">
           <p>Composition</p>
           <strong>{legend?.edge_types.length ?? edgeTypes.length} edge types</strong>
@@ -122,11 +125,11 @@ export function InspectorRail({
         <TypeCloud items={edgeTypes} variant="muted" maxItems={8} label="Edge type counts" />
       </section>
 
-      <section className="inspector-panel controls-panel">
-        <button type="button" title="Fit all nodes in view" onClick={onFitAll}>
+      <section className="inspector-panel controls-panel" aria-label="Graph controls">
+        <button type="button" title="Fit all nodes in view (F)" aria-label="Fit all nodes in view" aria-keyshortcuts="F" onClick={onFitAll}>
           Fit all
         </button>
-        <button type="button" title="Add a new probe node" onClick={onAddProbe}>
+        <button type="button" title="Add a new probe node" aria-label="Add probe node" onClick={onAddProbe}>
           Add probe
         </button>
       </section>
