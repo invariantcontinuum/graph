@@ -1,16 +1,14 @@
 import React, { useEffect } from "react";
 import {
   toLocalPointer,
-  centroid,
-  pinchDist,
   handleHoverOnly,
   handleSinglePointerMove,
   handlePinchMove,
   handlePointerDown,
   handlePointerUp,
   handleClick,
-  PointerState,
-  GestureState,
+  handleKeyDown,
+  PointerControllerState,
 } from "./pointerUtils";
 
 interface UsePointerControllerProps {
@@ -40,8 +38,8 @@ export function usePointerController({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const active: Map<number, PointerState> = new Map();
-    const state: GestureState = {
+    const state: PointerControllerState = {
+      active: new Map(),
       singleMode: null,
       suppressNextClick: false,
       lastPinchDist: 0,
@@ -52,11 +50,10 @@ export function usePointerController({
     const onDown = (e: PointerEvent) => {
       handlePointerDown(
         e,
+        state,
         canvas,
-        active,
         engineRef.current,
         draggingNodeRef,
-        state,
         flushWorkerMessages,
       );
       requestRender();
@@ -64,20 +61,44 @@ export function usePointerController({
 
     const onMove = (e: PointerEvent) => {
       const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      const existing = active.get(e.pointerId);
+      const existing = state.active.get(e.pointerId);
 
       if (!existing) {
-        handleHoverOnly(local, engineRef.current, canvas, callbacksRef.current, nodeFromId);
+        // Hovering without a button pressed
+        handleHoverOnly(
+          local,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+        );
         requestRender();
         return;
       }
 
-      active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
+      state.active.set(e.pointerId, {
+        id: e.pointerId,
+        x: local.x,
+        y: local.y,
+      });
 
-      if (active.size === 1) {
-        handleSinglePointerMove(local, state.singleMode, engineRef.current, canvas, callbacksRef.current, nodeFromId, flushWorkerMessages);
-      } else if (active.size === 2) {
-        const { d, c } = handlePinchMove(active, engineRef.current, state.lastPinchDist, state.lastCentroid);
+      if (state.active.size === 1) {
+        handleSinglePointerMove(
+          local,
+          state.singleMode,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+          flushWorkerMessages,
+        );
+      } else if (state.active.size === 2) {
+        const { d, c } = handlePinchMove(
+          state.active,
+          engineRef.current,
+          state.lastPinchDist,
+          state.lastCentroid,
+        );
         state.lastPinchDist = d;
         state.lastCentroid = c;
       }
@@ -87,13 +108,12 @@ export function usePointerController({
     const onUp = (e: PointerEvent) => {
       handlePointerUp(
         e,
-        canvas,
-        active,
-        engineRef.current,
-        draggingNodeRef,
         state,
+        canvas,
+        engineRef.current,
         callbacksRef.current,
         nodeFromId,
+        draggingNodeRef,
         flushWorkerMessages,
       );
       requestRender();
@@ -102,36 +122,18 @@ export function usePointerController({
     const onClick = (e: MouseEvent) => {
       handleClick(
         e,
+        state,
         canvas,
         engineRef.current,
-        draggingNodeRef,
-        state,
         callbacksRef.current,
         nodeFromId,
+        draggingNodeRef,
       );
       requestRender();
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-      let handled = false;
-      if (e.key === "Escape") {
-        callbacksRef.current.onBackgroundClick?.();
-        handled = true;
-      } else if (e.key === "+" || e.key === "=") {
-        engineRef.current?.zoom_in();
-        requestRender();
-        handled = true;
-      } else if (e.key === "-" || e.key === "_") {
-        engineRef.current?.zoom_out();
-        requestRender();
-        handled = true;
-      }
-
-      if (handled) {
-        e.preventDefault();
-      }
+      handleKeyDown(e, engineRef.current, callbacksRef.current, requestRender);
     };
 
     canvas.style.touchAction = "none";

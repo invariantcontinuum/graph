@@ -1,3 +1,5 @@
+import React from "react";
+
 export type PointerState = { id: number; x: number; y: number };
 
 export function toLocalPointer(
@@ -90,8 +92,8 @@ export function handlePinchMove(
   return { d, c };
 }
 
-
-export interface GestureState {
+export interface PointerControllerState {
+  active: Map<number, PointerState>;
   singleMode: "drag" | "pan" | null;
   suppressNextClick: boolean;
   lastPinchDist: number;
@@ -99,21 +101,21 @@ export interface GestureState {
   downPos: { x: number; y: number } | null;
 }
 
-
 export function handlePointerDown(
   e: PointerEvent,
+  state: PointerControllerState,
   canvas: HTMLCanvasElement,
-  active: Map<number, PointerState>,
   engine: any,
-  draggingNodeRef: { current: string | null },
-  state: GestureState,
+  draggingNodeRef: React.MutableRefObject<string | null>,
   flushWorkerMessages: () => void,
 ) {
   canvas.setPointerCapture(e.pointerId);
   const local = toLocalPointer(e.clientX, e.clientY, canvas);
-  active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
+  state.active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
 
-  if (active.size === 1) {
+  if (state.active.size === 1) {
+    // Hit-test: if the pointer lands on a node, start a node-drag;
+    // otherwise start a camera pan.
     const nodeId = engine?.handle_node_drag_start(local.x, local.y);
     if (nodeId) {
       draggingNodeRef.current = nodeId;
@@ -125,7 +127,8 @@ export function handlePointerDown(
       state.singleMode = "pan";
       state.downPos = null;
     }
-  } else if (active.size === 2) {
+  } else if (state.active.size === 2) {
+    // Second pointer joined — end any single-pointer gesture and begin pinch.
     if (state.singleMode === "drag") {
       engine?.handle_node_drag_end();
       flushWorkerMessages();
@@ -135,34 +138,37 @@ export function handlePointerDown(
       engine?.handle_pan_end();
     }
     state.singleMode = null;
-    state.lastPinchDist = pinchDist(active);
-    state.lastCentroid = centroid(active);
+    state.lastPinchDist = pinchDist(state.active);
+    state.lastCentroid = centroid(state.active);
   }
 }
 
-
 export function handlePointerUp(
   e: PointerEvent,
+  state: PointerControllerState,
   canvas: HTMLCanvasElement,
-  active: Map<number, PointerState>,
   engine: any,
-  draggingNodeRef: { current: string | null },
-  state: GestureState,
   callbacks: {
     onNodeClick?: (node: any) => void;
   },
   nodeFromId: (id: string) => any,
+  draggingNodeRef: React.MutableRefObject<string | null>,
   flushWorkerMessages: () => void,
 ) {
   if (canvas.hasPointerCapture(e.pointerId)) {
     canvas.releasePointerCapture(e.pointerId);
   }
-  active.delete(e.pointerId);
+  state.active.delete(e.pointerId);
 
-  if (active.size === 0) {
+  if (state.active.size === 0) {
     if (state.singleMode === "drag") {
       engine?.handle_node_drag_end();
       flushWorkerMessages();
+      // A "click on node" also begins with a drag-start (because the
+      // pointer-down hit-tested a node). If the pointer never moved
+      // beyond the threshold, fire onNodeClick directly here — the
+      // synthetic `click` event that follows would otherwise be
+      // swallowed by the draggingNodeRef guard inside onClick.
       const movedThreshold = 4;
       const localUp = toLocalPointer(e.clientX, e.clientY, canvas);
       const moved = state.downPos
@@ -174,6 +180,8 @@ export function handlePointerUp(
         callbacks.onNodeClick?.(nodeFromId(pickedId));
         state.suppressNextClick = true;
       }
+      // Clear on next tick to suppress the synthetic click that fires
+      // immediately after pointerup on the same element.
       setTimeout(() => {
         draggingNodeRef.current = null;
       }, 0);
@@ -184,37 +192,73 @@ export function handlePointerUp(
     state.singleMode = null;
     state.lastCentroid = null;
     state.lastPinchDist = 0;
-  } else if (active.size === 1) {
-    const only = [...active.values()][0];
+  } else if (state.active.size === 1) {
+    // Transitioned from pinch back to single pointer — resume panning from
+    // the remaining pointer. Treat as a new pan gesture (not a drag).
+    const only = [...state.active.values()][0];
     engine?.handle_pan_start(only.x, only.y);
     state.singleMode = "pan";
+    // The next click would be a pinch-release → suppress.
     state.suppressNextClick = true;
   }
 }
 
-
 export function handleClick(
   e: MouseEvent,
+  state: PointerControllerState,
   canvas: HTMLCanvasElement,
   engine: any,
-  draggingNodeRef: { current: string | null },
-  state: GestureState,
   callbacks: {
     onNodeClick?: (node: any) => void;
     onBackgroundClick?: () => void;
   },
   nodeFromId: (id: string) => any,
+  draggingNodeRef: React.MutableRefObject<string | null>,
 ) {
   if (state.suppressNextClick) {
     state.suppressNextClick = false;
     return;
   }
-  if (draggingNodeRef.current !== null) return;
+  if (draggingNodeRef.current !== null) return; // consumed by drag
   const local = toLocalPointer(e.clientX, e.clientY, canvas);
   const clickedId = engine?.handle_click(local.x, local.y);
   if (clickedId) {
     callbacks.onNodeClick?.(nodeFromId(clickedId));
   } else {
+    // Clicking empty canvas clears spotlight — Cytoscape parity. Hosts
+    // that wire `onBackgroundClick` to `setSelectedNodeId(null)` get the
+    // full escape-without-keyboard behavior users expect on touch
+    // devices where there is no Esc key.
     callbacks.onBackgroundClick?.();
+  }
+}
+
+export function handleKeyDown(
+  e: KeyboardEvent,
+  engine: any,
+  callbacks: {
+    onBackgroundClick?: () => void;
+  },
+  requestRender: () => void,
+) {
+  // Don't intercept shortcuts like Ctrl+C or Cmd+R
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  let handled = false;
+  if (e.key === "Escape") {
+    callbacks.onBackgroundClick?.();
+    handled = true;
+  } else if (e.key === "+" || e.key === "=") {
+    engine?.zoom_in();
+    requestRender();
+    handled = true;
+  } else if (e.key === "-" || e.key === "_") {
+    engine?.zoom_out();
+    requestRender();
+    handled = true;
+  }
+
+  if (handled) {
+    e.preventDefault();
   }
 }
