@@ -163,6 +163,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In quadtree implementations (e.g. Barnes-Hut algorithm), the bounding box quadrant calculation has a completely unpredictable hot branch that degrades execution pipeline performance. Spatial coordinates (`x < mx`, `y < my`) cause constant CPU branch mispredictions.
 **Action:** Replace predictable but slow branching (`if/else`) with branchless bitwise operators `((x >= mx) as usize) | (((y >= my) as usize) << 1)`. In benchmarks, this yielded a 10-15% performance improvement for unpredictable data traversals.
 
-## 2026-06-20 - [Branchless quadrant calculation in Barnes-Hut quadtree]
-**Learning:** In Rust hot paths like quadtree traversal, unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
-**Action:** Replace nested `if/else` blocks with branchless bitwise operations to yield measurable execution speedups for unpredictable coordinate classification.
+## 2026-06-20 - [Use branchless bitwise operations for quadtree quadrant classification]
+**Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
+**Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
