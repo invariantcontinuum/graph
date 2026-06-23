@@ -27,7 +27,15 @@ const EDGE_TYPE_STYLE: Record<EdgeType, EdgeTypeStyle["style"]> = {
   drift:      "dashed",
 };
 
+const themeCache = new Map<string, GraphTheme>();
+
 export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
+  // ⚡ Bolt: Cache built themes to guarantee identity stability for the base
+  // theme. This prevents downstream cascading identity drops.
+  if (themeCache.has(mode)) {
+    return themeCache.get(mode)!;
+  }
+
   const p = mode === "light" ? LIGHT : DARK;
 
   const nodeTypes: Record<string, NodeTypeStyle> = {};
@@ -79,7 +87,7 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     arrow: "triangle",
   };
 
-  return {
+  const result = {
     canvasBg: p.canvasBg,
     gridLineColor: p.gridLine,
     selectionBorder: p.selection,
@@ -96,4 +104,7 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     defaultNodeStyle,
     defaultEdgeStyle,
   };
+
+  themeCache.set(mode, result);
+  return result;
 }
