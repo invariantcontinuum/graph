@@ -150,3 +150,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-15 - [Memoize GraphTheme to JSON conversion]
 **Learning:** In the React bridge, `graphThemeToEngineJson` converts a `GraphTheme` object to JSON. Even though `GraphScene` uses `useMemo` for this call, identity drops can cause the function to be called with identically shaped or even the exact same referenced theme, churning memory. This is a common performance bottleneck specific to this codebase's architecture where React needs to communicate frequently with the WASM engine.
 **Action:** When creating JSON bridge configurations from stable objects like themes, cache the last converted object to avoid deep conversion churn and unnecessary garbage collection on every render.
+
+## 2026-06-17 - [Memoize theme configuration conversion to prevent useMemo identity drops]
+**Learning:** In the React bridge, creating a new theme conversion object on every render invalidates identity in hooks that depend on it, resulting in excessive churn and deep re-computation. By using a module-level WeakMap cache, the conversion result is preserved across hook evaluations for identical `GraphTheme` instances.
+**Action:** When extracting functions for configuring dependencies, employ a module-level `WeakMap` cache matching arguments to converted results so they safely endure the React render cycle without garbage collection.
