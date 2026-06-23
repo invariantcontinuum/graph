@@ -35,13 +35,20 @@ function toEdgeOverride(s: EdgeTypeStyle) {
   return { color: s.color, width: s.width, style: s.style };
 }
 
+// Cache the last conversion to avoid churning the engine JSON object when the
+// same GraphTheme is passed multiple times in rapid succession.
+let lastGraphTheme: GraphTheme | null = null;
+let lastEngineJson: unknown | null = null;
+
 export function graphThemeToEngineJson(t: GraphTheme): unknown {
+  if (t === lastGraphTheme && lastEngineJson !== null) return lastEngineJson;
+
   const byTypeNodes: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(t.nodeTypes)) byTypeNodes[k] = toNodeBody(v);
   const byTypeEdges: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(t.edgeTypes)) byTypeEdges[k] = toEdgeOverride(v);
 
-  return {
+  const json = {
     // Opaque canvas bg: the grid is now rendered inside the WebGL canvas as
     // the first pass, so antialiased edges no longer bleed an underlying
     // overlay through.
@@ -65,4 +72,8 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
       spotlight: { dimOpacity: t.dimOpacity, transitionMs: 400 },
     },
   };
+
+  lastGraphTheme = t;
+  lastEngineJson = json;
+  return json;
 }
