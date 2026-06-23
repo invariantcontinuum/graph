@@ -19,13 +19,14 @@ pub(super) fn integrate_step(
     velocities: &mut [(f32, f32)],
     forces: &mut [(f32, f32)],
     pinned: &std::collections::HashSet<usize>,
+    saved_pinned: &mut Vec<(usize, f32, f32)>,
 ) -> f32 {
     let n = positions.len() / 2;
     if n == 0 {
         return 0.0;
     }
 
-    let saved = snapshot_pinned(positions, pinned);
+    snapshot_pinned(positions, pinned, saved_pinned);
 
     let bounds = bounding_box(positions, TREE_BOUNDS_PAD);
     let root = build_tree(positions, bounds);
@@ -42,7 +43,7 @@ pub(super) fn integrate_step(
 
     let max_vel_sq = integrate_positions(positions, velocities, forces);
 
-    restore_pinned(positions, &saved);
+    restore_pinned(positions, saved_pinned);
 
     max_vel_sq
 }
@@ -50,19 +51,19 @@ pub(super) fn integrate_step(
 fn snapshot_pinned(
     positions: &[f32],
     pinned: &std::collections::HashSet<usize>,
-) -> Vec<(usize, f32, f32)> {
-    let mut res = Vec::with_capacity(pinned.len());
+    saved_pinned: &mut Vec<(usize, f32, f32)>,
+) {
+    saved_pinned.clear();
     for &idx in pinned {
         let i = idx * 2;
         if i + 1 < positions.len() {
-            res.push((idx, positions[i], positions[i + 1]));
+            saved_pinned.push((idx, positions[i], positions[i + 1]));
         }
     }
-    res
 }
 
-fn restore_pinned(positions: &mut [f32], saved: &[(usize, f32, f32)]) {
-    for &(idx, x, y) in saved {
+fn restore_pinned(positions: &mut [f32], saved_pinned: &[(usize, f32, f32)]) {
+    for &(idx, x, y) in saved_pinned {
         let i = idx * 2;
         if i + 1 < positions.len() {
             positions[i] = x;
