@@ -36,7 +36,7 @@ export function GraphDeck({
           <h1>{preset.title}</h1>
           <p>{preset.essay}</p>
         </div>
-        <div className="mode-cluster" aria-label="Graph controls">
+        <div className="mode-cluster" role="group" aria-label="Graph controls">
           <SegmentedControl<LayoutType>
             label="Layout"
             value={layout}
@@ -54,7 +54,7 @@ export function GraphDeck({
         </div>
       </div>
 
-      <div className="metrics-strip" aria-label="Graph metrics">
+      <div className="metrics-strip" role="group" aria-label="Graph metrics">
         <MetricCard
           label="nodes"
           value={stats?.nodeCount ?? snapshot.nodes.length}
