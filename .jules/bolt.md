@@ -170,3 +170,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-21 - [Branchless Quadtree Initialization]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replace nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) to avoid stalls and yield measurable execution speedups.
+
+## 2026-06-22 - [Replace spatial branching with bitwise ops in Barnes-Hut quadtree]
+**Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), avoiding unpredictable spatial branching (`if x < mx`, `y < my`) which causes CPU pipeline stalls is important.
+**Action:** When classifying spatial coordinates in performance-critical loops or recursive functions, prefer branchless bitwise arithmetic (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) over standard conditional statements.
