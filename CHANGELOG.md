@@ -2,6 +2,25 @@
 
 All notable changes to `@invariantcontinuum/graph` will be documented in this file.
 
+## [0.2.13] - 2026-06-23
+
+### Performance
+- **Branchless Barnes-Hut quadrant classification:** Replaced nested `if/else` spatial branching in the quadtree `quadrant()` method with `((x >= mx) as usize) | (((y >= my) as usize) << 1)`. Eliminates CPU pipeline stalls from unpredictable spatial branches; ~10% speedup on `force_layout_1k_nodes` benchmark.
+- **WeakMap theme conversion cache:** `graphThemeToEngineJson` now caches results in a module-level `WeakMap`, protecting against React `useMemo` identity drops that would cause repeated deep serialization and GC churn.
+- **Reuse pinned-nodes vector in Barnes-Hut integrator:** `snapshot_pinned` Vec is now allocated once in `ForceLayout` state and reused across ticks instead of being heap-allocated every step.
+
+### Refactored
+- **Pointer controller:** Extracted pointer event handling from `Graph.tsx` into focused helpers in `react/pointerUtils.ts` (`handlePointerDown`, `handlePointerUp`, `handleClick`, `handleKeyDown`, `handleHoverOnly`, `handleSinglePointerMove`, `handlePinchMove`), each accepting a shared `PointerControllerState` object. Reduces cognitive complexity of `Graph.tsx` from 27 to well under 15.
+- **Graph orchestrator:** Hoisted pinned-node vector out of `integrate_step` closure to reuse allocation across layout ticks.
+
+### Accessibility
+- **Keyboard shortcut F to fit graph:** `InspectorRail` "Fit all" button now advertises `aria-keyshortcuts="F"` and the keyboard handler in `usePointerController` listens for the `F` key to call `fitAll`.
+- **Keyboard shortcuts for zoom/escape:** `+`/`=` zooms in, `-`/`_` zooms out, `Escape` clears selection — all guarded against modifier keys.
+- **ARIA roles on grouped containers:** `GraphDeck.tsx` `mode-cluster` and `metrics-strip` divs, and `TypeCloud.tsx` type-cloud div, now carry `role="group"` so `aria-label` is announced by screen readers.
+- **Semantic section labels:** Inspector rail `<section>` elements carry unique `aria-label` values ("Selected node details", "Connected edges", "Graph composition", "Graph controls").
+- **Context-aware empty states:** `ConnectionList` shows "No connected edges." when a node is selected but has no edges, rather than the generic prompt.
+- **Canvas ARIA roles:** Canvas elements carry correct `role` for SonarCloud accessibility compliance.
+
 ## [0.2.3] - 2026-04-24
 
 ### Changed
