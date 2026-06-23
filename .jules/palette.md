@@ -110,6 +110,10 @@ Browser smoke must cover:
 ## 2026-05-30 - Prevent ARIA keyshortcuts parsing ambiguity
 **Learning:** Screen readers often use space to separate distinct keyboard shortcuts and `+` to denote simultaneous key combinations (e.g., `Shift+A`). When advertising a literal `+` or space as a keyboard shortcut, using the literal characters in `aria-keyshortcuts` creates parsing ambiguity and fails to read correctly for users. The string 'Plus' should be used instead of '+' in `aria-keyshortcuts`.
 **Action:** Used the text 'Plus' when adding `aria-keyshortcuts` to the zoom-in controls.
+## 2024-06-19 - Explicit Roles for Container ARIA Labels
+**Learning:** Screen readers typically ignore `aria-label` attributes on non-semantic container elements (like `<div>` or `<span>`) unless they are assigned an explicit ARIA role that supports naming.
+**Action:** Always pair `aria-label` with an appropriate semantic role (e.g., `role="group"`, `role="region"`, or `role="navigation"`) when applying labels to structural `<div>` or `<span>` containers that group related UI elements.
+
 ## 2024-06-25 - Prevent Global Formatting Overreach
 **Learning:** Running tools like \`npx prettier --write .\` or repository-wide linters across all generated files (like WASM bindings or lockfiles) overrides strict constraint instructions to keep changes focused and small, causing massive noisy PR diffs that obscure UX improvements.
 **Action:** When implementing UX improvements, only run targeted formatting or linting on the exact files modified (e.g. \`npx prettier --write path/to/file.tsx\`) to prevent widespread formatting changes and keep pull requests small and reviewable.
