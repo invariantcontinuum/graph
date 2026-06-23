@@ -7,7 +7,8 @@ import {
   handlePointerDown,
   handlePointerUp,
   handleClick,
-  PointerState,
+  handleKeyDown,
+  PointerControllerState,
 } from "./pointerUtils";
 
 interface UsePointerControllerProps {
@@ -37,108 +38,102 @@ export function usePointerController({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const active: Map<number, PointerState> = new Map();
-    // Track whether the current single-pointer gesture is dragging a node,
-    // panning the camera, or neither (pre-hit-test state). Resets on release.
-    let singleMode: "drag" | "pan" | null = null;
-    let suppressNextClick = false;
-    let lastPinchDist = 0;
-    let lastCentroid: { x: number; y: number } | null = null;
-    // Records the local pointerdown position so onUp can distinguish a pure
-    // click (no movement) from a drag. Without this, a click-on-node never
-    // fires onNodeClick because onUp always installs the click-suppression
-    // timeout before the synthetic click event runs.
-    let downPos: { x: number; y: number } | null = null;
+    const state: PointerControllerState = {
+      active: new Map(),
+      singleMode: null,
+      suppressNextClick: false,
+      lastPinchDist: 0,
+      lastCentroid: null,
+      downPos: null,
+    };
 
     const onDown = (e: PointerEvent) => {
-      const res = handlePointerDown(e, canvas, active, engineRef.current, draggingNodeRef, flushWorkerMessages);
-      if (res.newSingleMode !== null) singleMode = res.newSingleMode;
-      if (res.newDownPos !== null || singleMode === "pan") downPos = res.newDownPos;
-      if (active.size === 2) {
-        singleMode = null;
-        lastPinchDist = res.newPinchDist;
-        lastCentroid = res.newCentroid;
-      }
-      if (res.suppressNextClick) suppressNextClick = true;
+      handlePointerDown(
+        e,
+        state,
+        canvas,
+        engineRef.current,
+        draggingNodeRef,
+        flushWorkerMessages,
+      );
       requestRender();
     };
 
     const onMove = (e: PointerEvent) => {
       const local = toLocalPointer(e.clientX, e.clientY, canvas);
-      const existing = active.get(e.pointerId);
+      const existing = state.active.get(e.pointerId);
 
       if (!existing) {
         // Hovering without a button pressed
-        handleHoverOnly(local, engineRef.current, canvas, callbacksRef.current, nodeFromId);
+        handleHoverOnly(
+          local,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+        );
         requestRender();
         return;
       }
 
-      active.set(e.pointerId, { id: e.pointerId, x: local.x, y: local.y });
+      state.active.set(e.pointerId, {
+        id: e.pointerId,
+        x: local.x,
+        y: local.y,
+      });
 
-      if (active.size === 1) {
-        handleSinglePointerMove(local, singleMode, engineRef.current, canvas, callbacksRef.current, nodeFromId, flushWorkerMessages);
-      } else if (active.size === 2) {
-        const { d, c } = handlePinchMove(active, engineRef.current, lastPinchDist, lastCentroid);
-        lastPinchDist = d;
-        lastCentroid = c;
+      if (state.active.size === 1) {
+        handleSinglePointerMove(
+          local,
+          state.singleMode,
+          engineRef.current,
+          canvas,
+          callbacksRef.current,
+          nodeFromId,
+          flushWorkerMessages,
+        );
+      } else if (state.active.size === 2) {
+        const { d, c } = handlePinchMove(
+          state.active,
+          engineRef.current,
+          state.lastPinchDist,
+          state.lastCentroid,
+        );
+        state.lastPinchDist = d;
+        state.lastCentroid = c;
       }
       requestRender();
     };
 
     const onUp = (e: PointerEvent) => {
-      const res = handlePointerUp(
+      handlePointerUp(
         e,
+        state,
         canvas,
-        active,
         engineRef.current,
-        singleMode,
-        downPos,
-        draggingNodeRef,
         callbacksRef.current,
         nodeFromId,
-        flushWorkerMessages
+        draggingNodeRef,
+        flushWorkerMessages,
       );
-      singleMode = res.newSingleMode;
-      if (res.newSuppressNextClick) suppressNextClick = true;
-      if (active.size === 0) {
-        lastCentroid = null;
-        lastPinchDist = 0;
-        downPos = null;
-      }
       requestRender();
     };
 
     const onClick = (e: MouseEvent) => {
-      if (suppressNextClick) {
-        suppressNextClick = false;
-        return;
-      }
-      handleClick(e, canvas, engineRef.current, draggingNodeRef, callbacksRef.current, nodeFromId);
+      handleClick(
+        e,
+        state,
+        canvas,
+        engineRef.current,
+        callbacksRef.current,
+        nodeFromId,
+        draggingNodeRef,
+      );
       requestRender();
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept shortcuts like Ctrl+C or Cmd+R
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-      let handled = false;
-      if (e.key === "Escape") {
-        callbacksRef.current.onBackgroundClick?.();
-        handled = true;
-      } else if (e.key === "+" || e.key === "=") {
-        engineRef.current?.zoom_in();
-        requestRender();
-        handled = true;
-      } else if (e.key === "-" || e.key === "_") {
-        engineRef.current?.zoom_out();
-        requestRender();
-        handled = true;
-      }
-
-      if (handled) {
-        e.preventDefault();
-      }
+      handleKeyDown(e, engineRef.current, callbacksRef.current, requestRender);
     };
 
     canvas.style.touchAction = "none";
