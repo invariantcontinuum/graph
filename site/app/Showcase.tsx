@@ -351,6 +351,13 @@ export default function Showcase() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
       if (event.key === "Escape") {
         if (drawerOpen) {
           setDrawerOpen(false);
@@ -359,11 +366,18 @@ export default function Showcase() {
         } else {
           clearSelection();
         }
+      } else if (
+        event.key.toLowerCase() === "f" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        fitGraph();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawerOpen, detailsOpen, clearSelection]);
+  }, [drawerOpen, detailsOpen, clearSelection, fitGraph]);
 
   return (
     <main className="atlas-shell">
