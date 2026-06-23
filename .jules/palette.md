@@ -114,6 +114,10 @@ Browser smoke must cover:
 **Learning:** Screen readers typically ignore `aria-label` attributes on non-semantic container elements (like `<div>` or `<span>`) unless they are assigned an explicit ARIA role that supports naming.
 **Action:** Always pair `aria-label` with an appropriate semantic role (e.g., `role="group"`, `role="region"`, or `role="navigation"`) when applying labels to structural `<div>` or `<span>` containers that group related UI elements.
 
+## 2024-06-20 - Screen readers ignore aria-label on generic divs without roles
+**Learning:** Found an accessibility issue pattern in `GraphDeck.tsx` (`mode-cluster`, `metrics-strip`) and `TypeCloud.tsx` where generic `<div>` elements were given an `aria-label` but lacked an ARIA role. Screen readers typically ignore `aria-label` on non-semantic container elements unless paired with a role, making those labels invisible to assistive technologies.
+**Action:** Always pair `aria-label` with a semantic structural role (e.g., `role="group"` or `role="region"`) when applying labels to `<div>` or `<span>` containers that group related UI elements.
+
 ## 2024-06-25 - Prevent Global Formatting Overreach
 **Learning:** Running tools like \`npx prettier --write .\` or repository-wide linters across all generated files (like WASM bindings or lockfiles) overrides strict constraint instructions to keep changes focused and small, causing massive noisy PR diffs that obscure UX improvements.
 **Action:** When implementing UX improvements, only run targeted formatting or linting on the exact files modified (e.g. \`npx prettier --write path/to/file.tsx\`) to prevent widespread formatting changes and keep pull requests small and reviewable.
