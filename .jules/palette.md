@@ -110,6 +110,9 @@ Browser smoke must cover:
 ## 2026-05-30 - Prevent ARIA keyshortcuts parsing ambiguity
 **Learning:** Screen readers often use space to separate distinct keyboard shortcuts and `+` to denote simultaneous key combinations (e.g., `Shift+A`). When advertising a literal `+` or space as a keyboard shortcut, using the literal characters in `aria-keyshortcuts` creates parsing ambiguity and fails to read correctly for users. The string 'Plus' should be used instead of '+' in `aria-keyshortcuts`.
 **Action:** Used the text 'Plus' when adding `aria-keyshortcuts` to the zoom-in controls.
+## 2024-06-25 - Prevent Global Formatting Overreach
+**Learning:** Running tools like \`npx prettier --write .\` or repository-wide linters across all generated files (like WASM bindings or lockfiles) overrides strict constraint instructions to keep changes focused and small, causing massive noisy PR diffs that obscure UX improvements.
+**Action:** When implementing UX improvements, only run targeted formatting or linting on the exact files modified (e.g. \`npx prettier --write path/to/file.tsx\`) to prevent widespread formatting changes and keep pull requests small and reviewable.
 
 ## 2026-05-30 - Maintain consistent screen reader context across duplicated UI elements
 **Learning:** When UI patterns are duplicated across different regions of an application—such as node action buttons ("Frame", "Center") existing in both a persistent side panel (`InspectorRail.tsx`) and a temporary overlay modal (`NodeDetailsModal.tsx`)—inconsistent `aria-label` attributes lead to a fragmented screen reader experience. Furthermore, using landmark roles (`<section>`) without an accessible name (`aria-label`) causes them to announce generically or be ignored by assistive tech. Finally, buttons with visible text must ensure their exact string is contiguously present within their `aria-label` to comply with WCAG 2.5.3 (Label in Name) for voice-control users.
