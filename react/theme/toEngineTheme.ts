@@ -35,13 +35,21 @@ function toEdgeOverride(s: EdgeTypeStyle) {
   return { color: s.color, width: s.width, style: s.style };
 }
 
+const themeCache = new WeakMap<GraphTheme, unknown>();
+
 export function graphThemeToEngineJson(t: GraphTheme): unknown {
+  // ⚡ Bolt: Module-level cache to protect against React `useMemo` identity
+  // drops causing unnecessary deep theme conversion and garbage collection.
+  if (themeCache.has(t)) {
+    return themeCache.get(t);
+  }
+
   const byTypeNodes: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(t.nodeTypes)) byTypeNodes[k] = toNodeBody(v);
   const byTypeEdges: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(t.edgeTypes)) byTypeEdges[k] = toEdgeOverride(v);
 
-  return {
+  const result = {
     // Opaque canvas bg: the grid is now rendered inside the WebGL canvas as
     // the first pass, so antialiased edges no longer bleed an underlying
     // overlay through.
@@ -65,4 +73,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
       spotlight: { dimOpacity: t.dimOpacity, transitionMs: 400 },
     },
   };
+
+  themeCache.set(t, result);
+  return result;
 }

@@ -187,9 +187,9 @@ impl QuadNode {
         let (x_min, y_min, x_max, y_max) = self.bounds;
         let mx = (x_min + x_max) * 0.5;
         let my = (y_min + y_max) * 0.5;
-        // ⚡ Bolt: Unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
-        // Replacing nested `if/else` blocks with branchless bitwise operations yields
-        // measurable execution speedups for unpredictable coordinate classification.
+        // ⚡ Bolt: Replace nested branches with branchless bitwise logic.
+        // Unpredictable spatial branches cause CPU pipeline stalls. This
+        // branchless approach yields a measurable speedup in quadtree insertion.
         ((x >= mx) as usize) | (((y >= my) as usize) << 1)
     }
 }
