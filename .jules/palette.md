@@ -113,3 +113,15 @@ Browser smoke must cover:
 ## 2024-06-19 - Explicit Roles for Container ARIA Labels
 **Learning:** Screen readers typically ignore `aria-label` attributes on non-semantic container elements (like `<div>` or `<span>`) unless they are assigned an explicit ARIA role that supports naming.
 **Action:** Always pair `aria-label` with an appropriate semantic role (e.g., `role="group"`, `role="region"`, or `role="navigation"`) when applying labels to structural `<div>` or `<span>` containers that group related UI elements.
+
+## 2024-06-25 - Prevent Global Formatting Overreach
+**Learning:** Running tools like \`npx prettier --write .\` or repository-wide linters across all generated files (like WASM bindings or lockfiles) overrides strict constraint instructions to keep changes focused and small, causing massive noisy PR diffs that obscure UX improvements.
+**Action:** When implementing UX improvements, only run targeted formatting or linting on the exact files modified (e.g. \`npx prettier --write path/to/file.tsx\`) to prevent widespread formatting changes and keep pull requests small and reviewable.
+
+## 2026-05-30 - Maintain consistent screen reader context across duplicated UI elements
+**Learning:** When UI patterns are duplicated across different regions of an application—such as node action buttons ("Frame", "Center") existing in both a persistent side panel (`InspectorRail.tsx`) and a temporary overlay modal (`NodeDetailsModal.tsx`)—inconsistent `aria-label` attributes lead to a fragmented screen reader experience. Furthermore, using landmark roles (`<section>`) without an accessible name (`aria-label`) causes them to announce generically or be ignored by assistive tech. Finally, buttons with visible text must ensure their exact string is contiguously present within their `aria-label` to comply with WCAG 2.5.3 (Label in Name) for voice-control users.
+**Action:** Added matching `aria-label` attributes (e.g., "Frame selected node", "Center selected node") to duplicate action buttons in both the rail and modal. Provided unique `aria-label`s to the structural `<section>` elements (e.g., "Selected node details", "Connected edges", "Graph composition") to convert them into meaningful, navigable regions. Updated the "Add probe" button's `aria-label` to "Add probe node" to preserve the visible text contiguously.
+
+## 2026-06-01 - Provide Context-Aware Empty States
+**Learning:** Reusing generic default prompt copy in empty state UI can cause conflicting instructions. In the ConnectionList component, if a node with no connections is selected, it would still show "Select a node to view connections" instead of indicating there are no connections.
+**Action:** Use context-aware logic to pass specific empty-state messages based on the current selection state (e.g. passing "No connected edges" if a node is already active).

@@ -80,7 +80,7 @@ export const GraphStage = forwardRef<GraphHandle, GraphStageProps>(
         )}
         <div className="stage-overlay">
           <div className="graph-hint" aria-hidden="true">
-            <kbd>+</kbd> <kbd>−</kbd> zoom · drag pan · click inspect
+            <kbd>+</kbd> <kbd>−</kbd> zoom · <kbd>F</kbd> fit · drag pan · click inspect
           </div>
           <div className="zoom-bar" role="group" aria-label="Graph camera controls">
             <button
@@ -107,7 +107,8 @@ export const GraphStage = forwardRef<GraphHandle, GraphStageProps>(
               type="button"
               className="zoom-control"
               aria-label="Fit graph to view"
-              title="Fit graph to view"
+              title="Fit graph to view (F)"
+              aria-keyshortcuts="F"
               onClick={onFit}
             >
               Fit
