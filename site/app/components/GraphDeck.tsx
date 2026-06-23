@@ -36,7 +36,7 @@ export function GraphDeck({
           <h1>{preset.title}</h1>
           <p>{preset.essay}</p>
         </div>
-        <div className="mode-cluster" role="group" aria-label="Graph controls">
+        <div className="mode-cluster" role="group" aria-label="Graph display controls">
           <SegmentedControl<LayoutType>
             label="Layout"
             value={layout}
@@ -66,11 +66,11 @@ export function GraphDeck({
           title="Total edges in the current graph"
         />
         <MetricCard
-          label="node types"
+          label="types"
           value={nodeTypeCount}
           title="Distinct node types"
         />
-        <MetricCard label="density" value={graphDensity} title="Edges per node" />
+        <MetricCard label="density" value={graphDensity} title="Edges per node (graph density)" />
       </div>
 
       {children}

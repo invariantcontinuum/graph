@@ -19,7 +19,7 @@ import { NodeDetailsModal } from "./components/NodeDetailsModal";
 import { ScenarioRail } from "./components/ScenarioRail";
 import { Topbar } from "./components/Topbar";
 
-const PACKAGE_VERSION = "0.2.12";
+const PACKAGE_VERSION = "0.2.13";
 
 function withMeta(snapshot: GraphSnapshot): GraphSnapshot {
   return {
