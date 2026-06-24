@@ -11,11 +11,29 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+// ⚡ Bolt: Module-level cache to protect against React `useMemo` identity
+// drops causing unnecessary deep theme conversion and garbage collection.
+// The base theme goes in a WeakMap so it can be garbage collected,
+// while the overrides are stringified to serve as a cache key.
+const themeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
 ): GraphTheme {
   if (!overrides) return base;
+
+  const overridesKey = JSON.stringify(overrides);
+  let baseCache = themeCache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    themeCache.set(base, baseCache);
+  }
+
+  const cached = baseCache.get(overridesKey);
+  if (cached) {
+    return cached;
+  }
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -42,7 +60,7 @@ export function mergeGraphTheme(
     };
   }
 
-  return {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -58,4 +76,7 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
+
+  baseCache.set(overridesKey, result);
+  return result;
 }
