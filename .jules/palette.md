@@ -141,3 +141,7 @@ Browser smoke must cover:
 ## 2026-05-31 - Contextual Empty States in Shared Components
 **Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
 **Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
+
+## 2026-06-21 - Accessible Labels for External Links
+**Learning:** Always provide an explicit `aria-label` (e.g., "GitHub (opens in a new tab)") to external links using `target="_blank"` to warn screen reader users of the sudden context switch.
+**Action:** When adding links that open in a new tab, use `aria-label` to indicate that a new tab or window will be opened.
