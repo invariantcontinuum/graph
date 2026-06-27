@@ -246,6 +246,7 @@ fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {
     positions.reserve(flat.len() / 2);
     // ⚡ Bolt: chunks_exact is considerably faster than indexing
     // flat[i * 2] in a loop since it elides bounds checking.
+    #[allow(clippy::chunks_exact_to_as_chunks)]
     positions.extend(flat.chunks_exact(2).map(|c| (c[0], c[1])));
 }
 
