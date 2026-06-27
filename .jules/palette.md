@@ -141,3 +141,7 @@ Browser smoke must cover:
 ## 2026-05-31 - Contextual Empty States in Shared Components
 **Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
 **Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
+
+## 2026-06-27 - Make skip-to-content target focusable
+**Learning:** Adding a "Skip to content" link that points to a specific container ID using an `href="#target-id"` anchor will visually scroll the page, but screen readers and keyboard navigation require that target container to programmatically receive focus. If the target is a generic `<div>` without a `tabIndex`, it won't receive focus, leaving the user's sequential tab order unchanged and defeating the purpose of the skip link.
+**Action:** Always add `tabIndex={-1}` to the target container of a skip link (e.g., `<div id="graph-stage">`) so it can be programmatically focused and properly reset the tab order for assistive technologies without interrupting natural page flow.

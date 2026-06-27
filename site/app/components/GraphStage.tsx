@@ -53,7 +53,7 @@ export const GraphStage = forwardRef<GraphHandle, GraphStageProps>(
     ref,
   ) {
     return (
-      <div id="graph-stage" className="graph-stage">
+      <div id="graph-stage" className="graph-stage" tabIndex={-1}>
         <GraphScene
           ref={ref}
           snapshot={snapshot}
@@ -80,9 +80,14 @@ export const GraphStage = forwardRef<GraphHandle, GraphStageProps>(
         )}
         <div className="stage-overlay">
           <div className="graph-hint" aria-hidden="true">
-            <kbd>+</kbd> <kbd>−</kbd> zoom · <kbd>F</kbd> fit · drag pan · click inspect
+            <kbd>+</kbd> <kbd>−</kbd> zoom · <kbd>F</kbd> fit · drag pan · click
+            inspect
           </div>
-          <div className="zoom-bar" role="group" aria-label="Graph camera controls">
+          <div
+            className="zoom-bar"
+            role="group"
+            aria-label="Graph camera controls"
+          >
             <button
               type="button"
               className="zoom-control"
