@@ -11,6 +11,20 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+function stableSerialize(obj: unknown): string {
+  if (obj === null || typeof obj !== "object") {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return `[${obj.map(stableSerialize).join(",")}]`;
+  }
+  const keys = Object.keys(obj).sort();
+  const parts = keys.map(
+    (k) => `${JSON.stringify(k)}:${stableSerialize((obj as any)[k])}`,
+  );
+  return `{${parts.join(",")}}`;
+}
+
 // ⚡ Bolt: Module-level cache to prevent cascading React identity drops.
 // If an app passes `themeOverrides={{...}}` inline, rebuilding the theme on every render
 // causes deep WebGL theme conversions. This WeakMap protects against that.
@@ -24,7 +38,7 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  const overridesKey = JSON.stringify(overrides);
+  const overridesKey = stableSerialize(overrides);
   let baseCache = mergeCache.get(base);
   if (!baseCache) {
     baseCache = new Map();

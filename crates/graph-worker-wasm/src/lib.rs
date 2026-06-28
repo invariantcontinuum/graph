@@ -1,3 +1,5 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
+
 use js_sys::{Float32Array, Uint8Array};
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
