@@ -34,3 +34,6 @@ harness = false
 [dev-dependencies.criterion]
 version = "0.5"
 default-features = false
+
+[lints]
+workspace = true
