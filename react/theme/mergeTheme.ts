@@ -19,7 +19,7 @@ function stableSerialize(obj: unknown): string {
     return `[${obj.map(stableSerialize).join(",")}]`;
   }
   const record = obj as Record<string, unknown>;
-  const keys = Object.keys(record).sort();
+  const keys = Object.keys(record).sort((a, b) => a.localeCompare(b));
   const parts = keys.map(
     (k) => `${JSON.stringify(k)}:${stableSerialize(record[k])}`,
   );
