@@ -18,9 +18,10 @@ function stableSerialize(obj: unknown): string {
   if (Array.isArray(obj)) {
     return `[${obj.map(stableSerialize).join(",")}]`;
   }
-  const keys = Object.keys(obj).sort();
+  const record = obj as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
   const parts = keys.map(
-    (k) => `${JSON.stringify(k)}:${stableSerialize((obj as any)[k])}`,
+    (k) => `${JSON.stringify(k)}:${stableSerialize(record[k])}`,
   );
   return `{${parts.join(",")}}`;
 }
