@@ -121,7 +121,7 @@ fn integrate_positions(
     // an explicit counter, we can iterate over positions, while using un-checked
     // access into forces and velocities vectors which we know have enough capacity,
     // thereby improving the speed of this hot mathematical integration loop.
-    for (i, pos) in positions.chunks_exact_mut(2).enumerate() {
+    for (i, pos) in positions.as_chunks_mut::<2>().0.iter_mut().enumerate() {
         // SAFETY: We verify that both velocities and forces have sufficient length
         // (>= positions.len() / 2) at the top of the function to ensure this is safe.
         let vel = unsafe { velocities.get_unchecked_mut(i) };
