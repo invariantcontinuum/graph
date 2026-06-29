@@ -53,7 +53,7 @@ export const GraphStage = forwardRef<GraphHandle, GraphStageProps>(
     ref,
   ) {
     return (
-      <div id="graph-stage" className="graph-stage">
+      <div id="graph-stage" className="graph-stage" tabIndex={-1}>
         <GraphScene
           ref={ref}
           snapshot={snapshot}

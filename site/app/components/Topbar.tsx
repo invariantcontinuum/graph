@@ -36,6 +36,7 @@ export function Topbar({ packageVersion, drawerOpen, onToggleDrawer }: TopbarPro
           href="https://github.com/invariantcontinuum/graph"
           target="_blank"
           rel="noreferrer"
+          aria-label="GitHub (opens in a new tab)"
         >
           GitHub
         </a>

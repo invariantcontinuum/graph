@@ -1,0 +1,33 @@
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 21 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/media/36966cca54120369-s.p.woff2
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/css/62d00a072b6efe2e.css
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/media/37786be940ec402b-s.p.woff2
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/media/98e207f02528a563-s.p.woff2
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/media/d3ebbfd689654d3a-s.p.woff2
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/media/db96af6b531dc71f-s.p.woff2
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 19 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 19 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 17 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 18 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 17 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 16 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/chunks/webpack-c34588a1dcdfb7a0.js
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/chunks/ed64ccb0-b7d2b5246d18ca7e.js
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/chunks/128-8143b486d44c4875.js
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/chunks/main-app-92b3209e4c9f22a7.js
+ HTTP  6/29/2026 9:29:24 PM ::1 GET /graph/_next/static/chunks/app/page-0ba9c9a752a764b4.js
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 6 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 5 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 5 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 12 ms
+ HTTP  6/29/2026 9:29:24 PM ::1 Returned 200 in 12 ms
+ HTTP  6/29/2026 9:29:25 PM ::1 GET /graph/_next/static/chunks/999.9f49abbc8ef30415.js
+ HTTP  6/29/2026 9:29:25 PM ::1 Returned 200 in 3 ms
+ HTTP  6/29/2026 9:29:25 PM ::1 GET /graph/graph_main_wasm_bg.wasm
+ HTTP  6/29/2026 9:29:25 PM ::1 Returned 200 in 6 ms
+ HTTP  6/29/2026 9:29:25 PM ::1 GET /graph/_next/static/chunks/526.6343730531e344ab.js
+ HTTP  6/29/2026 9:29:25 PM ::1 Returned 200 in 1 ms
+ HTTP  6/29/2026 9:29:25 PM ::1 GET /graph/graph_worker_wasm_bg.wasm
+ HTTP  6/29/2026 9:29:25 PM ::1 Returned 200 in 3 ms
