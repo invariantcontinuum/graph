@@ -178,3 +178,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
+## 2026-06-29 - Use #![allow(clippy::chunks_exact_to_as_chunks)] to suppress chunks_exact lint
+**Learning:** In newer Rust nightly versions, the `cargo clippy` linter will flag `chunks_exact(N)` as a warning (`clippy::chunks_exact_to_as_chunks`) recommending to use `as_chunks::<N>()` instead.
+**Action:** When working in a repository that mandates `cargo clippy --all-targets -- -D warnings`, if you hit this warning on existing code (like in hot loops where `chunks_exact` is highly performant), add `#![allow(clippy::chunks_exact_to_as_chunks)]` at the top of the crate's `lib.rs` file to suppress the warning workspace-wide without disrupting the existing optimizations or polluting loop scopes.
