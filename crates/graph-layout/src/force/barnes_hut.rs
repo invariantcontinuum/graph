@@ -201,10 +201,11 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     let mut y_min = f32::MAX;
     let mut x_max = f32::MIN;
     let mut y_max = f32::MIN;
-    // ⚡ Bolt: Using chunks_exact(2) allows the compiler to elide bounds checks
+    // ⚡ Bolt: Using chunks_exact(2)  allows the compiler to elide bounds checks
     // and vectorizing operations when possible, providing a performance win.
     // Standard f32::min/max handle NaNs efficiently and vectorize better than branches.
-    for chunk in positions_flat.chunks_exact(2) {
+    #[allow(clippy::chunks_exact_to_as_chunks)]
+    for chunk in positions_flat.chunks_exact(2)  {
         let x = chunk[0];
         let y = chunk[1];
         x_min = x_min.min(x);
@@ -221,7 +222,8 @@ pub(super) fn build_tree(positions_flat: &[f32], bounds: Bounds) -> QuadNode {
     let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
     // ⚡ Bolt: chunk iteration avoids sequential indexing bounds checks
     // and manual indexing, saving computation time in this hot loop.
-    for chunk in positions_flat.chunks_exact(2) {
+    #[allow(clippy::chunks_exact_to_as_chunks)]
+    for chunk in positions_flat.chunks_exact(2)  {
         root.insert(chunk[0], chunk[1]);
     }
     root
