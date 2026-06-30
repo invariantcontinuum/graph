@@ -11,11 +11,28 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+// ⚡ Bolt: WeakMap cache matching stable base object combined with a bounded Map
+// matching the serialized overrides protects against cascading React identity drops
+// that cause WebGL theme conversions.
+const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
 ): GraphTheme {
   if (!overrides) return base;
+
+  const cacheKey = JSON.stringify(overrides);
+  let innerMap = mergeCache.get(base);
+  if (!innerMap) {
+    innerMap = new Map();
+    mergeCache.set(base, innerMap);
+  }
+
+  const cached = innerMap.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -42,7 +59,7 @@ export function mergeGraphTheme(
     };
   }
 
-  return {
+  const merged = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -58,4 +75,11 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
+
+  if (innerMap.size >= 10) {
+    innerMap.clear();
+  }
+  innerMap.set(cacheKey, merged);
+
+  return merged;
 }
