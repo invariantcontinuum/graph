@@ -313,6 +313,7 @@ fn aabb_from_all_positions(positions: &[f32]) -> Option<(f32, f32, f32, f32)> {
     let mut min_y = f32::INFINITY;
     let mut max_x = f32::NEG_INFINITY;
     let mut max_y = f32::NEG_INFINITY;
+    #[allow(clippy::chunks_exact_to_as_chunks)]
     for chunk in positions.chunks_exact(4) {
         let (x, y, r) = (chunk[0], chunk[1], chunk[2]);
         min_x = min_x.min(x - r);
