@@ -11,11 +11,32 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+// ⚡ Bolt: Two-level cache.
+// Level 1: WeakMap keyed on the base theme (stable instance from buildGraphTheme)
+// Level 2: Map keyed on the serialized overrides string to detect identical
+// inline object literals passed on re-renders.
+// This prevents cascading identity drops in GraphScene which cause
+// deep theme conversion churn and layout/render recalculation.
+const cache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
 ): GraphTheme {
   if (!overrides) return base;
+
+  // Serialize overrides to act as cache key
+  const cacheKey = JSON.stringify(overrides);
+  let baseCache = cache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    cache.set(base, baseCache);
+  } else {
+    const cached = baseCache.get(cacheKey);
+    if (cached) return cached;
+    // Bound the inner map to prevent memory leaks from dynamic overrides
+    if (baseCache.size >= 10) baseCache.clear();
+  }
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -42,7 +63,7 @@ export function mergeGraphTheme(
     };
   }
 
-  return {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -58,4 +79,7 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
+
+  baseCache.set(cacheKey, result);
+  return result;
 }

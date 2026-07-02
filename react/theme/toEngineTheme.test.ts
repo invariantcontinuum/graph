@@ -67,4 +67,11 @@ describe("graphThemeToEngineJson", () => {
       }
     }
   });
+
+  test("returns referentially stable json for identical theme instances", () => {
+    const theme = buildGraphTheme("dark");
+    const json1 = graphThemeToEngineJson(theme);
+    const json2 = graphThemeToEngineJson(theme);
+    expect(json1).toBe(json2);
+  });
 });
