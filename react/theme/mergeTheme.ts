@@ -11,11 +11,27 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+// Cache base theme -> stringified overrides -> merged theme
+// We bound the inner map to prevent memory leaks from constantly changing inline object props.
+const overridesCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
 ): GraphTheme {
   if (!overrides) return base;
+
+  let baseCache = overridesCache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    overridesCache.set(base, baseCache);
+  }
+
+  const overridesKey = JSON.stringify(overrides);
+  const cached = baseCache.get(overridesKey);
+  if (cached) {
+    return cached;
+  }
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -42,7 +58,7 @@ export function mergeGraphTheme(
     };
   }
 
-  return {
+  const mergedTheme: GraphTheme = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -58,4 +74,11 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
+
+  if (baseCache.size >= 10) {
+    baseCache.clear();
+  }
+  baseCache.set(overridesKey, mergedTheme);
+
+  return mergedTheme;
 }
