@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Barnes-Hut quadtree for approximate O(n log n) repulsive-force computation.
 //!
 //! The quadtree recursively divides 2D space into four quadrants, accumulating

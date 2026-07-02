@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Camera: fit, pan-to-node, zoom, focus + dim animation, min-zoom recalc.
 
 use wasm_bindgen::prelude::*;

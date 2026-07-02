@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Force integration — builds the quadtree, adds attractive edges, integrates
 //! velocities, and returns peak kinetic energy for convergence checks.
 //!

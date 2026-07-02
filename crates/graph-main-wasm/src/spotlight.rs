@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Spotlight subsystem: compute focused-node neighborhood, stamp dim bits,
 //! hand focused indices to the renderer. Separated from engine.rs so we can
 //! unit-test the lookup + neighborhood computation in isolation.
