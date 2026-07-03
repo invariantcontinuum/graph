@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 pub mod force;
 pub mod grid;
 pub mod hierarchical;
