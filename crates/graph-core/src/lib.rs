@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 pub mod algorithms;
 pub mod filter;
 pub mod graph;
