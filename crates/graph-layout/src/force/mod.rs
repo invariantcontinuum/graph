@@ -241,6 +241,7 @@ fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
     flat.extend(positions.iter().flat_map(|&(x, y)| [x, y]));
 }
 
+#[allow(clippy::chunks_exact_to_as_chunks)]
 fn unflatten_positions(flat: &[f32], positions: &mut Vec<(f32, f32)>) {
     positions.clear();
     positions.reserve(flat.len() / 2);

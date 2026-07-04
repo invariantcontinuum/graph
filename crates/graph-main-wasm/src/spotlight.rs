@@ -22,6 +22,7 @@ pub fn build_coord_index(positions: &[f32]) -> HashMap<(u32, u32), usize> {
 /// Given a focused node index + the edge buffer in stride-6
 /// [sx, sy, tx, ty, type_idx, weight] world-coord layout, return the set of
 /// node indices in the 1-hop closed neighborhood (focus + neighbors).
+#[allow(clippy::chunks_exact_to_as_chunks)]
 pub fn neighborhood_indices(
     focus_idx: usize,
     edge_data: &[f32],

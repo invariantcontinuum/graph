@@ -106,6 +106,7 @@ fn apply_attractive_edges(positions: &[f32], edges: &[(usize, usize)], forces: &
     }
 }
 
+#[allow(clippy::chunks_exact_to_as_chunks)]
 fn integrate_positions(
     positions: &mut [f32],
     velocities: &mut [(f32, f32)],
