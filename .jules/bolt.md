@@ -186,3 +186,11 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-05 - [Ignore out-of-scope warnings at the CI workflow level]
 **Learning:** When using nightly tools in CI for stable Rust codebases, new lints (like `clippy::chunks_exact_to_as_chunks`) can cause CI failures on pre-existing code.
 **Action:** Instead of modifying unrelated files to satisfy the linter (which pollutes the PR scope), ignore the specific lint at the workflow level (e.g., `-A clippy::chunks_exact_to_as_chunks`).
+
+## 2026-07-05 - [Disable wasm-opt for wasm-pack builds]
+**Learning:** When using `wasm-pack` with newer rust toolchains in CI, the bundled `wasm-opt` may fail to optimize the generated WebAssembly. This causes the `wasm-pack build` CI step to fail with exit code 1.
+**Action:** Disable `wasm-opt` in the `Cargo.toml` of the WASM crates by adding `[package.metadata.wasm-pack.profile.release]` with `wasm-opt = false`.
+
+## 2026-07-05 - [Install latest wasm-pack manually in CI]
+**Learning:** The `jetli/wasm-pack-action` GitHub Action can fail to build WASM with newer Rust nightly toolchains, resulting in `wasm-opt` errors. Disabling `wasm-opt` entirely to fix this causes severe performance regressions.
+**Action:** Avoid failing GitHub Actions for `wasm-pack`. Instead, install `wasm-pack` directly via the official curl installer (`curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`) to ensure compatibility with modern toolchains while retaining `wasm-opt` performance benefits.
