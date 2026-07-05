@@ -178,3 +178,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
+## 2026-06-23 - [Use allow directive to suppress unstable clippy feature suggestions]
+**Learning:** In stable Rust codebases, standard tools may sometimes suggest nightly-only or unstable features (e.g., `clippy::chunks_exact_to_as_chunks` suggesting `.as_chunks::<N>()` instead of `.chunks_exact(N)`).
+**Action:** Do not use unstable features to silence linter warnings. Instead, append `#[allow(clippy::chunks_exact_to_as_chunks)]` to the enclosing function or module to prevent the warning from breaking CI builds (`-D warnings`) while maintaining compatibility with stable Rust compilers.
