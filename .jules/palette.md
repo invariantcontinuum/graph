@@ -141,3 +141,7 @@ Browser smoke must cover:
 ## 2026-05-31 - Contextual Empty States in Shared Components
 **Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
 **Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
+
+## 2026-06-25 - Programmatic Focus for Skip Links
+**Learning:** "Skip-to-content" links target container elements (e.g., `<div id="graph-stage">`) to help keyboard and screen reader users bypass repetitive navigation. However, if the target container lacks a `tabIndex`, the browser will scroll to the element but fail to move programmatic focus, leaving the user's tab order unchanged and defeating the purpose of the skip link.
+**Action:** Always add `tabIndex={-1}` to the target container of a "skip-to-content" link so it can receive programmatic focus and properly reset the document tab order.
