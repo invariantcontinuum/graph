@@ -178,3 +178,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
+
+## 2026-07-05 - [Cache merged theme configurations]
+**Learning:** Inline object literal props (like `themeOverrides={{...}}`) cause cascading React identity drops, invalidating `useMemo` hooks and leading to deep, unnecessary re-computations of derived configurations (e.g., WebGL theme conversions).
+**Action:** Cache merged configurations using a `WeakMap` keyed on a stable base object combined with a bounded `Map` keyed on the serialized string of the overrides. This ensures referentially stable objects are returned, protecting downstream caches.
