@@ -11,11 +11,29 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
+const cache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
 ): GraphTheme {
   if (!overrides) return base;
+
+  // ⚡ Bolt: Cache merged configurations to prevent cascading React identity drops
+  // when inline object literal props are passed (e.g., themeOverrides={{...}}).
+  let baseCache = cache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    cache.set(base, baseCache);
+  }
+
+  const overrideKey = JSON.stringify(overrides);
+  const cached = baseCache.get(overrideKey);
+  if (cached) return cached;
+
+  if (baseCache.size >= 10) {
+    baseCache.clear();
+  }
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -42,7 +60,7 @@ export function mergeGraphTheme(
     };
   }
 
-  return {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -58,4 +76,7 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
+
+  baseCache.set(overrideKey, result);
+  return result;
 }
