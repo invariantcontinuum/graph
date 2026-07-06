@@ -20,7 +20,7 @@ import { ScenarioRail } from "./components/ScenarioRail";
 import { Topbar } from "./components/Topbar";
 
 // Injected at build time by next.config.ts from the installed package manifest.
-const PACKAGE_VERSION = process.env.NEXT_PUBLIC_GRAPH_VERSION ?? "0.2.13";
+const PACKAGE_VERSION = process.env.NEXT_PUBLIC_GRAPH_VERSION ?? "0.2.14";
 
 function withMeta(snapshot: GraphSnapshot): GraphSnapshot {
   return {
