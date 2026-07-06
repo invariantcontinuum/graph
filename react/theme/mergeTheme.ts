@@ -13,7 +13,8 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-const themeMergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
+const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -21,16 +22,21 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  let innerCache = themeMergeCache.get(base);
-  if (!innerCache) {
-    innerCache = new Map();
-    themeMergeCache.set(base, innerCache);
+  const overridesKey = JSON.stringify(overrides);
+
+  let baseCache = mergeCache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    mergeCache.set(base, baseCache);
   }
 
-  const overridesKey = JSON.stringify(overrides);
-  const cached = innerCache.get(overridesKey);
+  const cached = baseCache.get(overridesKey);
   if (cached) {
     return cached;
+  }
+
+  if (baseCache.size >= 10) {
+    baseCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -75,10 +81,6 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  if (innerCache.size >= 10) {
-    innerCache.clear();
-  }
-  innerCache.set(overridesKey, result);
-
+  baseCache.set(overridesKey, result);
   return result;
 }

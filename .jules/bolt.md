@@ -178,7 +178,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
-
-## 2026-06-23 - [Memoize mergeGraphTheme to prevent React identity drops with dynamic overrides]
-**Learning:** To prevent cascading React identity drops caused by inline object literal props (like `themeOverrides={{...}}`), we need to cache merged configurations. `GraphScene` merges these dynamically, which can cause downstream caches like the WebGL theme conversion to churn.
-**Action:** Use a `WeakMap` keyed on a stable base object combined with a standard `Map` keyed on the serialized string of the overrides to return referentially stable objects and protect downstream caches. Ensure the inner `Map` is size-bounded (e.g., clear if size >= 10) to prevent memory leaks from dynamic overrides.
+## 2026-06-25 - [Memoize mergeTheme to prevent React useMemo identity drops]
+**Learning:** In the React bridge, `mergeGraphTheme` creates a new theme object when `themeOverrides` are provided. Because `themeOverrides` are often inline object literals (e.g., `themeOverrides={{...}}`), they cause the result of `mergeGraphTheme` to have a new reference on every render, invalidating downstream `useMemo` hooks (like `engineTheme`) and causing deep re-computation and churn.
+**Action:** When merging configuration overrides, cache the merged configurations using a `WeakMap` keyed on the stable base object combined with a standard `Map` keyed on the serialized string of the overrides. This returns referentially stable objects and protects downstream caches. Ensure the inner `Map` is size-bounded (e.g., clear if size >= 10) to prevent memory leaks.
