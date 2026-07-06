@@ -179,6 +179,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
 
-## 2026-06-23 - [Cache merged theme objects in mergeGraphTheme]
-**Learning:** In the React bridge, creating a new theme conversion object on every render invalidates identity in hooks that depend on it, resulting in excessive churn and deep re-computation when inline object literals are passed to `mergeGraphTheme`. This is a codebase-specific architecture pattern where React's render lifecycle interacts frequently with the WASM engine.
-**Action:** When extracting functions for configuring dependencies, employ a module-level `WeakMap` cache matching arguments to converted results so they safely endure the React render cycle without garbage collection.
+## 2026-06-23 - [Memoize mergeGraphTheme to prevent React identity drops with dynamic overrides]
+**Learning:** To prevent cascading React identity drops caused by inline object literal props (like `themeOverrides={{...}}`), we need to cache merged configurations. `GraphScene` merges these dynamically, which can cause downstream caches like the WebGL theme conversion to churn.
+**Action:** Use a `WeakMap` keyed on a stable base object combined with a standard `Map` keyed on the serialized string of the overrides to return referentially stable objects and protect downstream caches. Ensure the inner `Map` is size-bounded (e.g., clear if size >= 10) to prevent memory leaks from dynamic overrides.
