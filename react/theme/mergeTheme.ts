@@ -5,6 +5,8 @@ import type {
   NodeTypeStyle,
 } from "./types";
 
+const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+
 function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(value).filter(([, entry]) => entry !== undefined),
@@ -23,17 +25,18 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  const overridesKey = JSON.stringify(overrides);
-  let baseCache = themeCache.get(base);
+  // ⚡ Bolt: Cache merged theme configurations to prevent cascading React identity drops
+  // when `themeOverrides` are passed as inline object literals (e.g., `<GraphScene themeOverrides={{...}} />`).
+  // This ensures we return a referentially stable object for identical overrides,
+  // protecting downstream caches like WebGL JSON conversion.
+  let baseCache = mergeCache.get(base);
   if (!baseCache) {
-    baseCache = new Map();
-    themeCache.set(base, baseCache);
+    baseCache = new Map<string, GraphTheme>();
+    mergeCache.set(base, baseCache);
   }
-
-  const cached = baseCache.get(overridesKey);
-  if (cached) {
-    return cached;
-  }
+  const cacheKey = JSON.stringify(overrides);
+  const cached = baseCache.get(cacheKey);
+  if (cached) return cached;
 
   const defaultNodeStyle: NodeTypeStyle = {
     ...base.defaultNodeStyle,
@@ -60,7 +63,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const result = {
+  const result: GraphTheme = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -77,6 +80,6 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  baseCache.set(overridesKey, result);
+  baseCache.set(cacheKey, result);
   return result;
 }
