@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 pub mod arrows;
 pub mod camera;
 pub mod context;
