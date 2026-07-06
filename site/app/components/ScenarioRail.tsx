@@ -45,6 +45,7 @@ export function ScenarioRail({
               className="scenario-card"
               data-active={item.slug === activeSlug}
               aria-current={item.slug === activeSlug ? "true" : undefined}
+              aria-label={`${item.title}, ${item.subtitle}. ${item.snapshot.nodes.length} nodes and ${item.snapshot.edges.length} edges.`}
               onClick={() => onSelect(item.slug)}
             >
               <span aria-hidden="true">{item.folio}</span>
