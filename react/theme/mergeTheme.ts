@@ -13,11 +13,7 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: Module-level cache to protect against React `useMemo` identity
-// drops causing unnecessary deep theme conversion and garbage collection.
-// The base theme goes in a WeakMap so it can be garbage collected,
-// while the overrides are stringified to serve as a cache key.
-const themeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+const themeMergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -25,17 +21,15 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  // ⚡ Bolt: Cache merged theme configurations to prevent cascading React identity drops
-  // when `themeOverrides` are passed as inline object literals (e.g., `<GraphScene themeOverrides={{...}} />`).
-  // This ensures we return a referentially stable object for identical overrides,
-  // protecting downstream caches like WebGL JSON conversion.
-  let baseCache = mergeCache.get(base);
+  // ⚡ Bolt: Cache merged configurations to prevent cascading React identity drops
+  // caused by inline object literal props.
+  const overrideKey = JSON.stringify(overrides);
+  let baseCache = themeMergeCache.get(base);
   if (!baseCache) {
-    baseCache = new Map<string, GraphTheme>();
-    mergeCache.set(base, baseCache);
+    baseCache = new Map();
+    themeMergeCache.set(base, baseCache);
   }
-  const cacheKey = JSON.stringify(overrides);
-  const cached = baseCache.get(cacheKey);
+  const cached = baseCache.get(overrideKey);
   if (cached) return cached;
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -63,7 +57,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const result: GraphTheme = {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -79,7 +73,6 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
-
-  baseCache.set(cacheKey, result);
+  baseCache.set(overrideKey, result);
   return result;
 }
