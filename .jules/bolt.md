@@ -179,18 +179,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
 
-## 2026-07-05 - [Cache merged theme configurations]
-**Learning:** Inline object literal props (like `themeOverrides={{...}}`) cause cascading React identity drops, invalidating `useMemo` hooks and leading to deep, unnecessary re-computations of derived configurations (e.g., WebGL theme conversions).
-**Action:** Cache merged configurations using a `WeakMap` keyed on a stable base object combined with a bounded `Map` keyed on the serialized string of the overrides. This ensures referentially stable objects are returned, protecting downstream caches.
-
-## 2026-07-05 - [Ignore out-of-scope warnings at the CI workflow level]
-**Learning:** When using nightly tools in CI for stable Rust codebases, new lints (like `clippy::chunks_exact_to_as_chunks`) can cause CI failures on pre-existing code.
-**Action:** Instead of modifying unrelated files to satisfy the linter (which pollutes the PR scope), ignore the specific lint at the workflow level (e.g., `-A clippy::chunks_exact_to_as_chunks`).
-
-## 2026-07-05 - [Disable wasm-opt for wasm-pack builds]
-**Learning:** When using `wasm-pack` with newer rust toolchains in CI, the bundled `wasm-opt` may fail to optimize the generated WebAssembly. This causes the `wasm-pack build` CI step to fail with exit code 1.
-**Action:** Disable `wasm-opt` in the `Cargo.toml` of the WASM crates by adding `[package.metadata.wasm-pack.profile.release]` with `wasm-opt = false`.
-
-## 2026-07-05 - [Install latest wasm-pack manually in CI]
-**Learning:** The `jetli/wasm-pack-action` GitHub Action can fail to build WASM with newer Rust nightly toolchains, resulting in `wasm-opt` errors. Disabling `wasm-opt` entirely to fix this causes severe performance regressions.
-**Action:** Avoid failing GitHub Actions for `wasm-pack`. Instead, install `wasm-pack` directly via the official curl installer (`curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`) to ensure compatibility with modern toolchains while retaining `wasm-opt` performance benefits.
+## 2026-07-06 - [Cache merged theme configurations]
+**Learning:** In the React bridge, cascading identity drops can occur when inline object literal props (like `themeOverrides={{...}}`) are passed. These drops invalidate caches in dependent hooks and result in unnecessary re-computation and deep conversions down the line, reducing React rendering performance.
+**Action:** When accepting configurable objects from props that may be constructed inline, cache merged configurations using a dual `WeakMap` (keyed on the stable base object) and a size-bounded `Map` (keyed on the serialized string of the overrides). This returns referentially stable objects and protects downstream caches (like WebGL theme conversions).
