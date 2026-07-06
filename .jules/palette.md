@@ -141,7 +141,6 @@ Browser smoke must cover:
 ## 2026-05-31 - Contextual Empty States in Shared Components
 **Learning:** Shared components that display lists (like `ConnectionList`) often have a default empty state (e.g. "Select a node to view connections"). However, when context changes (e.g. a node *is* selected but has no edges), the default empty state becomes confusing and misleading. Passing contextual empty copy down from the parent prevents this UX issue.
 **Action:** Passed down a dynamic `emptyCopy` prop to `ConnectionList` in `InspectorRail.tsx` that changes from "Select a node..." to "No connected edges" when a node is actively selected.
-
-## 2024-06-25 - Skip Link Target Focusability
-**Learning:** Adding a "skip-to-content" link is only half the solution for keyboard accessibility. If the target element (like `<div id="graph-stage">`) does not natively accept focus, the browser will scroll to the target but won't move the programmatic focus. As a result, the next time the user presses Tab, their focus will jump back to the top of the page.
-**Action:** Always add `tabIndex={-1}` to the target container of a "skip-to-content" link so it can receive programmatic focus and properly reset the document tab order for screen readers and keyboard navigation.
+## 2023-10-24 - Accessibility on external links
+**Learning:** External links utilizing `target="_blank"` cause a sudden context switch, which can be disorienting for screen reader users if not explicitly announced.
+**Action:** Always provide an explicit `aria-label` (e.g., "GitHub (opens in a new tab)") when rendering external links to ensure users are warned of the context switch.
