@@ -146,8 +146,7 @@ impl RenderEngine {
 
 impl RenderEngine {
     fn rewrite_dragged_edge_endpoints(&mut self, old_x: f32, old_y: f32, new_x: f32, new_y: f32) {
-        #[allow(clippy::chunks_exact_to_as_chunks)]
-        for edge in self.edge_data.chunks_exact_mut(6) {
+        for edge in self.edge_data.as_chunks_mut::<6>().0 {
             if edge[0].to_bits() == old_x.to_bits() && edge[1].to_bits() == old_y.to_bits() {
                 edge[0] = new_x;
                 edge[1] = new_y;

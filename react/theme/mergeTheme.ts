@@ -13,26 +13,6 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-function stableSerialize(obj: unknown): string {
-  if (obj === null || typeof obj !== "object") {
-    return JSON.stringify(obj);
-  }
-  if (Array.isArray(obj)) {
-    return `[${obj.map(stableSerialize).join(",")}]`;
-  }
-  const record = obj as Record<string, unknown>;
-  const keys = Object.keys(record).sort((a, b) => a.localeCompare(b));
-  const parts = keys.map(
-    (k) => `${JSON.stringify(k)}:${stableSerialize(record[k])}`,
-  );
-  return `{${parts.join(",")}}`;
-}
-
-// ⚡ Bolt: Module-level cache to prevent cascading React identity drops.
-// If an app passes `themeOverrides={{...}}` inline, rebuilding the theme on every render
-// causes deep WebGL theme conversions. This WeakMap protects against that.
-// The inner Map is size-bounded to prevent memory leaks if the app animates overrides.
-const MAX_CACHE_SIZE = 10;
 const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
@@ -41,7 +21,10 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  const overridesKey = stableSerialize(overrides);
+  // ⚡ Bolt: Cache merged configurations to prevent cascading React identity
+  // drops caused by inline object literal props (like `themeOverrides={{...}}`).
+  // This returns referentially stable objects and protects downstream caches.
+  const overridesKey = JSON.stringify(overrides);
   let baseCache = mergeCache.get(base);
   if (!baseCache) {
     baseCache = new Map();
@@ -49,8 +32,11 @@ export function mergeGraphTheme(
   }
 
   const cached = baseCache.get(overridesKey);
-  if (cached) {
-    return cached;
+  if (cached) return cached;
+
+  // Prevent memory leaks from dynamic overrides
+  if (baseCache.size >= 10) {
+    baseCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -78,7 +64,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const merged: GraphTheme = {
+  const merged = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -94,11 +80,6 @@ export function mergeGraphTheme(
     nodeTypes,
     edgeTypes,
   };
-
-  // Simple LRU-ish bound: clear the cache if it gets too large.
-  if (baseCache.size >= MAX_CACHE_SIZE) {
-    baseCache.clear();
-  }
 
   baseCache.set(overridesKey, merged);
   return merged;

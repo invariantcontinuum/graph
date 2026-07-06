@@ -29,8 +29,7 @@ pub fn neighborhood_indices(
 ) -> HashSet<usize> {
     let mut keep = HashSet::new();
     keep.insert(focus_idx);
-    #[allow(clippy::chunks_exact_to_as_chunks)]
-    for chunk in edge_data.chunks_exact(6) {
+    for chunk in edge_data.as_chunks::<6>().0 {
         let sx = chunk[0].to_bits();
         let sy = chunk[1].to_bits();
         let tx = chunk[2].to_bits();
