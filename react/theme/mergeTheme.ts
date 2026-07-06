@@ -13,8 +13,10 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// Memory caching to prevent cascading React identity drops when overrides is an inline object
-const baseCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+// ⚡ Bolt: Cache merged configurations to prevent cascading React identity drops
+// caused by inline object literal props (like `themeOverrides={{...}}`).
+// Uses a WeakMap on the stable base combined with a size-bounded Map on the serialized overrides.
+const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -22,21 +24,16 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  let overrideCache = baseCache.get(base);
-  if (!overrideCache) {
-    overrideCache = new Map<string, GraphTheme>();
-    baseCache.set(base, overrideCache);
+  const overridesKey = JSON.stringify(overrides);
+  let innerMap = mergeCache.get(base);
+  if (!innerMap) {
+    innerMap = new Map();
+    mergeCache.set(base, innerMap);
   }
 
-  const cacheKey = JSON.stringify(overrides);
-  const cached = overrideCache.get(cacheKey);
+  const cached = innerMap.get(overridesKey);
   if (cached) {
     return cached;
-  }
-
-  // Cap the size of the inner map to prevent memory leaks from dynamic overrides
-  if (overrideCache.size >= 10) {
-    overrideCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -64,7 +61,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const merged = {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -81,6 +78,10 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  overrideCache.set(cacheKey, merged);
-  return merged;
+  if (innerMap.size >= 10) {
+    innerMap.clear();
+  }
+  innerMap.set(overridesKey, result);
+
+  return result;
 }
