@@ -13,9 +13,8 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: Module-level cache to prevent cascading React identity drops
-// caused by inline object literal props for theme overrides.
-const mergedThemeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+// Memory caching to prevent cascading React identity drops when overrides is an inline object
+const baseCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -23,21 +22,21 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  // Serialize overrides to catch identical inline objects across renders.
-  const overridesKey = JSON.stringify(overrides);
-  let innerCache = mergedThemeCache.get(base);
-
-  if (!innerCache) {
-    innerCache = new Map();
-    mergedThemeCache.set(base, innerCache);
+  let overrideCache = baseCache.get(base);
+  if (!overrideCache) {
+    overrideCache = new Map<string, GraphTheme>();
+    baseCache.set(base, overrideCache);
   }
 
-  const cached = innerCache.get(overridesKey);
-  if (cached) return cached;
+  const cacheKey = JSON.stringify(overrides);
+  const cached = overrideCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
-  // Prevent memory leaks from dynamic overrides
-  if (innerCache.size >= 10) {
-    innerCache.clear();
+  // Cap the size of the inner map to prevent memory leaks from dynamic overrides
+  if (overrideCache.size >= 10) {
+    overrideCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -65,7 +64,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const merged: GraphTheme = {
+  const merged = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -82,6 +81,6 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  innerCache.set(overridesKey, merged);
+  overrideCache.set(cacheKey, merged);
   return merged;
 }

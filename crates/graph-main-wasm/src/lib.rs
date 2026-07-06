@@ -1,5 +1,4 @@
 #![allow(clippy::chunks_exact_to_as_chunks)]
-
 use wasm_bindgen::prelude::*;
 
 pub mod bezier;
