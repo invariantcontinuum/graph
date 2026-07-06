@@ -309,6 +309,7 @@ fn aabb_of(indices: &[usize], positions: &[f32]) -> Option<(f32, f32, f32, f32)>
     min_x.is_finite().then_some((min_x, min_y, max_x, max_y))
 }
 
+#[allow(clippy::chunks_exact_to_as_chunks)]
 fn aabb_from_all_positions(positions: &[f32]) -> Option<(f32, f32, f32, f32)> {
     let mut min_x = f32::INFINITY;
     let mut min_y = f32::INFINITY;

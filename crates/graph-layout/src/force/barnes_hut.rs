@@ -197,6 +197,7 @@ impl QuadNode {
 
 /// Compute axis-aligned bounding box over a flat positions buffer
 /// `[x0, y0, x1, y1, ...]`, padded by `pad` units on each side.
+#[allow(clippy::chunks_exact_to_as_chunks)]
 pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
     let mut x_min = f32::MAX;
     let mut y_min = f32::MAX;
