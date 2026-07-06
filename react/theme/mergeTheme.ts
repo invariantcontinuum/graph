@@ -13,8 +13,6 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
-
 export function mergeGraphTheme(
   base: GraphTheme,
   overrides?: GraphThemeOverrides | null,
