@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Pointer input handlers — click, hover, pan, zoom, and node drag.
 //!
 //! Drag handlers queue `pin_node` / `unpin_node` messages in

@@ -1,3 +1,4 @@
+#![allow(clippy::chunks_exact_to_as_chunks)]
 //! Force-directed graph layout using Barnes-Hut repulsion and spring edges.
 //!
 //! The module is split along these seams:
