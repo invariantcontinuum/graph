@@ -13,10 +13,13 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: WeakMap cache matching stable base object combined with a bounded Map
-// matching the serialized overrides protects against cascading React identity drops
-// that cause WebGL theme conversions.
-const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+// ⚡ Bolt: Two-level cache.
+// Level 1: WeakMap keyed on the base theme (stable instance from buildGraphTheme)
+// Level 2: Map keyed on the serialized overrides string to detect identical
+// inline object literals passed on re-renders.
+// This prevents cascading identity drops in GraphScene which cause
+// deep theme conversion churn and layout/render recalculation.
+const cache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -24,16 +27,17 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
+  // Serialize overrides to act as cache key
   const cacheKey = JSON.stringify(overrides);
-  let innerMap = mergeCache.get(base);
-  if (!innerMap) {
-    innerMap = new Map();
-    mergeCache.set(base, innerMap);
-  }
-
-  const cached = innerMap.get(cacheKey);
-  if (cached) {
-    return cached;
+  let baseCache = cache.get(base);
+  if (!baseCache) {
+    baseCache = new Map();
+    cache.set(base, baseCache);
+  } else {
+    const cached = baseCache.get(cacheKey);
+    if (cached) return cached;
+    // Bound the inner map to prevent memory leaks from dynamic overrides
+    if (baseCache.size >= 10) baseCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -61,7 +65,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const merged = {
+  const result = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -78,10 +82,6 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  if (innerMap.size >= 10) {
-    innerMap.clear();
-  }
-  innerMap.set(cacheKey, merged);
-
-  return merged;
+  baseCache.set(cacheKey, result);
+  return result;
 }

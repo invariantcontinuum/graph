@@ -178,6 +178,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
-## 2026-06-25 - [Cache merged React props using WeakMap to prevent identity drops]
-**Learning:** In the React bridge, cascading React identity drops from inline object literal props for `themeOverrides` trigger unnecessary deep WebGL theme conversion and garbage collection because of the dynamic creation of new theme configs on every render.
-**Action:** When extracting functions for merging dependent configurations (e.g., `mergeGraphTheme`), employ a module-level `WeakMap` cache keyed on a stable base object combined with a size-bounded `Map` keyed on the serialized string of the overrides to return referentially stable objects and protect downstream caches.
+
+## 2026-06-23 - [Memoize GraphTheme overrides merge]
+**Learning:** In the React bridge, `mergeGraphTheme` creates a new theme object every time it's called with inline object literal overrides, even if the content is identical. This causes downstream identity drops and deep theme conversion churn.
+**Action:** When merging theme overrides, use a two-level cache (`WeakMap` keyed by base theme, holding a bounded `Map` keyed by serialized overrides) to return referentially stable objects and protect downstream caches.
