@@ -13,9 +13,9 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: Cache merged configurations to prevent cascading React identity drops
-// caused by inline object literal props (like `themeOverrides={{...}}`).
-// Uses a WeakMap on the stable base combined with a size-bounded Map on the serialized overrides.
+// ⚡ Bolt: WeakMap cache matching stable base object combined with a bounded Map
+// matching the serialized overrides protects against cascading React identity drops
+// that cause WebGL theme conversions.
 const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
@@ -24,14 +24,14 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  const overridesKey = JSON.stringify(overrides);
+  const cacheKey = JSON.stringify(overrides);
   let innerMap = mergeCache.get(base);
   if (!innerMap) {
     innerMap = new Map();
     mergeCache.set(base, innerMap);
   }
 
-  const cached = innerMap.get(overridesKey);
+  const cached = innerMap.get(cacheKey);
   if (cached) {
     return cached;
   }
@@ -61,7 +61,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const result = {
+  const merged = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -81,7 +81,7 @@ export function mergeGraphTheme(
   if (innerMap.size >= 10) {
     innerMap.clear();
   }
-  innerMap.set(overridesKey, result);
+  innerMap.set(cacheKey, merged);
 
-  return result;
+  return merged;
 }
