@@ -13,13 +13,12 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: Two-level cache.
-// Level 1: WeakMap keyed on the base theme (stable instance from buildGraphTheme)
-// Level 2: Map keyed on the serialized overrides string to detect identical
-// inline object literals passed on re-renders.
-// This prevents cascading identity drops in GraphScene which cause
-// deep theme conversion churn and layout/render recalculation.
-const cache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+// ⚡ Bolt: Cache merged theme objects to prevent cascading identity drops
+// in React's render cycle caused by inline object literal themeOverrides props.
+// The WeakMap is keyed by the base theme, and the inner Map by the serialized
+// string of the overrides, ensuring referential stability for downstream
+// WebGL memoization hooks.
+const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -27,17 +26,14 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
-  // Serialize overrides to act as cache key
   const cacheKey = JSON.stringify(overrides);
-  let baseCache = cache.get(base);
-  if (!baseCache) {
-    baseCache = new Map();
-    cache.set(base, baseCache);
+  let innerCache = mergeCache.get(base);
+  if (!innerCache) {
+    innerCache = new Map();
+    mergeCache.set(base, innerCache);
   } else {
-    const cached = baseCache.get(cacheKey);
+    const cached = innerCache.get(cacheKey);
     if (cached) return cached;
-    // Bound the inner map to prevent memory leaks from dynamic overrides
-    if (baseCache.size >= 10) baseCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -65,7 +61,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const result = {
+  const merged: GraphTheme = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -82,6 +78,10 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  baseCache.set(cacheKey, result);
-  return result;
+  // Size bound the inner map to prevent memory leaks from dynamic overrides
+  if (innerCache.size >= 10) {
+    innerCache.clear();
+  }
+  innerCache.set(cacheKey, merged);
+  return merged;
 }
