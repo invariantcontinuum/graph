@@ -11,13 +11,11 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-// ⚡ Bolt: Cache merged themes to prevent cascading React identity drops.
-// By caching based on the serialized overrides, if a user passes an inline
-// object literal (`themeOverrides={{...}}`), we guarantee the returned
-// GraphTheme remains referentially stable. This ensures downstream WeakMap caches
-// (like `graphThemeToEngineJson`) hit, avoiding expensive WASM `set_theme`
-// calls on every render.
-const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+// ⚡ Bolt: Module-level cache to protect against React `useMemo` identity
+// drops causing unnecessary deep theme conversion and garbage collection.
+// The base theme goes in a WeakMap so it can be garbage collected,
+// while the overrides are stringified to serve as a cache key.
+const themeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -26,14 +24,15 @@ export function mergeGraphTheme(
   if (!overrides) return base;
 
   const overridesKey = JSON.stringify(overrides);
-  let baseCache = mergeCache.get(base);
+  let baseCache = themeCache.get(base);
   if (!baseCache) {
     baseCache = new Map();
-    mergeCache.set(base, baseCache);
+    themeCache.set(base, baseCache);
   }
 
-  if (baseCache.has(overridesKey)) {
-    return baseCache.get(overridesKey)!;
+  const cached = baseCache.get(overridesKey);
+  if (cached) {
+    return cached;
   }
 
   const defaultNodeStyle: NodeTypeStyle = {

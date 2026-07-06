@@ -178,6 +178,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
-## 2026-06-23 - [Cache merged GraphTheme to prevent cascading identity drops]
-**Learning:** In React, if a downstream object's identity relies on upstream useMemo hooks, inline user prop literals (like `themeOverrides={{...}}`) can invalidate all upstream dependencies, causing the downstream `WeakMap` cache (e.g., in `graphThemeToEngineJson`) to miss on every render. This forces deep JSON conversion and triggers expensive WebGL `set_theme` updates continuously.
-**Action:** Use a combination of a `WeakMap` (keyed on the stable base theme) and a standard `Map` (keyed on the serialized string of the overrides literal) to memoize and return a referentially stable merged theme object. This breaks the cascade and preserves downstream caches.
+## 2026-06-24 - [Memoize mergeGraphTheme to prevent React identity drops]
+**Learning:** In the React bridge, `mergeGraphTheme` merges base theme with overrides on every render in `GraphScene`'s `useMemo` hooks. This creates a new identity if it's not cached, which causes cascading re-renders and unnecessary re-conversions in `graphThemeToEngineJson`.
+**Action:** When merging configuration objects like themes in a performance-critical path, use a module-level `WeakMap` coupled with a stringified key map (e.g. `Map<string, GraphTheme>`) to cache merged results and ensure referential stability across React renders for identical base themes and overrides.
