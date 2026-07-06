@@ -13,8 +13,7 @@ function defined<T extends Record<string, unknown>>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-
-const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
+const themeMergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
 export function mergeGraphTheme(
   base: GraphTheme,
@@ -22,21 +21,18 @@ export function mergeGraphTheme(
 ): GraphTheme {
   if (!overrides) return base;
 
+  // ⚡ Bolt: Cache merged configurations to prevent inline object literal props
+  // from breaking downstream reference equality and causing conversion churn.
   const overridesKey = JSON.stringify(overrides);
-
-  let baseCache = mergeCache.get(base);
-  if (!baseCache) {
-    baseCache = new Map();
-    mergeCache.set(base, baseCache);
+  let innerCache = themeMergeCache.get(base);
+  if (!innerCache) {
+    innerCache = new Map<string, GraphTheme>();
+    themeMergeCache.set(base, innerCache);
   }
 
-  const cached = baseCache.get(overridesKey);
+  const cached = innerCache.get(overridesKey);
   if (cached) {
     return cached;
-  }
-
-  if (baseCache.size >= 10) {
-    baseCache.clear();
   }
 
   const defaultNodeStyle: NodeTypeStyle = {
@@ -64,7 +60,7 @@ export function mergeGraphTheme(
     };
   }
 
-  const result = {
+  const result: GraphTheme = {
     ...base,
     canvasBg: overrides.canvasBg ?? base.canvasBg,
     gridLineColor: overrides.gridLineColor ?? base.gridLineColor,
@@ -81,6 +77,10 @@ export function mergeGraphTheme(
     edgeTypes,
   };
 
-  baseCache.set(overridesKey, result);
+  if (innerCache.size >= 10) {
+    innerCache.clear();
+  }
+  innerCache.set(overridesKey, result);
+
   return result;
 }

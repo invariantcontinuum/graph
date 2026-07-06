@@ -178,6 +178,19 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-22 (PR 148) - [Use branchless bitwise operations in spatial branching]
 **Learning:** In Rust hot paths like quadtree traversal (e.g., the Barnes-Hut algorithm), unpredictable spatial branching (`if x < mx`, `y < my`) causes CPU pipeline stalls.
 **Action:** Replacing nested `if/else` blocks with branchless bitwise operations (e.g., `((x >= mx) as usize) | (((y >= my) as usize) << 1)`) yields measurable execution speedups for unpredictable coordinate classification.
-## 2026-06-23 - [Use allow directive to suppress unstable clippy feature suggestions]
-**Learning:** In stable Rust codebases, standard tools may sometimes suggest nightly-only or unstable features (e.g., `clippy::chunks_exact_to_as_chunks` suggesting `.as_chunks::<N>()` instead of `.chunks_exact(N)`).
-**Action:** Do not use unstable features to silence linter warnings. Instead, append `#[allow(clippy::chunks_exact_to_as_chunks)]` to the enclosing function or module to prevent the warning from breaking CI builds (`-D warnings`) while maintaining compatibility with stable Rust compilers.
+
+## 2026-07-05 - [Cache merged theme configurations]
+**Learning:** Inline object literal props (like `themeOverrides={{...}}`) cause cascading React identity drops, invalidating `useMemo` hooks and leading to deep, unnecessary re-computations of derived configurations (e.g., WebGL theme conversions).
+**Action:** Cache merged configurations using a `WeakMap` keyed on a stable base object combined with a bounded `Map` keyed on the serialized string of the overrides. This ensures referentially stable objects are returned, protecting downstream caches.
+
+## 2026-07-05 - [Ignore out-of-scope warnings at the CI workflow level]
+**Learning:** When using nightly tools in CI for stable Rust codebases, new lints (like `clippy::chunks_exact_to_as_chunks`) can cause CI failures on pre-existing code.
+**Action:** Instead of modifying unrelated files to satisfy the linter (which pollutes the PR scope), ignore the specific lint at the workflow level (e.g., `-A clippy::chunks_exact_to_as_chunks`).
+
+## 2026-07-05 - [Disable wasm-opt for wasm-pack builds]
+**Learning:** When using `wasm-pack` with newer rust toolchains in CI, the bundled `wasm-opt` may fail to optimize the generated WebAssembly. This causes the `wasm-pack build` CI step to fail with exit code 1.
+**Action:** Disable `wasm-opt` in the `Cargo.toml` of the WASM crates by adding `[package.metadata.wasm-pack.profile.release]` with `wasm-opt = false`.
+
+## 2026-07-05 - [Install latest wasm-pack manually in CI]
+**Learning:** The `jetli/wasm-pack-action` GitHub Action can fail to build WASM with newer Rust nightly toolchains, resulting in `wasm-opt` errors. Disabling `wasm-opt` entirely to fix this causes severe performance regressions.
+**Action:** Avoid failing GitHub Actions for `wasm-pack`. Instead, install `wasm-pack` directly via the official curl installer (`curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`) to ensure compatibility with modern toolchains while retaining `wasm-opt` performance benefits.
