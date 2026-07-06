@@ -35,5 +35,5 @@ harness = false
 version = "0.5"
 default-features = false
 
-[lints.clippy]
-chunks_exact_to_as_chunks = "allow"
+[lints]
+workspace = true

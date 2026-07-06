@@ -15,5 +15,5 @@ criterion = { version = "0.5", features = ["html_reports"] }
 name = "layout_bench"
 harness = false
 
-[lints.clippy]
-chunks_exact_to_as_chunks = "allow"
+[lints]
+workspace = true
