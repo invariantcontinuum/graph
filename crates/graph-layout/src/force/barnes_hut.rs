@@ -219,6 +219,7 @@ pub(super) fn bounding_box(positions_flat: &[f32], pad: f32) -> Bounds {
 }
 
 /// Build and populate a Barnes-Hut tree from a flat positions buffer.
+#[allow(clippy::chunks_exact_to_as_chunks)]
 pub(super) fn build_tree(positions_flat: &[f32], bounds: Bounds) -> QuadNode {
     let (x_min, y_min, x_max, y_max) = bounds;
     let mut root = QuadNode::new(x_min, y_min, x_max, y_max);
