@@ -145,3 +145,7 @@ Browser smoke must cover:
 ## 2026-06-25 - Programmatic Focus for Skip Links
 **Learning:** "Skip-to-content" links target container elements (e.g., `<div id="graph-stage">`) to help keyboard and screen reader users bypass repetitive navigation. However, if the target container lacks a `tabIndex`, the browser will scroll to the element but fail to move programmatic focus, leaving the user's tab order unchanged and defeating the purpose of the skip link.
 **Action:** Always add `tabIndex={-1}` to the target container of a "skip-to-content" link so it can receive programmatic focus and properly reset the document tab order.
+
+## 2026-07-06 - Expand abbreviations and embed adjacent context in aria-labels
+**Learning:** Screen readers announce the exact text content of elements. When abbreviations like "42n / 12e" are used for visual density on interactive cards, they read poorly ("42n slash 12e"). Furthermore, screen reader users navigating interactively via the Tab key will skip non-focusable adjacent context (e.g. edge connection types presented next to a button).
+**Action:** Expand abbreviations into natural language (e.g. "42 nodes and 12 edges") within `aria-label`s. Ensure that crucial adjacent visual context (like edge connection type) is embedded directly into the interactive element's `aria-label` so that context is not lost during Tab-key navigation.

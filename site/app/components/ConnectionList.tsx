@@ -37,7 +37,7 @@ export function ConnectionList({
             <button
               type="button"
               title={neighborName}
-              aria-label={`Select neighbor ${neighborName}`}
+              aria-label={`Select neighbor ${neighborName} (connected via ${compactLabel(edge.type)})`}
               onClick={() => onSelect(neighborId)}
             >
               {neighborName}
