@@ -134,7 +134,13 @@ fn integrate_positions(
         vel.1 = (vel.1 + fy) * DAMPING;
 
         let v_sq = vel.0 * vel.0 + vel.1 * vel.1;
-        max_velocity_sq = max_velocity_sq.max(v_sq);
+
+        // ⚡ Bolt: `f32::max()` includes standard NaN checks which add overhead
+        // in hot loops. Since `v_sq` is guaranteed to be non-negative (x^2 + y^2),
+        // we can safely use simple comparison without NaN risk to improve throughput.
+        if v_sq > max_velocity_sq {
+            max_velocity_sq = v_sq;
+        }
 
         pos[0] += vel.0;
         pos[1] += vel.1;
