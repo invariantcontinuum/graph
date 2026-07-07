@@ -184,3 +184,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-25 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
 **Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative (e.g., $x^2 + y^2$), this overhead is unnecessary.
 **Action:** When determining the maximum of squared values or guaranteed non-negative/non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
+## 2026-06-25 - [Inline object allocations in hot render paths]
+**Learning:** In hot render paths that run every frame (like `drawOneLabel` in Canvas2D overlays), calling helper functions that return short-lived objects (e.g., `{w, h}` or `{family, weight, basePx}`) causes excessive memory churn and triggers garbage collection pauses that drop FPS.
+**Action:** When computing layout metrics inside per-node/per-frame loops, compute them inline as local primitive variables and pass them as flat arguments to downstream functions instead of encapsulating them in short-lived parameter objects.
