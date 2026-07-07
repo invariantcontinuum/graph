@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# WASM binaries are synced from the installed package at build time
+public/graph_main_wasm_bg.wasm
+public/graph_worker_wasm_bg.wasm
