@@ -64,7 +64,11 @@ export function Playground() {
   }, []);
 
   return (
-    <section className="section playground" id="playground" aria-labelledby="pg-h">
+    <section
+      className="section playground"
+      id="playground"
+      aria-labelledby="pg-h"
+    >
       <Reveal>
         <h2 id="pg-h">Five datasets, one engine</h2>
         <p className="section-lede">
@@ -132,6 +136,7 @@ export function Playground() {
                 type="button"
                 onClick={() => graphRef.current?.zoomOut()}
                 aria-label="Zoom out"
+                aria-keyshortcuts="-"
               >
                 &minus;
               </button>
@@ -139,6 +144,7 @@ export function Playground() {
                 type="button"
                 onClick={() => graphRef.current?.zoomIn()}
                 aria-label="Zoom in"
+                aria-keyshortcuts="Plus"
               >
                 +
               </button>
@@ -160,7 +166,11 @@ export function Playground() {
                   type {selected.type}, {selectedEdges.length} connection
                   {selectedEdges.length === 1 ? "" : "s"}
                 </span>
-                <button type="button" onClick={clearSelection}>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  aria-keyshortcuts="Escape"
+                >
                   Clear
                 </button>
               </>
