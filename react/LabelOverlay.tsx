@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
-import { worldToScreen, screenZoom } from "./overlays/vpMath";
+import { screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface LabelOverlayProps {
@@ -156,7 +156,10 @@ interface FrameContext {
   theme: GraphTheme;
 }
 
-function drawAllLabels(ctx: CanvasRenderingContext2D, frame: FrameContext): void {
+function drawAllLabels(
+  ctx: CanvasRenderingContext2D,
+  frame: FrameContext,
+): void {
   const { positions, nodeIds } = frame;
   // Iterate engine-ordered ids. positions stride-4: [x, y, radius, type_idx].
   for (let i = 0; i < nodeIds.length; i++) {
@@ -172,37 +175,81 @@ function drawOneLabel(
   index: number,
   off: number,
 ): void {
-  const { positions, vpMatrix, cvs, zoom, dpr, nodeIds, labels, nodeTypes, theme } = frame;
+  const {
+    positions,
+    vpMatrix,
+    cvs,
+    zoom,
+    dpr,
+    nodeIds,
+    labels,
+    nodeTypes,
+    theme,
+  } = frame;
 
   const id = nodeIds[index];
   const wx = positions[off];
   const wy = positions[off + 1];
-  const { sx, sy } = worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height);
+
+  const cx = vpMatrix[0] * wx + vpMatrix[4] * wy + vpMatrix[12];
+  const cy = vpMatrix[1] * wx + vpMatrix[5] * wy + vpMatrix[13];
+  const sx = (cx + 1) * 0.5 * cvs.width;
+  const sy = (1 - cy) * 0.5 * cvs.height;
+
   if (isOffscreen(sx, sy, cvs)) return;
 
   const type = nodeTypes[id] ?? "";
   const typeStyle = theme.nodeTypes[type] ?? theme.defaultNodeStyle;
-  const nodeBox = computeNodeBox(typeStyle, theme, zoom, dpr);
-  if (nodeBox.w < MIN_NODE_WIDTH_PX * dpr || nodeBox.h < MIN_NODE_HEIGHT_PX * dpr) return;
 
-  const textBox = computeTextBox(nodeBox, dpr);
-  if (textBox.w < MIN_BOX_WIDTH_PX * dpr || textBox.h < MIN_BOX_HEIGHT_PX * dpr) return;
+  const halfW = typeStyle.halfWidth ?? theme.defaultNodeStyle.halfWidth;
+  const halfH = typeStyle.halfHeight ?? theme.defaultNodeStyle.halfHeight;
+  const nodeBoxW = Math.max(halfW * 2 * zoom * dpr, 0);
+  const nodeBoxH = Math.max(halfH * 2 * zoom * dpr, 0);
+  if (nodeBoxW < MIN_NODE_WIDTH_PX * dpr || nodeBoxH < MIN_NODE_HEIGHT_PX * dpr)
+    return;
 
-  const fonts = resolveFont(typeStyle, zoom, dpr);
+  const padX = Math.min(PAD_MAX_X_PX * dpr, nodeBoxW * PAD_AXIS_RATIO);
+  const padY = Math.min(PAD_MAX_Y_PX * dpr, nodeBoxH * PAD_AXIS_RATIO);
+  const textBoxW = nodeBoxW - 2 * padX;
+  const textBoxH = nodeBoxH - 2 * padY;
+  if (textBoxW < MIN_BOX_WIDTH_PX * dpr || textBoxH < MIN_BOX_HEIGHT_PX * dpr)
+    return;
+
+  const requestedFontPx =
+    (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
+  const fontFamily = typeStyle.labelFont ?? DEFAULT_LABEL_FONT_FAMILY;
+  const fontWeight = typeStyle.labelWeight ?? DEFAULT_LABEL_FONT_WEIGHT;
+  const baseFontPx = Math.min(
+    Math.max(requestedFontPx, MIN_LABEL_FONT_PX * dpr),
+    MAX_LABEL_FONT_PX * dpr,
+  );
+
   const fitted = fitLabelInBox({
     ctx,
     text: labels[id] ?? "",
-    maxWidth: textBox.w,
-    maxHeight: textBox.h,
-    fontFamily: fonts.family,
-    fontWeight: fonts.weight,
-    baseFontPx: fonts.basePx,
+    maxWidth: textBoxW,
+    maxHeight: textBoxH,
+    fontFamily: fontFamily,
+    fontWeight: fontWeight,
+    baseFontPx: baseFontPx,
     minFontPx: MIN_LABEL_FONT_PX * dpr,
     dpr,
   });
   if (!fitted) return;
 
-  paintLabel(ctx, { sx, sy, nodeBox, fitted, typeStyle, theme, fonts, dpr });
+  paintLabel(
+    ctx,
+    sx,
+    sy,
+    nodeBoxW,
+    nodeBoxH,
+    fitted,
+    typeStyle,
+    theme,
+    fontFamily,
+    fontWeight,
+    dpr,
+  );
 }
 
 function isOffscreen(sx: number, sy: number, cvs: HTMLCanvasElement): boolean {
@@ -214,70 +261,32 @@ function isOffscreen(sx: number, sy: number, cvs: HTMLCanvasElement): boolean {
   );
 }
 
-interface NodeBoxPx {
-  w: number;
-  h: number;
-}
-
-function computeNodeBox(
+function paintLabel(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  nodeBoxW: number,
+  nodeBoxH: number,
+  fitted: FittedLabel,
   typeStyle: NodeTypeStyle,
   theme: GraphTheme,
-  zoom: number,
+  fontFamily: string,
+  fontWeight: number,
   dpr: number,
-): NodeBoxPx {
-  const halfW = typeStyle.halfWidth ?? theme.defaultNodeStyle.halfWidth;
-  const halfH = typeStyle.halfHeight ?? theme.defaultNodeStyle.halfHeight;
-  return {
-    w: Math.max(halfW * 2 * zoom * dpr, 0),
-    h: Math.max(halfH * 2 * zoom * dpr, 0),
-  };
-}
-
-function computeTextBox(nodeBox: NodeBoxPx, dpr: number): NodeBoxPx {
-  const padX = Math.min(PAD_MAX_X_PX * dpr, nodeBox.w * PAD_AXIS_RATIO);
-  const padY = Math.min(PAD_MAX_Y_PX * dpr, nodeBox.h * PAD_AXIS_RATIO);
-  return { w: nodeBox.w - 2 * padX, h: nodeBox.h - 2 * padY };
-}
-
-interface ResolvedFont {
-  family: string;
-  weight: number;
-  basePx: number;
-}
-
-function resolveFont(typeStyle: NodeTypeStyle, zoom: number, dpr: number): ResolvedFont {
-  const requested = (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
-  return {
-    family: typeStyle.labelFont ?? DEFAULT_LABEL_FONT_FAMILY,
-    weight: typeStyle.labelWeight ?? DEFAULT_LABEL_FONT_WEIGHT,
-    basePx: Math.min(Math.max(requested, MIN_LABEL_FONT_PX * dpr), MAX_LABEL_FONT_PX * dpr),
-  };
-}
-
-interface PaintParams {
-  sx: number;
-  sy: number;
-  nodeBox: NodeBoxPx;
-  fitted: FittedLabel;
-  typeStyle: NodeTypeStyle;
-  theme: GraphTheme;
-  fonts: ResolvedFont;
-  dpr: number;
-}
-
-function paintLabel(ctx: CanvasRenderingContext2D, p: PaintParams): void {
-  const { sx, sy, nodeBox, fitted, typeStyle, theme, fonts, dpr } = p;
-
+): void {
   ctx.save();
   ctx.beginPath();
-  ctx.rect(sx - nodeBox.w * 0.5, sy - nodeBox.h * 0.5, nodeBox.w, nodeBox.h);
+  ctx.rect(sx - nodeBoxW * 0.5, sy - nodeBoxH * 0.5, nodeBoxW, nodeBoxH);
   ctx.clip();
 
-  ctx.font = `${fonts.weight} ${fitted.fontPx}px ${fonts.family}`;
+  ctx.font = `${fontWeight} ${fitted.fontPx}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
-  ctx.lineWidth = Math.max(STROKE_WIDTH_FLOOR_PX * dpr, fitted.fontPx * STROKE_WIDTH_RATIO);
+  ctx.lineWidth = Math.max(
+    STROKE_WIDTH_FLOOR_PX * dpr,
+    fitted.fontPx * STROKE_WIDTH_RATIO,
+  );
   ctx.strokeStyle = theme.labelHalo ?? theme.canvasBg;
   ctx.fillStyle = typeStyle.labelColor ?? theme.defaultNodeStyle.labelColor;
 
