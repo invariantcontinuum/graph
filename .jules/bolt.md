@@ -187,3 +187,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-06-25 - [Inline object allocations in hot render paths]
 **Learning:** In hot render paths that run every frame (like `drawOneLabel` in Canvas2D overlays), calling helper functions that return short-lived objects (e.g., `{w, h}` or `{family, weight, basePx}`) causes excessive memory churn and triggers garbage collection pauses that drop FPS.
 **Action:** When computing layout metrics inside per-node/per-frame loops, compute them inline as local primitive variables and pass them as flat arguments to downstream functions instead of encapsulating them in short-lived parameter objects.
+## 2026-07-08 - [Inline short-lived layout objects in Canvas2D render loop]
+**Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), allocating short-lived objects (like returning `{w, h}` or parameter objects) causes excessive memory churn and GC pauses that drop FPS.
+**Action:** Compute layout metrics inline as local primitive variables and pass flat arguments to downstream functions to prevent memory churn.
