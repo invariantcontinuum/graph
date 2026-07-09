@@ -15,9 +15,10 @@ export function toLocalPointer(
   };
 }
 
-export function centroid(
-  activePointers: Map<number, PointerState>,
-): { x: number; y: number } {
+export function centroid(activePointers: Map<number, PointerState>): {
+  x: number;
+  y: number;
+} {
   let x = 0;
   let y = 0;
   for (const p of activePointers.values()) {
@@ -27,9 +28,7 @@ export function centroid(
   return { x: x / activePointers.size, y: y / activePointers.size };
 }
 
-export function pinchDist(
-  activePointers: Map<number, PointerState>,
-): number {
+export function pinchDist(activePointers: Map<number, PointerState>): number {
   const arr = [...activePointers.values()];
   const dx = arr[0].x - arr[1].x;
   const dy = arr[0].y - arr[1].y;
@@ -44,10 +43,13 @@ export function handleHoverOnly(
     onNodeHover?: (node: any) => void;
   },
   nodeFromId: (id: string) => any,
+  updateCursor: boolean = true,
 ) {
   const hoveredId = engine?.handle_hover(local.x, local.y);
   if (hoveredId !== undefined) {
-    canvas.style.cursor = hoveredId ? "pointer" : "default";
+    if (updateCursor) {
+      canvas.style.cursor = hoveredId ? "pointer" : "default";
+    }
     callbacks.onNodeHover?.(hoveredId ? nodeFromId(hoveredId) : null);
   }
 }
@@ -68,7 +70,7 @@ export function handleSinglePointerMove(
     flushWorkerMessages();
   } else if (mode === "pan") {
     engine?.handle_pan_move(local.x, local.y);
-    handleHoverOnly(local, engine, canvas, callbacks, nodeFromId);
+    handleHoverOnly(local, engine, canvas, callbacks, nodeFromId, false);
   }
 }
 
@@ -127,6 +129,7 @@ export function handlePointerDown(
       state.singleMode = "pan";
       state.downPos = null;
     }
+    canvas.style.cursor = "grabbing";
   } else if (state.active.size === 2) {
     // Second pointer joined — end any single-pointer gesture and begin pinch.
     if (state.singleMode === "drag") {
@@ -192,12 +195,20 @@ export function handlePointerUp(
     state.singleMode = null;
     state.lastCentroid = null;
     state.lastPinchDist = 0;
+    handleHoverOnly(
+      toLocalPointer(e.clientX, e.clientY, canvas),
+      engine,
+      canvas,
+      callbacks,
+      nodeFromId,
+    );
   } else if (state.active.size === 1) {
     // Transitioned from pinch back to single pointer — resume panning from
     // the remaining pointer. Treat as a new pan gesture (not a drag).
     const only = [...state.active.values()][0];
     engine?.handle_pan_start(only.x, only.y);
     state.singleMode = "pan";
+    canvas.style.cursor = "grabbing";
     // The next click would be a pinch-release → suppress.
     state.suppressNextClick = true;
   }
