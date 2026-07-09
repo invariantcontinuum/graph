@@ -17,7 +17,8 @@
     "./react": {
       "import": "./react/index.ts",
       "types": "./react/index.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "graph_main_wasm.js",

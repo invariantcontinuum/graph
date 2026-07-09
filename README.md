@@ -269,6 +269,23 @@ cp pkg-main/graph_main_wasm* pkg/ && rm -rf pkg-main
 cargo test --workspace
 ```
 
+## Ecosystem
+
+| Repo | Contents |
+| --- | --- |
+| [showcase](https://github.com/invariantcontinuum/showcase) | Live demo site → [invariantcontinuum.github.io/showcase](https://invariantcontinuum.github.io/showcase/) |
+| [docs](https://github.com/invariantcontinuum/docs) | Documentation (MkDocs Material) → [invariantcontinuum.github.io/docs](https://invariantcontinuum.github.io/docs/) |
+| [actions-library](https://github.com/invariantcontinuum/actions-library) | Reusable GitHub Actions powering the release pipeline |
+
+## Releases
+
+Merging a PR into `main` releases automatically: the bump level is derived
+from conventional commits (`feat!:`/`BREAKING CHANGE` → major, `feat:` →
+minor, else patch), a GitHub Release is published, `publish.yml` pushes the
+package to GitHub Packages (and npmjs.org once `NPM_TOKEN` is set), and a
+`graph-release` dispatch rebuilds the showcase and docs sites against the new
+version. Manual override: `gh workflow run release.yml -f bump=minor`.
+
 ## License
 
 MIT

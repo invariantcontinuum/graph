@@ -1,13 +1,14 @@
 name: Publish
 
+# Runs on every published release (created automatically by release.yml).
+# Publishes the package to GitHub Packages, optionally to npmjs.org, then
+# fans out a `graph-release` repository_dispatch so the showcase and docs
+# sites rebuild against the new version.
+
 on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version override (leave empty to use release tag)"
-        required: false
 
 jobs:
   publish-npm:
@@ -18,36 +19,18 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
+
+      - name: Build WASM package
+        uses: invariantcontinuum/actions-library/build-wasm-package@main
+
+      - name: Setup Node for GitHub Packages
+        uses: invariantcontinuum/actions-library/setup-node-gh-packages@main
         with:
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-      - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "latest"
-      - name: Build WASM targets
-        run: |
-          wasm-pack build --target web --out-dir ../../pkg crates/graph-worker-wasm --out-name graph_worker_wasm
-          wasm-pack build --target web --out-dir ../../pkg-main crates/graph-main-wasm --out-name graph_main_wasm
-          cp pkg-main/graph_main_wasm* pkg/
-          rm -rf pkg-main
-      - name: Prepare package
-        run: |
-          cp -r react/ pkg/react/
-          cp package.json pkg/package.json
-          [ -f README.md ] && cp README.md pkg/README.md || true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://npm.pkg.github.com
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish
         working-directory: pkg
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
 
   publish-npmjs:
     name: Publish to npmjs
@@ -66,43 +49,30 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "::notice::NPM_TOKEN secret not set; skipping npmjs publish"
           fi
+
       - uses: actions/checkout@v4
         if: steps.npm-token.outputs.present == 'true'
-      - uses: dtolnay/rust-toolchain@nightly
+
+      - name: Build WASM package
         if: steps.npm-token.outputs.present == 'true'
-        with:
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        if: steps.npm-token.outputs.present == 'true'
-      - name: Install wasm-pack
-        if: steps.npm-token.outputs.present == 'true'
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "latest"
-      - name: Build WASM targets
+        uses: invariantcontinuum/actions-library/build-wasm-package@main
+
+      - name: Point package at npmjs
         if: steps.npm-token.outputs.present == 'true'
         run: |
-          wasm-pack build --target web --out-dir ../../pkg crates/graph-worker-wasm --out-name graph_worker_wasm
-          wasm-pack build --target web --out-dir ../../pkg-main crates/graph-main-wasm --out-name graph_main_wasm
-          cp pkg-main/graph_main_wasm* pkg/
-          rm -rf pkg-main
-      - name: Prepare package
-        if: steps.npm-token.outputs.present == 'true'
-        run: |
-          cp -r react/ pkg/react/
-          cp package.json pkg/package.json
-          [ -f README.md ] && cp README.md pkg/README.md || true
           node -e "
             const fs = require('fs');
             const p = JSON.parse(fs.readFileSync('pkg/package.json', 'utf8'));
             p.publishConfig = { registry: 'https://registry.npmjs.org', access: 'public' };
             fs.writeFileSync('pkg/package.json', JSON.stringify(p, null, 2) + '\n');
           "
+
       - uses: actions/setup-node@v4
         if: steps.npm-token.outputs.present == 'true'
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+
       - name: Publish (skips versions already on npmjs)
         if: steps.npm-token.outputs.present == 'true'
         working-directory: pkg
@@ -116,3 +86,32 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  notify-sites:
+    name: Dispatch site rebuilds
+    runs-on: ubuntu-latest
+    needs: publish-npm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read released version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch to showcase
+        uses: invariantcontinuum/actions-library/repo-dispatch@main
+        with:
+          token: ${{ secrets.GH_PAT }}
+          repository: invariantcontinuum/showcase
+          event-type: graph-release
+          client-payload: '{"version": "${{ steps.version.outputs.version }}"}'
+
+      - name: Dispatch to docs
+        uses: invariantcontinuum/actions-library/repo-dispatch@main
+        with:
+          token: ${{ secrets.GH_PAT }}
+          repository: invariantcontinuum/docs
+          event-type: graph-release
+          client-payload: '{"version": "${{ steps.version.outputs.version }}"}'

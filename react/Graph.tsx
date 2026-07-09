@@ -36,6 +36,12 @@ export interface GraphProps {
   onReady?: () => void;
   spotlightIds?: string[] | null;
   showCommunities?: boolean;
+  /** Base URL prefix from which the engine fetches its WASM binaries
+   *  (`${wasmBasePath}/graph_main_wasm_bg.wasm` and the worker equivalent).
+   *  Both binaries must be served there — see the package docs for a
+   *  build-time sync script. Read once at mount. Defaults to "/graph" for
+   *  backward compatibility with ≤0.2.x, which hardcoded that path. */
+  wasmBasePath?: string;
   className?: string;
   style?: React.CSSProperties;
   authToken?: string;
@@ -84,6 +90,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     onReady,
     spotlightIds,
     showCommunities = false,
+    wasmBasePath = "/graph",
     className,
     style,
     authToken,
@@ -157,10 +164,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       const canvas = canvasRef.current;
       if (!canvas) return;
 
+      // Normalize the mount-time base path ("" means site root).
+      const wasmBase = wasmBasePath.replace(/\/+$/, "");
+
       const mainWasm = await import("../graph_main_wasm.js");
-      // Explicitly point to the public path for WASM on GitHub Pages
+      // Explicitly point to the host app's public path for the WASM binaries
       await mainWasm.default({
-        module_or_path: "/graph/graph_main_wasm_bg.wasm",
+        module_or_path: `${wasmBase}/graph_main_wasm_bg.wasm`,
       });
       if (cancelled) return;
 
@@ -171,6 +181,10 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         type: "module",
       });
       workerRef.current = worker;
+
+      // Must be the first message: the worker resolves its own WASM binary
+      // from this base path lazily on the next message it receives.
+      worker.postMessage({ type: "configure", wasmBasePath: wasmBase });
 
       worker.onmessage = (e: MessageEvent<WorkerOutMessage>) => {
         if (cancelled) return;
