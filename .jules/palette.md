@@ -149,3 +149,7 @@ Browser smoke must cover:
 ## 2026-07-06 - Expand abbreviations and embed adjacent context in aria-labels
 **Learning:** Screen readers announce the exact text content of elements. When abbreviations like "42n / 12e" are used for visual density on interactive cards, they read poorly ("42n slash 12e"). Furthermore, screen reader users navigating interactively via the Tab key will skip non-focusable adjacent context (e.g. edge connection types presented next to a button).
 **Action:** Expand abbreviations into natural language (e.g. "42 nodes and 12 edges") within `aria-label`s. Ensure that crucial adjacent visual context (like edge connection type) is embedded directly into the interactive element's `aria-label` so that context is not lost during Tab-key navigation.
+
+## 2026-07-28 - Exposing implicit keyboard shortcuts for canvas controls
+**Learning:** For users who rely on screen readers and keyboard navigation, implicit keyboard shortcuts that control UI state (such as 'Escape' to clear selection or '-' and 'Plus' to zoom) are effectively invisible unless documented or announced. Adding these to a hidden generic shortcuts overlay may still miss users trying to interact with specific canvas controls directly.
+**Action:** Always use the `aria-keyshortcuts` attribute (e.g. `aria-keyshortcuts="Escape"`) on interactive controls (like buttons for zooming or clearing selections) that have corresponding keyboard shortcuts to explicitly advertise the shortcuts to assistive technologies in context.
