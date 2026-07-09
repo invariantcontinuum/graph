@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
-import { screenZoom } from "./overlays/vpMath";
+import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface LabelOverlayProps {
@@ -156,10 +156,7 @@ interface FrameContext {
   theme: GraphTheme;
 }
 
-function drawAllLabels(
-  ctx: CanvasRenderingContext2D,
-  frame: FrameContext,
-): void {
+function drawAllLabels(ctx: CanvasRenderingContext2D, frame: FrameContext): void {
   const { positions, nodeIds } = frame;
   // Iterate engine-ordered ids. positions stride-4: [x, y, radius, type_idx].
   for (let i = 0; i < nodeIds.length; i++) {
@@ -175,27 +172,12 @@ function drawOneLabel(
   index: number,
   off: number,
 ): void {
-  const {
-    positions,
-    vpMatrix,
-    cvs,
-    zoom,
-    dpr,
-    nodeIds,
-    labels,
-    nodeTypes,
-    theme,
-  } = frame;
+  const { positions, vpMatrix, cvs, zoom, dpr, nodeIds, labels, nodeTypes, theme } = frame;
 
   const id = nodeIds[index];
   const wx = positions[off];
   const wy = positions[off + 1];
-
-  const cx = vpMatrix[0] * wx + vpMatrix[4] * wy + vpMatrix[12];
-  const cy = vpMatrix[1] * wx + vpMatrix[5] * wy + vpMatrix[13];
-  const sx = (cx + 1) * 0.5 * cvs.width;
-  const sy = (1 - cy) * 0.5 * cvs.height;
-
+  const { sx, sy } = worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height);
   if (isOffscreen(sx, sy, cvs)) return;
 
   const type = nodeTypes[id] ?? "";
@@ -205,51 +187,35 @@ function drawOneLabel(
   const halfH = typeStyle.halfHeight ?? theme.defaultNodeStyle.halfHeight;
   const nodeBoxW = Math.max(halfW * 2 * zoom * dpr, 0);
   const nodeBoxH = Math.max(halfH * 2 * zoom * dpr, 0);
-  if (nodeBoxW < MIN_NODE_WIDTH_PX * dpr || nodeBoxH < MIN_NODE_HEIGHT_PX * dpr)
-    return;
+
+  if (nodeBoxW < MIN_NODE_WIDTH_PX * dpr || nodeBoxH < MIN_NODE_HEIGHT_PX * dpr) return;
 
   const padX = Math.min(PAD_MAX_X_PX * dpr, nodeBoxW * PAD_AXIS_RATIO);
   const padY = Math.min(PAD_MAX_Y_PX * dpr, nodeBoxH * PAD_AXIS_RATIO);
   const textBoxW = nodeBoxW - 2 * padX;
   const textBoxH = nodeBoxH - 2 * padY;
-  if (textBoxW < MIN_BOX_WIDTH_PX * dpr || textBoxH < MIN_BOX_HEIGHT_PX * dpr)
-    return;
 
-  const requestedFontPx =
-    (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
+  if (textBoxW < MIN_BOX_WIDTH_PX * dpr || textBoxH < MIN_BOX_HEIGHT_PX * dpr) return;
+
+  const requestedFontSize = (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
   const fontFamily = typeStyle.labelFont ?? DEFAULT_LABEL_FONT_FAMILY;
   const fontWeight = typeStyle.labelWeight ?? DEFAULT_LABEL_FONT_WEIGHT;
-  const baseFontPx = Math.min(
-    Math.max(requestedFontPx, MIN_LABEL_FONT_PX * dpr),
-    MAX_LABEL_FONT_PX * dpr,
-  );
+  const basePx = Math.min(Math.max(requestedFontSize, MIN_LABEL_FONT_PX * dpr), MAX_LABEL_FONT_PX * dpr);
 
   const fitted = fitLabelInBox({
     ctx,
     text: labels[id] ?? "",
     maxWidth: textBoxW,
     maxHeight: textBoxH,
-    fontFamily: fontFamily,
-    fontWeight: fontWeight,
-    baseFontPx: baseFontPx,
+    fontFamily,
+    fontWeight,
+    baseFontPx: basePx,
     minFontPx: MIN_LABEL_FONT_PX * dpr,
     dpr,
   });
   if (!fitted) return;
 
-  paintLabel(
-    ctx,
-    sx,
-    sy,
-    nodeBoxW,
-    nodeBoxH,
-    fitted,
-    typeStyle,
-    theme,
-    fontFamily,
-    fontWeight,
-    dpr,
-  );
+  paintLabel(ctx, sx, sy, nodeBoxW, nodeBoxH, fitted, typeStyle, theme, fontFamily, fontWeight, dpr);
 }
 
 function isOffscreen(sx: number, sy: number, cvs: HTMLCanvasElement): boolean {
@@ -283,10 +249,7 @@ function paintLabel(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
-  ctx.lineWidth = Math.max(
-    STROKE_WIDTH_FLOOR_PX * dpr,
-    fitted.fontPx * STROKE_WIDTH_RATIO,
-  );
+  ctx.lineWidth = Math.max(STROKE_WIDTH_FLOOR_PX * dpr, fitted.fontPx * STROKE_WIDTH_RATIO);
   ctx.strokeStyle = theme.labelHalo ?? theme.canvasBg;
   ctx.fillStyle = typeStyle.labelColor ?? theme.defaultNodeStyle.labelColor;
 
