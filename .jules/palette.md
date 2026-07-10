@@ -153,3 +153,7 @@ Browser smoke must cover:
 ## 2026-07-28 - Exposing implicit keyboard shortcuts for canvas controls
 **Learning:** For users who rely on screen readers and keyboard navigation, implicit keyboard shortcuts that control UI state (such as 'Escape' to clear selection or '-' and 'Plus' to zoom) are effectively invisible unless documented or announced. Adding these to a hidden generic shortcuts overlay may still miss users trying to interact with specific canvas controls directly.
 **Action:** Always use the `aria-keyshortcuts` attribute (e.g. `aria-keyshortcuts="Escape"`) on interactive controls (like buttons for zooming or clearing selections) that have corresponding keyboard shortcuts to explicitly advertise the shortcuts to assistive technologies in context.
+
+## 2026-07-29 - Provide visual feedback for canvas drag/pan interactions
+**Learning:** During canvas interactions like dragging nodes or panning the camera, lacking immediate cursor feedback (such as changing the cursor to `grabbing`) makes the interface feel unresponsive. Furthermore, hover events that fire during the drag/pan motion can inappropriately overwrite the active drag cursor, causing a flickering or confusing visual state.
+**Action:** Set the cursor to `grabbing` on `pointerdown` when initiating a drag or pan, suppress cursor updates from hover events during the `pointermove` gesture, and explicitly restore the cursor to its correct hover state on `pointerup`.
