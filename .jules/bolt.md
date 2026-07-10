@@ -190,3 +190,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-08 - [Inline short-lived layout objects in Canvas2D render loop]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), allocating short-lived objects (like returning `{w, h}` or parameter objects) causes excessive memory churn and GC pauses that drop FPS.
 **Action:** Compute layout metrics inline as local primitive variables and pass flat arguments to downstream functions to prevent memory churn.
+## 2026-07-10 - [Replace configuration parameter objects with flat arguments in hot frontend loops]
+**Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), passing configuration objects into layout loops (like font size stepping in `fitLabelInBox`) causes compounded GC churn and FPS drops because a new object is allocated on every step for every label.
+**Action:** When computing layout inside per-node/per-frame loops, replace configuration parameter objects (e.g., `SizeAttempt`, `FallbackAttempt`) with primitive flat arguments to completely eliminate GC churn inside the loop.
