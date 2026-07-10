@@ -157,3 +157,8 @@ Browser smoke must cover:
 ## 2026-07-29 - Provide visual feedback for canvas drag/pan interactions
 **Learning:** During canvas interactions like dragging nodes or panning the camera, lacking immediate cursor feedback (such as changing the cursor to `grabbing`) makes the interface feel unresponsive. Furthermore, hover events that fire during the drag/pan motion can inappropriately overwrite the active drag cursor, causing a flickering or confusing visual state.
 **Action:** Set the cursor to `grabbing` on `pointerdown` when initiating a drag or pan, suppress cursor updates from hover events during the `pointermove` gesture, and explicitly restore the cursor to its correct hover state on `pointerup`.
+
+
+## 2026-07-31 - Keyboard Navigation for Canvas Panning
+**Learning:** For interactive canvas applications, users who rely on keyboard navigation (e.g., screen reader users or power users without a mouse) are entirely locked out of spatial navigation if panning is restricted to pointer gestures (click-and-drag). Providing explicit arrow-key support to pan the view is a crucial accessibility and usability win that restores basic exploratory function.
+**Action:** Added keyboard arrow key listeners to explicitly invoke camera panning in the WASM engine, and advertised the new shortcuts via the `aria-keyshortcuts` attribute.

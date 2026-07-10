@@ -52,6 +52,11 @@ impl RenderEngine {
         }
     }
 
+    pub fn pan_by(&mut self, dx: f32, dy: f32) {
+        self.camera.pan(dx, dy);
+        self.needs_render = true;
+    }
+
     pub fn handle_pan_end(&mut self) {
         self.is_panning = false;
     }
