@@ -193,3 +193,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-10 - [Replace configuration parameter objects with flat arguments in hot frontend loops]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), passing configuration objects into layout loops (like font size stepping in `fitLabelInBox`) causes compounded GC churn and FPS drops because a new object is allocated on every step for every label.
 **Action:** When computing layout inside per-node/per-frame loops, replace configuration parameter objects (e.g., `SizeAttempt`, `FallbackAttempt`) with primitive flat arguments to completely eliminate GC churn inside the loop.
+## 2026-07-11 - [Use squared distances to bypass sqrt() in hot picking loop]
+**Learning:** In the spatial grid picking loop (`pick` in `crates/graph-main-wasm/src/spatial.rs`), calculating the distance to candidate nodes involved a `.sqrt()` call for every candidate. Since this is an inner loop executing for potentially many candidate nodes, the floating-point square root operation adds measurable CPU overhead.
+**Action:** When comparing distances in performance-critical geometric loops (e.g., node picking, hit testing), bypass the expensive `sqrt()` operation by comparing squared distances (`dist_sq < max_d * max_d`).
