@@ -157,3 +157,7 @@ Browser smoke must cover:
 ## 2026-07-29 - Provide visual feedback for canvas drag/pan interactions
 **Learning:** During canvas interactions like dragging nodes or panning the camera, lacking immediate cursor feedback (such as changing the cursor to `grabbing`) makes the interface feel unresponsive. Furthermore, hover events that fire during the drag/pan motion can inappropriately overwrite the active drag cursor, causing a flickering or confusing visual state.
 **Action:** Set the cursor to `grabbing` on `pointerdown` when initiating a drag or pan, suppress cursor updates from hover events during the `pointermove` gesture, and explicitly restore the cursor to its correct hover state on `pointerup`.
+
+## 2026-07-11 - Explicit Keyboard Navigation for Panning
+**Learning:** Users who cannot use pointer gestures (like drag-to-pan) are locked out of spatial exploration unless explicit keyboard navigation (e.g., mapping arrow keys to panning logic) is provided. Furthermore, these implicit controls must be explicitly advertised via `aria-keyshortcuts` to inform assistive technologies.
+**Action:** Implemented arrow-key panning for the interactive canvas and explicitly advertised the shortcuts ('ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight') by appending them to the canvas element's `aria-keyshortcuts` attribute.

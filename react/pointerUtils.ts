@@ -267,6 +267,21 @@ export function handleKeyDown(
     engine?.zoom_out();
     requestRender();
     handled = true;
+  } else if (
+    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+  ) {
+    const step = 40;
+    let dx = 0;
+    let dy = 0;
+    if (e.key === "ArrowUp") dy = -step;
+    if (e.key === "ArrowDown") dy = step;
+    if (e.key === "ArrowLeft") dx = -step;
+    if (e.key === "ArrowRight") dx = step;
+    engine?.handle_pan_start(0, 0);
+    engine?.handle_pan_move(-dx, -dy);
+    engine?.handle_pan_end();
+    requestRender();
+    handled = true;
   }
 
   if (handled) {
