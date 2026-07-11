@@ -139,12 +139,13 @@ impl SpatialGrid {
                     let nr = positions[node_idx * 4 + 2];
                     let dx = world_x - nx;
                     let dy = world_y - ny;
-                    let dist = (dx * dx + dy * dy).sqrt();
-                    let hit_dist = dist - nr;
-                    if hit_dist < max_distance
-                        && (best.is_none_or(|(_, best_dist)| dist < best_dist))
+                    let dist_sq = dx * dx + dy * dy;
+                    let max_d = max_distance + nr;
+                    // ⚡ Bolt: Bypass expensive floating-point .sqrt() by comparing squared distances
+                    if dist_sq < max_d * max_d
+                        && (best.is_none_or(|(_, best_dist_sq)| dist_sq < best_dist_sq))
                     {
-                        best = Some((node_idx, dist));
+                        best = Some((node_idx, dist_sq));
                     }
                 }
             }

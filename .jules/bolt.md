@@ -193,3 +193,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-10 - [Replace configuration parameter objects with flat arguments in hot frontend loops]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), passing configuration objects into layout loops (like font size stepping in `fitLabelInBox`) causes compounded GC churn and FPS drops because a new object is allocated on every step for every label.
 **Action:** When computing layout inside per-node/per-frame loops, replace configuration parameter objects (e.g., `SizeAttempt`, `FallbackAttempt`) with primitive flat arguments to completely eliminate GC churn inside the loop.
+## 2025-01-20 - [Performance: Bypass expensive floating-point `sqrt()` in SpatialGrid picking]
+**Learning:** In hot loops in Rust where we compute distance for picking or hit-testing (e.g. `SpatialGrid::pick`), the `sqrt()` operation is very expensive and unnecessary when we just need to compare against a threshold.
+**Action:** When comparing distances, compare the squared distances `dist_sq < max_d * max_d` rather than `dist < max_d`.
