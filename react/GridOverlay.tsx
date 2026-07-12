@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import type { GraphHandle } from "./Graph";
+import { useCallback } from "react";
 import type { GraphTheme } from "./theme/types";
 import { screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
-import { useIdleRedraw } from "./overlays/useIdleRedraw";
+import { useCanvasRenderLoop } from "./overlays/useIdleRedraw";
 
 export interface GridOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -14,47 +15,16 @@ export interface GridOverlayProps {
 export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
-  const rafRef = useRef<number | null>(null);
-  const { markDirty, shouldSkipDraw } = useIdleRedraw();
 
   useDprCanvas(canvasRef);
 
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsub = engine.subscribeFrame(({ vpMatrix }) => {
-      frameRef.current.vp = vpMatrix;
-      markDirty();
-    });
-    return unsub;
-  }, [engineRef, ready]);
-
-  useEffect(() => {
-    markDirty();
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const dpr = window.devicePixelRatio || 1;
-    const BASE_GRID_PX = 50;
-
-    const tick = () => {
-      if (shouldSkipDraw(cvs)) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      const ctx = cvs.getContext("2d");
-      if (!ctx) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
+  const drawFn = useCallback(
+    (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
       const vp = frameRef.current.vp;
-      if (!vp) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!vp) return;
 
+      const dpr = window.devicePixelRatio || 1;
+      const BASE_GRID_PX = 50;
       const zoom = screenZoom(vp, cvs.width, dpr);
       const gridPx = Math.max(
         12 * dpr,
@@ -81,14 +51,22 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
         ctx.lineTo(cvs.width, y + 0.5);
       }
       ctx.stroke();
+    },
+    [theme.gridLineColor],
+  );
 
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [theme.gridLineColor]);
+  const markDirty = useCanvasRenderLoop(canvasRef, drawFn, [drawFn]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const engine = engineRef.current;
+    if (!engine) return;
+    const unsub = engine.subscribeFrame(({ vpMatrix }) => {
+      frameRef.current.vp = vpMatrix;
+      markDirty();
+    });
+    return unsub;
+  }, [engineRef, ready, markDirty]);
 
   return (
     <canvas

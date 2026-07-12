@@ -4,7 +4,8 @@ import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
-import { useIdleRedraw } from "./overlays/useIdleRedraw";
+import { useCanvasRenderLoop } from "./overlays/useIdleRedraw";
+import { useCallback } from "react";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -40,45 +41,12 @@ export function CompoundFramesOverlay({
     positions: null,
     vp: null,
   });
-  const rafRef = useRef<number | null>(null);
-  const { markDirty, shouldSkipDraw } = useIdleRedraw();
-
   useDprCanvas(canvasRef);
 
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
-      stateRef.current.positions = positions;
-      stateRef.current.vp = vpMatrix;
-      markDirty();
-    });
-    return unsub;
-  }, [engineRef, ready]);
-
-  useEffect(() => {
-    markDirty();
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-
-    const tick = () => {
-      if (shouldSkipDraw(cvs)) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      const ctx = cvs.getContext("2d");
-      if (!ctx) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
+  const drawFn = useCallback(
+    (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
       const { positions, vp } = stateRef.current;
-      if (!positions || !vp) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!positions || !vp) return;
 
       const boxes = new Map<string, AABB>();
       for (let i = 0; i < nodeIds.length; i++) {
@@ -141,13 +109,23 @@ export function CompoundFramesOverlay({
       }
 
       ctx.setLineDash([]);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [theme, nodeIds, nodeSourceIds, nodeTypes, sourceLabels]);
+    },
+    [theme, nodeIds, nodeSourceIds, nodeTypes, sourceLabels],
+  );
+
+  const markDirty = useCanvasRenderLoop(canvasRef, drawFn, [drawFn]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const engine = engineRef.current;
+    if (!engine) return;
+    const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
+      stateRef.current.positions = positions;
+      stateRef.current.vp = vpMatrix;
+      markDirty();
+    });
+    return unsub;
+  }, [engineRef, ready, markDirty]);
 
   return (
     <canvas
