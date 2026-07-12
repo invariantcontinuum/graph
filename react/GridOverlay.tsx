@@ -3,6 +3,7 @@ import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useIdleRedraw } from "./overlays/useIdleRedraw";
 
 export interface GridOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -14,8 +15,7 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { markDirty, shouldSkipDraw } = useIdleRedraw();
 
   useDprCanvas(canvasRef);
 
@@ -25,30 +25,23 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     if (!engine) return;
     const unsub = engine.subscribeFrame(({ vpMatrix }) => {
       frameRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
+      markDirty();
     });
     return unsub;
   }, [engineRef, ready]);
 
   useEffect(() => {
-    dirtyRef.current = true;
+    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
     const BASE_GRID_PX = 50;
 
     const tick = () => {
-      if (
-        !dirtyRef.current &&
-        lastSizeRef.current.w === cvs.width &&
-        lastSizeRef.current.h === cvs.height
-      ) {
+      if (shouldSkipDraw(cvs)) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-      dirtyRef.current = false;
-      lastSizeRef.current.w = cvs.width;
-      lastSizeRef.current.h = cvs.height;
 
       const ctx = cvs.getContext("2d");
       if (!ctx) {

@@ -4,6 +4,7 @@ import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useIdleRedraw } from "./overlays/useIdleRedraw";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -63,8 +64,7 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { markDirty, shouldSkipDraw } = useIdleRedraw();
 
   useDprCanvas(canvasRef);
 
@@ -77,30 +77,23 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
-      dirtyRef.current = true;
+      markDirty();
     });
     return unsubscribe;
   }, [engineRef, ready]);
 
   // Render loop.
   useEffect(() => {
-    dirtyRef.current = true;
+    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
-      if (
-        !dirtyRef.current &&
-        lastSizeRef.current.w === cvs.width &&
-        lastSizeRef.current.h === cvs.height
-      ) {
+      if (shouldSkipDraw(cvs)) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-      dirtyRef.current = false;
-      lastSizeRef.current.w = cvs.width;
-      lastSizeRef.current.h = cvs.height;
 
       const ctx = cvs.getContext("2d");
       if (!ctx) return;

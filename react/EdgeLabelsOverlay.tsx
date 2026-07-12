@@ -3,6 +3,7 @@ import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useIdleRedraw } from "./overlays/useIdleRedraw";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -30,8 +31,7 @@ export function EdgeLabelsOverlay({
     vp: null,
   });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { markDirty, shouldSkipDraw } = useIdleRedraw();
 
   useDprCanvas(canvasRef);
 
@@ -44,13 +44,13 @@ export function EdgeLabelsOverlay({
         stateRef.current.edgeData = edgeData;
         stateRef.current.edgeTypeKeys = edgeTypeKeys;
         stateRef.current.focusIdx = focusIdx;
-        dirtyRef.current = true;
+        markDirty();
       },
     );
     const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
+      markDirty();
     });
     return () => {
       unsubEdges();
@@ -59,22 +59,15 @@ export function EdgeLabelsOverlay({
   }, [engineRef, ready]);
 
   useEffect(() => {
-    dirtyRef.current = true;
+    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
 
     const tick = () => {
-      if (
-        !dirtyRef.current &&
-        lastSizeRef.current.w === cvs.width &&
-        lastSizeRef.current.h === cvs.height
-      ) {
+      if (shouldSkipDraw(cvs)) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-      dirtyRef.current = false;
-      lastSizeRef.current.w = cvs.width;
-      lastSizeRef.current.h = cvs.height;
 
       const ctx = cvs.getContext("2d");
       if (!ctx) {

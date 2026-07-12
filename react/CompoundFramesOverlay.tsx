@@ -4,6 +4,7 @@ import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useIdleRedraw } from "./overlays/useIdleRedraw";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -40,8 +41,7 @@ export function CompoundFramesOverlay({
     vp: null,
   });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { markDirty, shouldSkipDraw } = useIdleRedraw();
 
   useDprCanvas(canvasRef);
 
@@ -52,28 +52,21 @@ export function CompoundFramesOverlay({
     const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
+      markDirty();
     });
     return unsub;
   }, [engineRef, ready]);
 
   useEffect(() => {
-    dirtyRef.current = true;
+    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
 
     const tick = () => {
-      if (
-        !dirtyRef.current &&
-        lastSizeRef.current.w === cvs.width &&
-        lastSizeRef.current.h === cvs.height
-      ) {
+      if (shouldSkipDraw(cvs)) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-      dirtyRef.current = false;
-      lastSizeRef.current.w = cvs.width;
-      lastSizeRef.current.h = cvs.height;
 
       const ctx = cvs.getContext("2d");
       if (!ctx) {
