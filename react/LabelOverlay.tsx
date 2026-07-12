@@ -63,6 +63,8 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef(true);
+  const lastSizeRef = useRef({ w: 0, h: 0 });
 
   useDprCanvas(canvasRef);
 
@@ -75,17 +77,31 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      dirtyRef.current = true;
     });
     return unsubscribe;
   }, [engineRef, ready]);
 
   // Render loop.
   useEffect(() => {
+    dirtyRef.current = true;
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
+      if (
+        !dirtyRef.current &&
+        lastSizeRef.current.w === cvs.width &&
+        lastSizeRef.current.h === cvs.height
+      ) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+      lastSizeRef.current.w = cvs.width;
+      lastSizeRef.current.h = cvs.height;
+
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);

@@ -14,6 +14,8 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef(true);
+  const lastSizeRef = useRef({ w: 0, h: 0 });
 
   useDprCanvas(canvasRef);
 
@@ -23,25 +25,48 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     if (!engine) return;
     const unsub = engine.subscribeFrame(({ vpMatrix }) => {
       frameRef.current.vp = vpMatrix;
+      dirtyRef.current = true;
     });
     return unsub;
   }, [engineRef, ready]);
 
   useEffect(() => {
+    dirtyRef.current = true;
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
     const BASE_GRID_PX = 50;
 
     const tick = () => {
+      if (
+        !dirtyRef.current &&
+        lastSizeRef.current.w === cvs.width &&
+        lastSizeRef.current.h === cvs.height
+      ) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+      lastSizeRef.current.w = cvs.width;
+      lastSizeRef.current.h = cvs.height;
+
       const ctx = cvs.getContext("2d");
-      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+      if (!ctx) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       const vp = frameRef.current.vp;
-      if (!vp) { rafRef.current = requestAnimationFrame(tick); return; }
+      if (!vp) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
 
       const zoom = screenZoom(vp, cvs.width, dpr);
-      const gridPx = Math.max(12 * dpr, Math.min(240 * dpr, BASE_GRID_PX * zoom * dpr));
+      const gridPx = Math.max(
+        12 * dpr,
+        Math.min(240 * dpr, BASE_GRID_PX * zoom * dpr),
+      );
       const originX = (vp[12] + 1) * 0.5 * cvs.width;
       const originY = (1 - vp[13]) * 0.5 * cvs.height;
       const offsetX = ((originX % gridPx) + gridPx) % gridPx;
@@ -67,7 +92,9 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
   }, [theme.gridLineColor]);
 
   return (
@@ -76,7 +103,14 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
       className="graph-grid-overlay"
       aria-hidden={true}
       tabIndex={-1}
-      style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", width: "100%", height: "100%" }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+        width: "100%",
+        height: "100%",
+      }}
     />
   );
 }
