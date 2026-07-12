@@ -193,3 +193,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-10 - [Replace configuration parameter objects with flat arguments in hot frontend loops]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), passing configuration objects into layout loops (like font size stepping in `fitLabelInBox`) causes compounded GC churn and FPS drops because a new object is allocated on every step for every label.
 **Action:** When computing layout inside per-node/per-frame loops, replace configuration parameter objects (e.g., `SizeAttempt`, `FallbackAttempt`) with primitive flat arguments to completely eliminate GC churn inside the loop.
+## 2026-07-28 - [Skip redundant Canvas2D redraws on idle frame updates]
+**Learning:** Canvas2D overlays (`LabelOverlay`, `GridOverlay`, etc.) tracking a WebGL engine via `requestAnimationFrame` will constantly clear and redraw (wasting CPU/battery) even when the scene is totally idle, because the engine stops emitting new data but the RAF loop continues unconditionally.
+**Action:** When writing Canvas2D overlay render loops that subscribe to an external engine state, cache the references to the engine data (e.g., `positions`, `vpMatrix`, `edgeData`) and add an early return to skip clearing and redrawing the canvas when these references haven't changed.

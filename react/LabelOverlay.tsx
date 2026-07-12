@@ -66,6 +66,8 @@ export function LabelOverlay({
 
   useDprCanvas(canvasRef);
 
+  const dirtyRef = useRef(true);
+
   // Subscribe to engine frame updates. Gated on `ready` because the engine
   // ref is initially null and the `<Graph>` component only wires up the
   // frame subscription after its internal `init` effect has run.
@@ -75,6 +77,7 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      dirtyRef.current = true;
     });
     return unsubscribe;
   }, [engineRef, ready]);
@@ -85,16 +88,31 @@ export function LabelOverlay({
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
 
+    let lastWidth = 0;
+    let lastHeight = 0;
+
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const { positions, vpMatrix } = frameRef.current;
       if (!positions || !vpMatrix) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
+
+      // If dimensions change, the browser implicitly clears the canvas, so we must redraw.
+      const resized = cvs.width !== lastWidth || cvs.height !== lastHeight;
+      if (!dirtyRef.current && !resized) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      dirtyRef.current = false;
+      lastWidth = cvs.width;
+      lastHeight = cvs.height;
+
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const zoom = screenZoom(vpMatrix, cvs.width, dpr);
       if (zoom >= minZoomToShowLabels) {
