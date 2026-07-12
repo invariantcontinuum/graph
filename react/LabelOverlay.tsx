@@ -1,8 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
-import { useCallback } from "react";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useCanvasRenderLoop } from "./overlays/useIdleRedraw";

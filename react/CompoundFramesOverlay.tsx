@@ -1,11 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useCanvasRenderLoop } from "./overlays/useIdleRedraw";
-import { useCallback } from "react";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;

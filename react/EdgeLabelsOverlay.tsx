@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
-import { useCallback } from "react";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
