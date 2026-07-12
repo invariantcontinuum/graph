@@ -267,6 +267,25 @@ export function handleKeyDown(
     engine?.zoom_out();
     requestRender();
     handled = true;
+  } else if (
+    e.key === "ArrowUp" ||
+    e.key === "ArrowDown" ||
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight"
+  ) {
+    let dx = 0;
+    let dy = 0;
+    const amount = 50;
+    if (e.key === "ArrowUp") dy = -amount;
+    else if (e.key === "ArrowDown") dy = amount;
+    else if (e.key === "ArrowLeft") dx = -amount;
+    else if (e.key === "ArrowRight") dx = amount;
+
+    engine?.handle_pan_start(0, 0);
+    engine?.handle_pan_move(-dx, -dy);
+    engine?.handle_pan_end();
+    requestRender();
+    handled = true;
   }
 
   if (handled) {
