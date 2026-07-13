@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
-import { worldToScreenX, worldToScreenY } from "./overlays/vpMath";
+import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface CompoundFramesOverlayProps {
@@ -54,6 +54,9 @@ export function CompoundFramesOverlay({
     return unsub;
   }, [engineRef, ready]);
 
+  const TL_OUT = useRef({ sx: 0, sy: 0 });
+  const BR_OUT = useRef({ sx: 0, sy: 0 });
+
   useEffect(() => {
     const cvs = canvasRef.current;
     if (!cvs) return;
@@ -100,10 +103,26 @@ export function CompoundFramesOverlay({
       ctx.setLineDash([6, 4]);
 
       for (const [src, box] of boxes) {
-        const tl_sx = worldToScreenX(box.minX, box.minY, vp, cvs.width);
-        const tl_sy = worldToScreenY(box.minX, box.minY, vp, cvs.height);
-        const br_sx = worldToScreenX(box.maxX, box.maxY, vp, cvs.width);
-        const br_sy = worldToScreenY(box.maxX, box.maxY, vp, cvs.height);
+        worldToScreen(
+          box.minX,
+          box.minY,
+          vp,
+          cvs.width,
+          cvs.height,
+          TL_OUT.current,
+        );
+        worldToScreen(
+          box.maxX,
+          box.maxY,
+          vp,
+          cvs.width,
+          cvs.height,
+          BR_OUT.current,
+        );
+        const tl_sx = TL_OUT.current.sx;
+        const tl_sy = TL_OUT.current.sy;
+        const br_sx = BR_OUT.current.sx;
+        const br_sy = BR_OUT.current.sy;
         const PAD = 24;
         const rx = Math.min(tl_sx, br_sx) - PAD;
         const ry = Math.min(tl_sy, br_sy) - PAD;

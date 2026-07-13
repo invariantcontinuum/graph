@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
-import { worldToScreenX, worldToScreenY, screenZoom } from "./overlays/vpMath";
+import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 
 export interface LabelOverlayProps {
@@ -169,6 +169,8 @@ function drawAllLabels(
   }
 }
 
+const LABEL_OUT = { sx: 0, sy: 0 };
+
 function drawOneLabel(
   ctx: CanvasRenderingContext2D,
   frame: FrameContext,
@@ -190,8 +192,8 @@ function drawOneLabel(
   const id = nodeIds[index];
   const wx = positions[off];
   const wy = positions[off + 1];
-  const sx = worldToScreenX(wx, wy, vpMatrix, cvs.width);
-  const sy = worldToScreenY(wx, wy, vpMatrix, cvs.height);
+  worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height, LABEL_OUT);
+  const { sx, sy } = LABEL_OUT;
   if (isOffscreen(sx, sy, cvs)) return;
 
   const type = nodeTypes[id] ?? "";
