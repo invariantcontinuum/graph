@@ -196,6 +196,3 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-11 - [Use squared distances to bypass sqrt() in hot picking loop]
 **Learning:** In the spatial grid picking loop (`pick` in `crates/graph-main-wasm/src/spatial.rs`), calculating the distance to candidate nodes involved a `.sqrt()` call for every candidate. Since this is an inner loop executing for potentially many candidate nodes, the floating-point square root operation adds measurable CPU overhead.
 **Action:** When comparing distances in performance-critical geometric loops (e.g., node picking, hit testing), bypass the expensive `sqrt()` operation by comparing squared distances (`dist_sq < max_d * max_d`).
-## 2026-07-15 - [Avoid short-lived object allocations in worldToScreen]
-**Learning:** In hot frontend render paths that run every frame, allocating short-lived objects (like returning `{sx, sy}` from math helpers) causes memory churn and triggers garbage collection pauses that drop FPS.
-**Action:** Compute layout metrics inline as local primitive variables, return flat primitive values, or use mutable `out` parameters to prevent memory churn while maintaining code cohesion.

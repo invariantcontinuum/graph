@@ -22,12 +22,8 @@ export function worldToScreen(
 
 /** Approximate effective screen-space zoom from an orthographic VP matrix.
  *  Used to scale grid squares, node sizes at label time, and dash periods. */
-export function screenZoom(
-  vp: Float32Array,
-  canvasWidth: number,
-  dpr: number,
-): number {
-  return (Math.hypot(vp[0], vp[1]) * 0.5 * canvasWidth) / dpr;
+export function screenZoom(vp: Float32Array, canvasWidth: number, dpr: number): number {
+  return Math.hypot(vp[0], vp[1]) * 0.5 * canvasWidth / dpr;
 }
 
 // Shared scratch buffer for bitKey so we don't allocate per call.

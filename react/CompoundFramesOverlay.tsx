@@ -15,29 +15,14 @@ export interface CompoundFramesOverlayProps {
   readonly sourceLabels: Record<string, string>;
 }
 
-interface AABB {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
+interface AABB { minX: number; minY: number; maxX: number; maxY: number; }
 
 export function CompoundFramesOverlay({
-  engineRef,
-  theme,
-  ready,
-  nodeIds,
-  nodeSourceIds,
-  nodeTypes,
-  sourceLabels,
+  engineRef, theme, ready, nodeIds, nodeSourceIds, nodeTypes, sourceLabels,
 }: CompoundFramesOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<{
-    positions: Float32Array | null;
-    vp: Float32Array | null;
-  }>({
-    positions: null,
-    vp: null,
+  const stateRef = useRef<{ positions: Float32Array | null; vp: Float32Array | null }>({
+    positions: null, vp: null,
   });
   const rafRef = useRef<number | null>(null);
 
@@ -54,25 +39,16 @@ export function CompoundFramesOverlay({
     return unsub;
   }, [engineRef, ready]);
 
-  const TL_OUT = useRef({ sx: 0, sy: 0 });
-  const BR_OUT = useRef({ sx: 0, sy: 0 });
-
   useEffect(() => {
     const cvs = canvasRef.current;
     if (!cvs) return;
 
     const tick = () => {
       const ctx = cvs.getContext("2d");
-      if (!ctx) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       const { positions, vp } = stateRef.current;
-      if (!positions || !vp) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!positions || !vp) { rafRef.current = requestAnimationFrame(tick); return; }
 
       const boxes = new Map<string, AABB>();
       for (let i = 0; i < nodeIds.length; i++) {
@@ -84,12 +60,7 @@ export function CompoundFramesOverlay({
         const wx = positions[off];
         const wy = positions[off + 1];
         const style = typeStyleFor(nodeTypes[id]);
-        const existing = boxes.get(src) ?? {
-          minX: +Infinity,
-          minY: +Infinity,
-          maxX: -Infinity,
-          maxY: -Infinity,
-        };
+        const existing = boxes.get(src) ?? { minX: +Infinity, minY: +Infinity, maxX: -Infinity, maxY: -Infinity };
         existing.minX = Math.min(existing.minX, wx - style.halfWidth);
         existing.minY = Math.min(existing.minY, wy - style.halfHeight);
         existing.maxX = Math.max(existing.maxX, wx + style.halfWidth);
@@ -98,47 +69,32 @@ export function CompoundFramesOverlay({
       }
 
       ctx.strokeStyle = theme.hullStroke;
-      ctx.fillStyle = theme.hullFill;
-      ctx.lineWidth = 1;
+      ctx.fillStyle   = theme.hullFill;
+      ctx.lineWidth   = 1;
       ctx.setLineDash([6, 4]);
 
+      const TL_OUT = { sx: 0, sy: 0 };
+      const BR_OUT = { sx: 0, sy: 0 };
+
       for (const [src, box] of boxes) {
-        worldToScreen(
-          box.minX,
-          box.minY,
-          vp,
-          cvs.width,
-          cvs.height,
-          TL_OUT.current,
-        );
-        worldToScreen(
-          box.maxX,
-          box.maxY,
-          vp,
-          cvs.width,
-          cvs.height,
-          BR_OUT.current,
-        );
-        const tl_sx = TL_OUT.current.sx;
-        const tl_sy = TL_OUT.current.sy;
-        const br_sx = BR_OUT.current.sx;
-        const br_sy = BR_OUT.current.sy;
+        worldToScreen(box.minX, box.minY, vp, cvs.width, cvs.height, TL_OUT);
+        worldToScreen(box.maxX, box.maxY, vp, cvs.width, cvs.height, BR_OUT);
+        const tl_sx = TL_OUT.sx;
+        const tl_sy = TL_OUT.sy;
+        const br_sx = BR_OUT.sx;
+        const br_sy = BR_OUT.sy;
         const PAD = 24;
         const rx = Math.min(tl_sx, br_sx) - PAD;
         const ry = Math.min(tl_sy, br_sy) - PAD;
-        const w = Math.abs(br_sx - tl_sx) + PAD * 2;
-        const h = Math.abs(br_sy - tl_sy) + PAD * 2;
-        const r = 12;
+        const w  = Math.abs(br_sx - tl_sx) + PAD * 2;
+        const h  = Math.abs(br_sy - tl_sy) + PAD * 2;
+        const r  = 12;
         ctx.beginPath();
         ctx.moveTo(rx + r, ry);
-        ctx.lineTo(rx + w - r, ry);
-        ctx.quadraticCurveTo(rx + w, ry, rx + w, ry + r);
-        ctx.lineTo(rx + w, ry + h - r);
-        ctx.quadraticCurveTo(rx + w, ry + h, rx + w - r, ry + h);
-        ctx.lineTo(rx + r, ry + h);
-        ctx.quadraticCurveTo(rx, ry + h, rx, ry + h - r);
-        ctx.lineTo(rx, ry + r);
-        ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+        ctx.lineTo(rx + w - r, ry); ctx.quadraticCurveTo(rx + w, ry, rx + w, ry + r);
+        ctx.lineTo(rx + w,     ry + h - r); ctx.quadraticCurveTo(rx + w, ry + h, rx + w - r, ry + h);
+        ctx.lineTo(rx + r,     ry + h); ctx.quadraticCurveTo(rx, ry + h, rx, ry + h - r);
+        ctx.lineTo(rx,         ry + r); ctx.quadraticCurveTo(rx, ry, rx + r, ry);
         ctx.fill();
         ctx.stroke();
 
@@ -156,9 +112,7 @@ export function CompoundFramesOverlay({
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
+    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
   }, [theme, nodeIds, nodeSourceIds, nodeTypes, sourceLabels]);
 
   return (
@@ -167,14 +121,7 @@ export function CompoundFramesOverlay({
       className="graph-compound-frames-overlay"
       aria-hidden={true}
       tabIndex={-1}
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 1,
-        pointerEvents: "none",
-        width: "100%",
-        height: "100%",
-      }}
+      style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", width: "100%", height: "100%" }}
     />
   );
 }
