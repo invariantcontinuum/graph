@@ -283,6 +283,10 @@ export function handleKeyDown(
     engine?.pan_by(-40, 0);
     requestRender();
     handled = true;
+  } else if (e.key === "f" || e.key === "F") {
+    engine?.fit(40);
+    requestRender();
+    handled = true;
   }
 
   if (handled) {
