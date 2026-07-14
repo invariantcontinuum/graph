@@ -20,8 +20,12 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     vp: Float32Array | null;
   }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef(true);
+  dirtyRef.current = true;
 
-  useDprCanvas(canvasRef);
+  useDprCanvas(canvasRef, () => {
+    dirtyRef.current = true;
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -31,10 +35,12 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       stateRef.current.edgeData = edgeData;
       stateRef.current.edgeTypeKeys = edgeTypeKeys;
       stateRef.current.focusIdx = focusIdx;
+      dirtyRef.current = true;
     });
     const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
+      dirtyRef.current = true;
     });
     return () => { unsubEdges(); unsubFrame(); };
   }, [engineRef, ready]);
@@ -46,7 +52,15 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+
+      if (!dirtyRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+
       ctx.clearRect(0, 0, cvs.width, cvs.height);
+
       const { edgeData, edgeTypeKeys, focusIdx, positions, vp } = stateRef.current;
       if (focusIdx < 0 || !edgeData || !positions || !vp) {
         rafRef.current = requestAnimationFrame(tick);
