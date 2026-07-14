@@ -3,9 +3,7 @@ import { worldToScreenX, worldToScreenY, screenZoom, bitKey } from "./vpMath";
 
 describe("vpMath", () => {
   test("identity VP maps world (0,0) to the screen center", () => {
-    const vp = new Float32Array([
-      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
-    ]);
+    const vp = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
     const sx = worldToScreenX(0, 0, vp, 800);
     const sy = worldToScreenY(0, 0, vp, 600);
     expect(sx).toBeCloseTo(400);
@@ -13,17 +11,13 @@ describe("vpMath", () => {
   });
 
   test("translated VP shifts screen projection", () => {
-    const vp = new Float32Array([
-      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.5, 0, 0, 1,
-    ]);
+    const vp = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0.5,0,0,1]);
     const sx = worldToScreenX(0, 0, vp, 800);
     expect(sx).toBeCloseTo(600); // (+0.5 + 1) * 0.5 * 800
   });
 
   test("screenZoom recovers scale from VP", () => {
-    const vp = new Float32Array([
-      2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
-    ]);
+    const vp = new Float32Array([2,0,0,0, 0,2,0,0, 0,0,1,0, 0,0,0,1]);
     expect(screenZoom(vp, 1000, 1)).toBeCloseTo(1000); // hypot(2,0)*0.5*1000/1
   });
 
