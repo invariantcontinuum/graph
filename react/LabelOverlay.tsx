@@ -63,8 +63,14 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef<boolean>(true);
 
-  useDprCanvas(canvasRef);
+  // Set dirty on render to handle prop updates
+  dirtyRef.current = true;
+
+  useDprCanvas(canvasRef, () => {
+    dirtyRef.current = true;
+  });
 
   // Subscribe to engine frame updates. Gated on `ready` because the engine
   // ref is initially null and the `<Graph>` component only wires up the
@@ -75,6 +81,7 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      dirtyRef.current = true;
     });
     return unsubscribe;
   }, [engineRef, ready]);
@@ -86,6 +93,12 @@ export function LabelOverlay({
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
+      if (!dirtyRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
