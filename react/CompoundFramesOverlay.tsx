@@ -25,8 +25,12 @@ export function CompoundFramesOverlay({
     positions: null, vp: null,
   });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef(true);
+  dirtyRef.current = true;
 
-  useDprCanvas(canvasRef);
+  useDprCanvas(canvasRef, () => {
+    dirtyRef.current = true;
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -35,6 +39,7 @@ export function CompoundFramesOverlay({
     const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
+      dirtyRef.current = true;
     });
     return unsub;
   }, [engineRef, ready]);
@@ -44,6 +49,12 @@ export function CompoundFramesOverlay({
     if (!cvs) return;
 
     const tick = () => {
+      if (!dirtyRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);

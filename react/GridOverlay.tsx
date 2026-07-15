@@ -14,8 +14,12 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef(true);
+  dirtyRef.current = true; // Set dirty on prop updates
 
-  useDprCanvas(canvasRef);
+  useDprCanvas(canvasRef, () => {
+    dirtyRef.current = true;
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -23,6 +27,7 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     if (!engine) return;
     const unsub = engine.subscribeFrame(({ vpMatrix }) => {
       frameRef.current.vp = vpMatrix;
+      dirtyRef.current = true;
     });
     return unsub;
   }, [engineRef, ready]);
@@ -34,6 +39,12 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     const BASE_GRID_PX = 50;
 
     const tick = () => {
+      if (!dirtyRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
