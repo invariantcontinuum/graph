@@ -183,7 +183,7 @@ function ellipsize(
   maxW: number,
 ): string {
   if (ctx.measureText(text).width <= maxW) return text;
-  const ell = "...";
+  const ell = "…";
   let lo = 0;
   let hi = text.length;
   while (lo < hi) {

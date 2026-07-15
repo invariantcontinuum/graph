@@ -44,6 +44,6 @@ describe("fitLabelInBox", () => {
 
   test("very long unbroken text ellipsizes at min font", () => {
     const r = fit("a".repeat(200), 60, 14);
-    expect(r?.lines[0].endsWith("...")).toBe(true);
+    expect(r?.lines[0].endsWith("…")).toBe(true);
   });
 });
