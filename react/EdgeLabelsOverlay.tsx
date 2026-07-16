@@ -3,6 +3,7 @@ import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -20,8 +21,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     vp: Float32Array | null;
   }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { dirtyRef, checkDirty } = useDirtyCanvas(canvasRef);
 
   dirtyRef.current = true;
 
@@ -50,13 +50,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     if (!cvs) return;
 
     const tick = () => {
-      const { w, h } = lastSizeRef.current;
-      if (w !== cvs.width || h !== cvs.height) {
-        lastSizeRef.current = { w: cvs.width, h: cvs.height };
-        dirtyRef.current = true;
-      }
-
-      if (!dirtyRef.current) {
+      if (!checkDirty()) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }

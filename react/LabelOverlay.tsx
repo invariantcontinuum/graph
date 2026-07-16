@@ -4,6 +4,7 @@ import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -63,8 +64,7 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef(true);
-  const lastSizeRef = useRef({ w: 0, h: 0 });
+  const { dirtyRef, checkDirty } = useDirtyCanvas(canvasRef);
 
   dirtyRef.current = true;
 
@@ -91,13 +91,7 @@ export function LabelOverlay({
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
-      const { w, h } = lastSizeRef.current;
-      if (w !== cvs.width || h !== cvs.height) {
-        lastSizeRef.current = { w: cvs.width, h: cvs.height };
-        dirtyRef.current = true;
-      }
-
-      if (!dirtyRef.current) {
+      if (!checkDirty()) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
