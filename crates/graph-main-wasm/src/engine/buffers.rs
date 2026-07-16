@@ -36,9 +36,9 @@ impl RenderEngine {
         let status_override = self.theme.nodes.by_status.get(status);
 
         let shape_name = type_override
-            .and_then(|o| o.shape.clone())
-            .unwrap_or_else(|| default.shape.clone());
-        let shape = shape_index(&shape_name);
+            .and_then(|o| o.shape.as_deref())
+            .unwrap_or(default.shape.as_str());
+        let shape = shape_index(shape_name);
 
         let half_w = type_override
             .and_then(|o| o.half_width)
@@ -50,15 +50,15 @@ impl RenderEngine {
             .unwrap_or(default.size);
 
         let color_hex = type_override
-            .and_then(|o| o.color.clone())
-            .unwrap_or_else(|| default.color.clone());
-        let color = parse_color_tuple(&color_hex);
+            .and_then(|o| o.color.as_deref())
+            .unwrap_or(default.color.as_str());
+        let color = parse_color_tuple(color_hex);
 
         let border_color_hex = status_override
-            .and_then(|o| o.border_color.clone())
-            .or_else(|| type_override.and_then(|o| o.border_color.clone()))
-            .unwrap_or_else(|| default.border_color.clone());
-        let border_color = parse_color_tuple(&border_color_hex);
+            .and_then(|o| o.border_color.as_deref())
+            .or_else(|| type_override.and_then(|o| o.border_color.as_deref()))
+            .unwrap_or(default.border_color.as_str());
+        let border_color = parse_color_tuple(border_color_hex);
 
         let border_width = status_override
             .and_then(|o| o.border_width)
