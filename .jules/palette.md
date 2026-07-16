@@ -162,3 +162,6 @@ Browser smoke must cover:
 ## 2026-07-31 - Keyboard Navigation for Canvas Panning
 **Learning:** For interactive canvas applications, users who rely on keyboard navigation (e.g., screen reader users or power users without a mouse) are entirely locked out of spatial navigation if panning is restricted to pointer gestures (click-and-drag). Providing explicit arrow-key support to pan the view is a crucial accessibility and usability win that restores basic exploratory function.
 **Action:** Added keyboard arrow key listeners to explicitly invoke camera panning in the WASM engine, and advertised the new shortcuts via the `aria-keyshortcuts` attribute.
+## 2026-07-29 - Interactive canvas role
+**Learning:** The main Graph canvas was using `role="group"`, but `role="region"` along with an `aria-roledescription="graph"` and keyboard shortcut advertisement provides a superior standard interaction model for an interactive custom control surface.
+**Action:** Replaced `role="group"` with `role="region"` on the main Graph canvas.
