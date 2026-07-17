@@ -94,21 +94,11 @@ export function LabelOverlay({
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
 
-      const { positions, vpMatrix } = frameRef.current;
-      if (!positions || !vpMatrix) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      if (
-        cvs.width !== lastSizeRef.current.w ||
-        cvs.height !== lastSizeRef.current.h
-      ) {
+      if (cvs.width !== lastSizeRef.current.w || cvs.height !== lastSizeRef.current.h) {
         lastSizeRef.current.w = cvs.width;
         lastSizeRef.current.h = cvs.height;
         dirtyRef.current = true;
       }
-
       if (!dirtyRef.current) {
         rafRef.current = requestAnimationFrame(tick);
         return;
@@ -116,6 +106,12 @@ export function LabelOverlay({
       dirtyRef.current = false;
 
       ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      const { positions, vpMatrix } = frameRef.current;
+      if (!positions || !vpMatrix) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
 
       const zoom = screenZoom(vpMatrix, cvs.width, dpr);
       if (zoom >= minZoomToShowLabels) {
