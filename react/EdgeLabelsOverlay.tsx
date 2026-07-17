@@ -4,6 +4,7 @@ import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
+import { useCanvasLoop } from "./overlays/useCanvasLoop";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -20,7 +21,6 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     positions: Float32Array | null;
     vp: Float32Array | null;
   }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
-  const rafRef = useRef<number | null>(null);
 
   const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
   useDprCanvas(canvasRef, markDirty);
@@ -43,30 +43,16 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     return () => { unsubEdges(); unsubFrame(); };
   }, [engineRef, ready]);
 
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-
-    const tick = () => {
-      const ctx = cvs.getContext("2d");
-      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
-
-      if (!checkDirtyAndClear()) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
+  useCanvasLoop(
+    canvasRef,
+    checkDirtyAndClear,
+    (ctx, cvs) => {
       const { edgeData, edgeTypeKeys, focusIdx, positions, vp } = stateRef.current;
-      if (focusIdx < 0 || !edgeData || !positions || !vp) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (focusIdx < 0 || !edgeData || !positions || !vp) return;
 
       const focusOff = focusIdx * 4;
-      if (focusOff + 1 >= positions.length) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (focusOff + 1 >= positions.length) return;
+
       const focusKey = bitKey(positions[focusOff], positions[focusOff + 1]);
 
       ctx.font = "600 10px 'Manrope', sans-serif";
@@ -106,12 +92,9 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
         ctx.textBaseline = "middle";
         ctx.fillText(label, screenX, screenY);
       }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
-  }, [theme]);
+    },
+    [theme, checkDirtyAndClear],
+  );
 
   return (
     <canvas

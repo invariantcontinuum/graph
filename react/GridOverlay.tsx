@@ -4,6 +4,7 @@ import type { GraphTheme } from "./theme/types";
 import { screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
+import { useCanvasLoop } from "./overlays/useCanvasLoop";
 
 export interface GridOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -14,7 +15,6 @@ export interface GridOverlayProps {
 export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
-  const rafRef = useRef<number | null>(null);
 
   const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
   useDprCanvas(canvasRef, markDirty);
@@ -30,23 +30,15 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     return unsub;
   }, [engineRef, ready]);
 
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const dpr = window.devicePixelRatio || 1;
-    const BASE_GRID_PX = 50;
+  useCanvasLoop(
+    canvasRef,
+    checkDirtyAndClear,
+    (ctx, cvs) => {
+      const dpr = window.devicePixelRatio || 1;
+      const BASE_GRID_PX = 50;
 
-    const tick = () => {
-      const ctx = cvs.getContext("2d");
-      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
-
-      if (!checkDirtyAndClear()) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
       const vp = frameRef.current.vp;
-      if (!vp) { rafRef.current = requestAnimationFrame(tick); return; }
+      if (!vp) return;
 
       const zoom = screenZoom(vp, cvs.width, dpr);
       const gridPx = Math.max(12 * dpr, Math.min(240 * dpr, BASE_GRID_PX * zoom * dpr));
@@ -71,12 +63,9 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
         ctx.lineTo(cvs.width, y + 0.5);
       }
       ctx.stroke();
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
-  }, [theme.gridLineColor]);
+    },
+    [theme.gridLineColor, checkDirtyAndClear],
+  );
 
   return (
     <canvas

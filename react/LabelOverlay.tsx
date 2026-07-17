@@ -5,6 +5,7 @@ import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
+import { useCanvasLoop } from "./overlays/useCanvasLoop";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -63,7 +64,6 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
-  const rafRef = useRef<number | null>(null);
 
   const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
   useDprCanvas(canvasRef, markDirty);
@@ -83,26 +83,13 @@ export function LabelOverlay({
   }, [engineRef, ready]);
 
   // Render loop.
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const dpr = window.devicePixelRatio || 1;
-
-    const tick = () => {
-      const ctx = cvs.getContext("2d");
-      if (!ctx) return;
-
-      if (!checkDirtyAndClear()) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-
+  useCanvasLoop(
+    canvasRef,
+    checkDirtyAndClear,
+    (ctx, cvs) => {
+      const dpr = window.devicePixelRatio || 1;
       const { positions, vpMatrix } = frameRef.current;
-      if (!positions || !vpMatrix) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!positions || !vpMatrix) return;
 
       const zoom = screenZoom(vpMatrix, cvs.width, dpr);
       if (zoom >= minZoomToShowLabels) {
@@ -118,15 +105,9 @@ export function LabelOverlay({
           theme,
         });
       }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels]);
+    },
+    [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels, checkDirtyAndClear],
+  );
 
   return (
     <canvas

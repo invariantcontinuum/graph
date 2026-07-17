@@ -5,6 +5,7 @@ import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
 import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
+import { useCanvasLoop } from "./overlays/useCanvasLoop";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -25,7 +26,6 @@ export function CompoundFramesOverlay({
   const stateRef = useRef<{ positions: Float32Array | null; vp: Float32Array | null }>({
     positions: null, vp: null,
   });
-  const rafRef = useRef<number | null>(null);
 
   const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
   useDprCanvas(canvasRef, markDirty);
@@ -42,21 +42,12 @@ export function CompoundFramesOverlay({
     return unsub;
   }, [engineRef, ready]);
 
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-
-    const tick = () => {
-      const ctx = cvs.getContext("2d");
-      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
-
-      if (!checkDirtyAndClear()) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
+  useCanvasLoop(
+    canvasRef,
+    checkDirtyAndClear,
+    (ctx, cvs) => {
       const { positions, vp } = stateRef.current;
-      if (!positions || !vp) { rafRef.current = requestAnimationFrame(tick); return; }
+      if (!positions || !vp) return;
 
       const boxes = new Map<string, AABB>();
       for (let i = 0; i < nodeIds.length; i++) {
@@ -110,11 +101,9 @@ export function CompoundFramesOverlay({
       }
 
       ctx.setLineDash([]);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); };
-  }, [theme, nodeIds, nodeSourceIds, nodeTypes, sourceLabels]);
+    },
+    [theme, nodeIds, nodeSourceIds, nodeTypes, sourceLabels, checkDirtyAndClear],
+  );
 
   return (
     <canvas
