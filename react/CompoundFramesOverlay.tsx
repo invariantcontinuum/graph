@@ -4,6 +4,7 @@ import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvasFrame } from "./overlays/useDirtyCanvasFrame";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -25,10 +26,7 @@ export function CompoundFramesOverlay({
     positions: null, vp: null,
   });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef<boolean>(true);
-  const lastSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
-
-  dirtyRef.current = true;
+  const { markDirty, checkAndClearDirty } = useDirtyCanvasFrame(canvasRef);
 
   useDprCanvas(canvasRef);
 
@@ -39,10 +37,10 @@ export function CompoundFramesOverlay({
     const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
+      markDirty();
     });
     return unsub;
-  }, [engineRef, ready]);
+  }, [engineRef, ready, markDirty]);
 
   useEffect(() => {
     const cvs = canvasRef.current;
@@ -52,14 +50,7 @@ export function CompoundFramesOverlay({
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
 
-      if (cvs.width !== lastSizeRef.current.w || cvs.height !== lastSizeRef.current.h) {
-        lastSizeRef.current.w = cvs.width;
-        lastSizeRef.current.h = cvs.height;
-        dirtyRef.current = true;
-      }
-      if (!dirtyRef.current) { rafRef.current = requestAnimationFrame(tick); return; }
-      dirtyRef.current = false;
-
+      if (!checkAndClearDirty()) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const { positions, vp } = stateRef.current;

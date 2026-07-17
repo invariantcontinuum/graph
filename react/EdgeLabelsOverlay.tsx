@@ -3,6 +3,7 @@ import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvasFrame } from "./overlays/useDirtyCanvasFrame";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -20,10 +21,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     vp: Float32Array | null;
   }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
   const rafRef = useRef<number | null>(null);
-  const dirtyRef = useRef<boolean>(true);
-  const lastSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
-
-  dirtyRef.current = true;
+  const { markDirty, checkAndClearDirty } = useDirtyCanvasFrame(canvasRef);
 
   useDprCanvas(canvasRef);
 
@@ -35,15 +33,15 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       stateRef.current.edgeData = edgeData;
       stateRef.current.edgeTypeKeys = edgeTypeKeys;
       stateRef.current.focusIdx = focusIdx;
-      dirtyRef.current = true;
+      markDirty();
     });
     const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
+      markDirty();
     });
     return () => { unsubEdges(); unsubFrame(); };
-  }, [engineRef, ready]);
+  }, [engineRef, ready, markDirty]);
 
   useEffect(() => {
     const cvs = canvasRef.current;
@@ -53,14 +51,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
 
-      if (cvs.width !== lastSizeRef.current.w || cvs.height !== lastSizeRef.current.h) {
-        lastSizeRef.current.w = cvs.width;
-        lastSizeRef.current.h = cvs.height;
-        dirtyRef.current = true;
-      }
-      if (!dirtyRef.current) { rafRef.current = requestAnimationFrame(tick); return; }
-      dirtyRef.current = false;
-
+      if (!checkAndClearDirty()) { rafRef.current = requestAnimationFrame(tick); return; }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const { edgeData, edgeTypeKeys, focusIdx, positions, vp } = stateRef.current;
