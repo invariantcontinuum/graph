@@ -3,6 +3,7 @@ import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -21,7 +22,8 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
   }>({ edgeData: null, edgeTypeKeys: [], focusIdx: -1, positions: null, vp: null });
   const rafRef = useRef<number | null>(null);
 
-  useDprCanvas(canvasRef);
+  const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
+  useDprCanvas(canvasRef, markDirty);
 
   useEffect(() => {
     if (!ready) return;
@@ -31,10 +33,12 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       stateRef.current.edgeData = edgeData;
       stateRef.current.edgeTypeKeys = edgeTypeKeys;
       stateRef.current.focusIdx = focusIdx;
+      markDirty();
     });
     const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
+      markDirty();
     });
     return () => { unsubEdges(); unsubFrame(); };
   }, [engineRef, ready]);
@@ -46,6 +50,11 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+
+      if (!checkDirtyAndClear()) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       const { edgeData, edgeTypeKeys, focusIdx, positions, vp } = stateRef.current;
       if (focusIdx < 0 || !edgeData || !positions || !vp) {

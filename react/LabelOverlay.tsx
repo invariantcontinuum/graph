@@ -4,6 +4,7 @@ import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -64,7 +65,8 @@ export function LabelOverlay({
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
 
-  useDprCanvas(canvasRef);
+  const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
+  useDprCanvas(canvasRef, markDirty);
 
   // Subscribe to engine frame updates. Gated on `ready` because the engine
   // ref is initially null and the `<Graph>` component only wires up the
@@ -75,6 +77,7 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      markDirty();
     });
     return unsubscribe;
   }, [engineRef, ready]);
@@ -88,6 +91,11 @@ export function LabelOverlay({
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
+
+      if (!checkDirtyAndClear()) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const { positions, vpMatrix } = frameRef.current;

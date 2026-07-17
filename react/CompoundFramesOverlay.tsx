@@ -4,6 +4,7 @@ import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -26,7 +27,8 @@ export function CompoundFramesOverlay({
   });
   const rafRef = useRef<number | null>(null);
 
-  useDprCanvas(canvasRef);
+  const { markDirty, checkDirtyAndClear } = useDirtyCanvas();
+  useDprCanvas(canvasRef, markDirty);
 
   useEffect(() => {
     if (!ready) return;
@@ -35,6 +37,7 @@ export function CompoundFramesOverlay({
     const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
       stateRef.current.positions = positions;
       stateRef.current.vp = vpMatrix;
+      markDirty();
     });
     return unsub;
   }, [engineRef, ready]);
@@ -46,6 +49,11 @@ export function CompoundFramesOverlay({
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+
+      if (!checkDirtyAndClear()) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       const { positions, vp } = stateRef.current;
       if (!positions || !vp) { rafRef.current = requestAnimationFrame(tick); return; }
