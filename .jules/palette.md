@@ -162,3 +162,6 @@ Browser smoke must cover:
 ## 2026-07-31 - Keyboard Navigation for Canvas Panning
 **Learning:** For interactive canvas applications, users who rely on keyboard navigation (e.g., screen reader users or power users without a mouse) are entirely locked out of spatial navigation if panning is restricted to pointer gestures (click-and-drag). Providing explicit arrow-key support to pan the view is a crucial accessibility and usability win that restores basic exploratory function.
 **Action:** Added keyboard arrow key listeners to explicitly invoke camera panning in the WASM engine, and advertised the new shortcuts via the `aria-keyshortcuts` attribute.
+## 2024-07-17 - Use True Ellipsis Character for Truncation
+**Learning:** Using three periods ("...") for text truncation in UI elements takes up more horizontal space and looks less polished than the true single ellipsis character ("…"). Applying the true ellipsis character improves typographic visual polish, especially in constrained canvas label rendering.
+**Action:** Always use the true single ellipsis character ('…') instead of three periods when programmatically truncating text.
