@@ -196,3 +196,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-11 - [Use squared distances to bypass sqrt() in hot picking loop]
 **Learning:** In the spatial grid picking loop (`pick` in `crates/graph-main-wasm/src/spatial.rs`), calculating the distance to candidate nodes involved a `.sqrt()` call for every candidate. Since this is an inner loop executing for potentially many candidate nodes, the floating-point square root operation adds measurable CPU overhead.
 **Action:** When comparing distances in performance-critical geometric loops (e.g., node picking, hit testing), bypass the expensive `sqrt()` operation by comparing squared distances (`dist_sq < max_d * max_d`).
+## 2026-07-20 - [Skip redundant Canvas2D redraws on idle frame updates]
+**Learning:** When skipping redundant Canvas2D redraws on idle frame updates, do not use reference equality checks on WebGL engine Float32Array buffers, as the engine mutates these in-place. Instead, use a boolean dirtyRef flag that is set to true in the engine's subscription callback and cleared to false during the render tick, explicitly accounting for canvas resize events and placing clearRect after the early exit check.
+**Action:** Added dirtyRef short-circuit logic to GridOverlay, EdgeLabelsOverlay, CompoundFramesOverlay, and LabelOverlay to pause work when the frame data hasn't changed.

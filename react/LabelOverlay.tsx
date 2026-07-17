@@ -63,6 +63,10 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
+  const dirtyRef = useRef<boolean>(true);
+  const lastSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  dirtyRef.current = true;
 
   useDprCanvas(canvasRef);
 
@@ -75,6 +79,7 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      dirtyRef.current = true;
     });
     return unsubscribe;
   }, [engineRef, ready]);
@@ -88,13 +93,29 @@ export function LabelOverlay({
     const tick = () => {
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const { positions, vpMatrix } = frameRef.current;
       if (!positions || !vpMatrix) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
+
+      if (
+        cvs.width !== lastSizeRef.current.w ||
+        cvs.height !== lastSizeRef.current.h
+      ) {
+        lastSizeRef.current.w = cvs.width;
+        lastSizeRef.current.h = cvs.height;
+        dirtyRef.current = true;
+      }
+
+      if (!dirtyRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      dirtyRef.current = false;
+
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       const zoom = screenZoom(vpMatrix, cvs.width, dpr);
       if (zoom >= minZoomToShowLabels) {
