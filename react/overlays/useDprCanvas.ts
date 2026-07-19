@@ -1,8 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /** Resize a canvas element to match its CSS dimensions x devicePixelRatio.
  *  Observes size changes via ResizeObserver. */
-export function useDprCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+export function useDprCanvas(
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+) {
+  const dirtyRef = useRef(true);
+  dirtyRef.current = true;
+
   useEffect(() => {
     const cvs = canvasRef.current;
     if (!cvs) return;
@@ -10,10 +15,13 @@ export function useDprCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null
     const resize = () => {
       cvs.width = cvs.clientWidth * dpr;
       cvs.height = cvs.clientHeight * dpr;
+      dirtyRef.current = true;
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(cvs);
     return () => ro.disconnect();
   }, [canvasRef]);
+
+  return dirtyRef;
 }
