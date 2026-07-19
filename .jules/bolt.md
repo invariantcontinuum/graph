@@ -196,3 +196,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-11 - [Use squared distances to bypass sqrt() in hot picking loop]
 **Learning:** In the spatial grid picking loop (`pick` in `crates/graph-main-wasm/src/spatial.rs`), calculating the distance to candidate nodes involved a `.sqrt()` call for every candidate. Since this is an inner loop executing for potentially many candidate nodes, the floating-point square root operation adds measurable CPU overhead.
 **Action:** When comparing distances in performance-critical geometric loops (e.g., node picking, hit testing), bypass the expensive `sqrt()` operation by comparing squared distances (`dist_sq < max_d * max_d`).
+## 2026-07-19 - [Bypass string allocation in per-node and per-edge GPU buffer rebuilding]
+**Learning:** In Rust hot loops (like per-node or per-edge buffer rebuilding in WASM renderers), cloning `String` fields from configurations incurs unnecessary allocation overhead and memory churn.
+**Action:** Use `.as_deref()` or `.as_str()` on `Option<String>` or `String` fields to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time in hot loops.
