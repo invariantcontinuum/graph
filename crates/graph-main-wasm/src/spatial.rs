@@ -44,13 +44,22 @@ impl SpatialGrid {
         let mut y_min = f32::MAX;
         let mut y_max = f32::MIN;
 
-        for i in 0..node_count {
-            let x = positions[i * 4];
-            let y = positions[i * 4 + 1];
-            x_min = x_min.min(x);
-            x_max = x_max.max(x);
-            y_min = y_min.min(y);
-            y_max = y_max.max(y);
+        #[allow(clippy::chunks_exact_to_as_chunks)]
+        for chunk in positions[..node_count * 4].chunks_exact(4) {
+            let x = chunk[0];
+            let y = chunk[1];
+            if x < x_min {
+                x_min = x;
+            }
+            if x > x_max {
+                x_max = x;
+            }
+            if y < y_min {
+                y_min = y;
+            }
+            if y > y_max {
+                y_max = y;
+            }
         }
 
         let pad = 10.0;
@@ -70,13 +79,18 @@ impl SpatialGrid {
         self.cells.clear();
         self.cells.resize(total, Vec::new());
 
-        for i in 0..node_count {
-            let x = positions[i * 4];
-            let y = positions[i * 4 + 1];
-            let col = ((x - self.x_min) / self.cell_w).floor() as usize;
-            let row = ((y - self.y_min) / self.cell_h).floor() as usize;
-            let col = col.min(self.cols - 1);
-            let row = row.min(self.rows - 1);
+        #[allow(clippy::chunks_exact_to_as_chunks)]
+        for (i, chunk) in positions[..node_count * 4].chunks_exact(4).enumerate() {
+            let x = chunk[0];
+            let y = chunk[1];
+            let mut col = ((x - self.x_min) / self.cell_w).floor() as usize;
+            let mut row = ((y - self.y_min) / self.cell_h).floor() as usize;
+            if col > self.cols - 1 {
+                col = self.cols - 1;
+            }
+            if row > self.rows - 1 {
+                row = self.rows - 1;
+            }
             self.cells[row * self.cols + col].push(i);
         }
     }
