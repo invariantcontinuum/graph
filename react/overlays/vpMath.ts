@@ -5,34 +5,20 @@
 
 /** Project world-space (wx, wy, z=0, w=1) through a column-major 4x4 VP matrix
  *  onto canvas pixel coordinates (y flipped because canvas origin is top-left). */
-export function worldToScreenX(
-  wx: number,
-  wy: number,
-  vp: Float32Array,
-  canvasWidth: number,
-): number {
+export function worldToScreenX(wx: number, wy: number, vp: Float32Array, canvasWidth: number): number {
   const cx = vp[0] * wx + vp[4] * wy + vp[12];
   return (cx + 1) * 0.5 * canvasWidth;
 }
 
-export function worldToScreenY(
-  wx: number,
-  wy: number,
-  vp: Float32Array,
-  canvasHeight: number,
-): number {
+export function worldToScreenY(wx: number, wy: number, vp: Float32Array, canvasHeight: number): number {
   const cy = vp[1] * wx + vp[5] * wy + vp[13];
   return (1 - cy) * 0.5 * canvasHeight;
 }
 
 /** Approximate effective screen-space zoom from an orthographic VP matrix.
  *  Used to scale grid squares, node sizes at label time, and dash periods. */
-export function screenZoom(
-  vp: Float32Array,
-  canvasWidth: number,
-  dpr: number,
-): number {
-  return (Math.hypot(vp[0], vp[1]) * 0.5 * canvasWidth) / dpr;
+export function screenZoom(vp: Float32Array, canvasWidth: number, dpr: number): number {
+  return Math.hypot(vp[0], vp[1]) * 0.5 * canvasWidth / dpr;
 }
 
 // Shared scratch buffer for bitKey so we don't allocate per call.
