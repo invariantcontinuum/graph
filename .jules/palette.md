@@ -162,3 +162,6 @@ Browser smoke must cover:
 ## 2026-07-31 - Keyboard Navigation for Canvas Panning
 **Learning:** For interactive canvas applications, users who rely on keyboard navigation (e.g., screen reader users or power users without a mouse) are entirely locked out of spatial navigation if panning is restricted to pointer gestures (click-and-drag). Providing explicit arrow-key support to pan the view is a crucial accessibility and usability win that restores basic exploratory function.
 **Action:** Added keyboard arrow key listeners to explicitly invoke camera panning in the WASM engine, and advertised the new shortcuts via the `aria-keyshortcuts` attribute.
+## 2025-01-28 - Remove programmatic focus from aria-hidden decorative canvases
+**Learning:** Adding `tabIndex={-1}` to purely decorative elements (like overlay canvases) that use `aria-hidden={true}` creates an accessibility conflict by making them programmatically focusable despite being explicitly hidden from screen readers.
+**Action:** Removed `tabIndex={-1}` from all decorative overlay canvases that use `aria-hidden={true}` to prevent this accessibility conflict.
