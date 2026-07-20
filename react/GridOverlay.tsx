@@ -1,8 +1,9 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
+import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
 export interface GridOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -12,23 +13,11 @@ export interface GridOverlayProps {
 
 export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
-  const dirtyRef = useRef(true);
-
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsub = engine.subscribeFrame(({ vpMatrix }) => {
-      frameRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
-    });
-    return unsub;
-  }, [engineRef, ready]);
+  const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
     (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
-      const vp = frameRef.current.vp;
+      const vp = frameRef.current.vpMatrix;
       if (!vp) return;
       const dpr = window.devicePixelRatio || 1;
       const BASE_GRID_PX = 50;

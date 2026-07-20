@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
+import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -61,22 +62,7 @@ export function LabelOverlay({
   focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
-  const dirtyRef = useRef(true);
-
-  // Subscribe to engine frame updates. Gated on `ready` because the engine
-  // ref is initially null and the `<Graph>` component only wires up the
-  // frame subscription after its internal `init` effect has run.
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
-      frameRef.current = { positions, vpMatrix };
-      dirtyRef.current = true;
-    });
-    return unsubscribe;
-  }, [engineRef, ready]);
+  const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
     (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {

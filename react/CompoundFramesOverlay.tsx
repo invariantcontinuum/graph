@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
 import { worldToScreen } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
+import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
 export interface CompoundFramesOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -32,30 +33,11 @@ export function CompoundFramesOverlay({
   sourceLabels,
 }: CompoundFramesOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<{
-    positions: Float32Array | null;
-    vp: Float32Array | null;
-  }>({
-    positions: null,
-    vp: null,
-  });
-  const dirtyRef = useRef(true);
-
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsub = engine.subscribeFrame(({ positions, vpMatrix }) => {
-      stateRef.current.positions = positions;
-      stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
-    });
-    return unsub;
-  }, [engineRef, ready]);
+  const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
     (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
-      const { positions, vp } = stateRef.current;
+      const { positions, vpMatrix: vp } = frameRef.current;
       if (!positions || !vp) return;
 
       const boxes = new Map<string, AABB>();

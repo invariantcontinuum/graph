@@ -1,8 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { worldToScreen, bitKey } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
+import { useEngineFrameState } from "./overlays/useEngineFrameState";
+import { useEngineEdgesState } from "./overlays/useEngineEdgesState";
 
 export interface EdgeLabelsOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -16,48 +18,13 @@ export function EdgeLabelsOverlay({
   ready,
 }: EdgeLabelsOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<{
-    edgeData: Float32Array | null;
-    edgeTypeKeys: string[];
-    focusIdx: number;
-    positions: Float32Array | null;
-    vp: Float32Array | null;
-  }>({
-    edgeData: null,
-    edgeTypeKeys: [],
-    focusIdx: -1,
-    positions: null,
-    vp: null,
-  });
-  const dirtyRef = useRef(true);
-
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsubEdges = engine.subscribeEdges(
-      ({ edgeData, focusIdx, edgeTypeKeys }) => {
-        stateRef.current.edgeData = edgeData;
-        stateRef.current.edgeTypeKeys = edgeTypeKeys;
-        stateRef.current.focusIdx = focusIdx;
-        dirtyRef.current = true;
-      },
-    );
-    const unsubFrame = engine.subscribeFrame(({ positions, vpMatrix }) => {
-      stateRef.current.positions = positions;
-      stateRef.current.vp = vpMatrix;
-      dirtyRef.current = true;
-    });
-    return () => {
-      unsubEdges();
-      unsubFrame();
-    };
-  }, [engineRef, ready]);
+  const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
+  const edgesRef = useEngineEdgesState(engineRef, ready, dirtyRef);
 
   const renderFrame = useCallback(
     (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
-      const { edgeData, edgeTypeKeys, focusIdx, positions, vp } =
-        stateRef.current;
+      const { edgeData, edgeTypeKeys, focusIdx } = edgesRef.current;
+      const { positions, vpMatrix: vp } = frameRef.current;
       if (focusIdx < 0 || !edgeData || !positions || !vp) return;
 
       const focusOff = focusIdx * 4;
