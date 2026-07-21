@@ -4,6 +4,7 @@ import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -63,6 +64,7 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
+  const { checkDirty, markDirty } = useDirtyCanvas();
 
   useDprCanvas(canvasRef);
 
@@ -75,17 +77,24 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
+      markDirty();
     });
     return unsubscribe;
-  }, [engineRef, ready]);
+  }, [engineRef, ready, markDirty]);
 
   // Render loop.
   useEffect(() => {
+    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
+      if (!checkDirty(cvs)) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
       const ctx = cvs.getContext("2d");
       if (!ctx) return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
