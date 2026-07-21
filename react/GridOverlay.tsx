@@ -15,7 +15,7 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<{ vp: Float32Array | null }>({ vp: null });
   const rafRef = useRef<number | null>(null);
-  const { checkDirty, markDirty } = useDirtyCanvas();
+  const { renderFrame, markDirty } = useDirtyCanvas();
 
   useDprCanvas(canvasRef);
 
@@ -38,57 +38,44 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
     const BASE_GRID_PX = 50;
 
     const tick = () => {
-      if (!checkDirty(cvs)) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      renderFrame(cvs, rafRef, tick, (ctx) => {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        const vp = frameRef.current.vp;
+        if (!vp) return;
 
-      const ctx = cvs.getContext("2d");
-      if (!ctx) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-      const vp = frameRef.current.vp;
-      if (!vp) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+        const zoom = screenZoom(vp, cvs.width, dpr);
+        const gridPx = Math.max(
+          12 * dpr,
+          Math.min(240 * dpr, BASE_GRID_PX * zoom * dpr),
+        );
+        const originX = (vp[12] + 1) * 0.5 * cvs.width;
+        const originY = (1 - vp[13]) * 0.5 * cvs.height;
+        const offsetX = ((originX % gridPx) + gridPx) % gridPx;
+        const offsetY = ((originY % gridPx) + gridPx) % gridPx;
 
-      const zoom = screenZoom(vp, cvs.width, dpr);
-      const gridPx = Math.max(
-        12 * dpr,
-        Math.min(240 * dpr, BASE_GRID_PX * zoom * dpr),
-      );
-      const originX = (vp[12] + 1) * 0.5 * cvs.width;
-      const originY = (1 - vp[13]) * 0.5 * cvs.height;
-      const offsetX = ((originX % gridPx) + gridPx) % gridPx;
-      const offsetY = ((originY % gridPx) + gridPx) % gridPx;
+        ctx.strokeStyle = theme.gridLineColor;
+        ctx.lineWidth = 1;
 
-      ctx.strokeStyle = theme.gridLineColor;
-      ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = offsetX; x <= cvs.width; x += gridPx) {
+          ctx.moveTo(x + 0.5, 0);
+          ctx.lineTo(x + 0.5, cvs.height);
+        }
+        ctx.stroke();
 
-      ctx.beginPath();
-      for (let x = offsetX; x <= cvs.width; x += gridPx) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, cvs.height);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      for (let y = offsetY; y <= cvs.height; y += gridPx) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(cvs.width, y + 0.5);
-      }
-      ctx.stroke();
-
-      rafRef.current = requestAnimationFrame(tick);
+        ctx.beginPath();
+        for (let y = offsetY; y <= cvs.height; y += gridPx) {
+          ctx.moveTo(0, y + 0.5);
+          ctx.lineTo(cvs.width, y + 0.5);
+        }
+        ctx.stroke();
+      });
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [theme.gridLineColor]);
+  }, [theme.gridLineColor, markDirty, renderFrame]);
 
   return (
     <canvas
