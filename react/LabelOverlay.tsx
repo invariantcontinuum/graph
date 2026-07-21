@@ -4,7 +4,6 @@ import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
 import { useDprCanvas } from "./overlays/useDprCanvas";
-import { useDirtyCanvas } from "./overlays/useDirtyCanvas";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -64,7 +63,6 @@ export function LabelOverlay({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
   const rafRef = useRef<number | null>(null);
-  const { renderFrame, markDirty } = useDirtyCanvas();
 
   useDprCanvas(canvasRef);
 
@@ -77,47 +75,50 @@ export function LabelOverlay({
     if (!engine) return;
     const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
       frameRef.current = { positions, vpMatrix };
-      markDirty();
     });
     return unsubscribe;
-  }, [engineRef, ready, markDirty]);
+  }, [engineRef, ready]);
 
   // Render loop.
   useEffect(() => {
-    markDirty();
     const cvs = canvasRef.current;
     if (!cvs) return;
     const dpr = window.devicePixelRatio || 1;
 
     const tick = () => {
-      renderFrame(cvs, rafRef, tick, (ctx) => {
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
+      const ctx = cvs.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-        const { positions, vpMatrix } = frameRef.current;
-        if (!positions || !vpMatrix) return;
+      const { positions, vpMatrix } = frameRef.current;
+      if (!positions || !vpMatrix) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
 
-        const zoom = screenZoom(vpMatrix, cvs.width, dpr);
-        if (zoom >= minZoomToShowLabels) {
-          drawAllLabels(ctx, {
-            cvs,
-            positions,
-            vpMatrix,
-            zoom,
-            dpr,
-            nodeIds,
-            labels,
-            nodeTypes,
-            theme,
-          });
-        }
-      });
+      const zoom = screenZoom(vpMatrix, cvs.width, dpr);
+      if (zoom >= minZoomToShowLabels) {
+        drawAllLabels(ctx, {
+          cvs,
+          positions,
+          vpMatrix,
+          zoom,
+          dpr,
+          nodeIds,
+          labels,
+          nodeTypes,
+          theme,
+        });
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels, markDirty, renderFrame]);
+  }, [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels]);
 
   return (
     <canvas
