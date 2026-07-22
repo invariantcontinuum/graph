@@ -2,6 +2,9 @@
 
 Last updated: 2026-05-29
 
+> Before starting any task, read `AGENTS.md` rule zero: check open PRs and
+> recent merges so you never duplicate in-flight work.
+
 This file is the playbook for product experience: graph readability,
 accessibility semantics, keyboard behavior, labels, themes, responsive fit, and
 showcase design. The graph package is a product UI surface, so clarity and

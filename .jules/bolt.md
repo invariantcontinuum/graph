@@ -2,6 +2,9 @@
 
 Last updated: 2026-05-29
 
+> Before starting any task, read `AGENTS.md` rule zero: check open PRs and
+> recent merges so you never duplicate in-flight work.
+
 This file is the execution playbook for package internals: Rust layout, WASM
 engines, React bridge code, worker protocol, benchmarks, and SonarCloud code
 quality findings. Keep it practical. Every entry should point future agents at
