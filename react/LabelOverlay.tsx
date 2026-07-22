@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
-import { worldToScreen, screenZoom } from "./overlays/vpMath";
+import { worldToScreenX, worldToScreenY, screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
@@ -159,7 +159,8 @@ function drawOneLabel(
   const id = nodeIds[index];
   const wx = positions[off];
   const wy = positions[off + 1];
-  const { sx, sy } = worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height);
+  const sx = worldToScreenX(wx, wy, vpMatrix, cvs.width);
+  const sy = worldToScreenY(wx, wy, vpMatrix, cvs.height);
   if (isOffscreen(sx, sy, cvs)) return;
 
   const type = nodeTypes[id] ?? "";

@@ -200,3 +200,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-01 - [Short-circuit redundant Canvas2D redraws]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), redrawing when the frame data hasn't changed wastes CPU. However, relying on WebGL `Float32Array` reference equality checks fails because the engine mutates them in-place. Furthermore, abstracting the `dirtyRef` early-exit check into a custom hook prevents SonarCloud code duplication errors and guarantees `ctx.clearRect()` is correctly called after the exit check to avoid blank canvases.
 **Action:** Created `useOverlayRenderLoop` to manage a boolean `dirtyRef` that is set in subscription callbacks and cleared during the render tick, replacing naive `requestAnimationFrame` loops in all overlay components.
+
+## 2026-07-21 - Bypass allocations in hot coordinate loops
+**Learning:** Returning short-lived parameter objects like {sx, sy} from utility functions inside requestAnimationFrame loops causes excessive memory churn and GC pauses.
+**Action:** Split return values into separate distinct X and Y functions that return primitives.

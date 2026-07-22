@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
-import { worldToScreen, bitKey } from "./overlays/vpMath";
+import { worldToScreenX, worldToScreenY, bitKey } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
 import { useEngineEdgesState } from "./overlays/useEngineEdgesState";
@@ -47,13 +47,8 @@ export function EdgeLabelsOverlay({
 
         const mx = (sx + tx) / 2;
         const my = (sy + ty) / 2;
-        const { sx: screenX, sy: screenY } = worldToScreen(
-          mx,
-          my,
-          vp,
-          cvs.width,
-          cvs.height,
-        );
+        const screenX = worldToScreenX(mx, my, vp, cvs.width);
+        const screenY = worldToScreenY(mx, my, vp, cvs.height);
 
         const pad = 5;
         const w = ctx.measureText(label).width + pad * 2;

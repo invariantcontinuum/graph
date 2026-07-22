@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme } from "./theme/types";
 import { typeStyleFor } from "./theme/typeStyles";
-import { worldToScreen } from "./overlays/vpMath";
+import { worldToScreenX, worldToScreenY } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
@@ -69,13 +69,15 @@ export function CompoundFramesOverlay({
       ctx.setLineDash([6, 4]);
 
       for (const [src, box] of boxes) {
-        const tl = worldToScreen(box.minX, box.minY, vp, cvs.width, cvs.height);
-        const br = worldToScreen(box.maxX, box.maxY, vp, cvs.width, cvs.height);
+        const tlsx = worldToScreenX(box.minX, box.minY, vp, cvs.width);
+        const tlsy = worldToScreenY(box.minX, box.minY, vp, cvs.height);
+        const brsx = worldToScreenX(box.maxX, box.maxY, vp, cvs.width);
+        const brsy = worldToScreenY(box.maxX, box.maxY, vp, cvs.height);
         const PAD = 24;
-        const rx = Math.min(tl.sx, br.sx) - PAD;
-        const ry = Math.min(tl.sy, br.sy) - PAD;
-        const w = Math.abs(br.sx - tl.sx) + PAD * 2;
-        const h = Math.abs(br.sy - tl.sy) + PAD * 2;
+        const rx = Math.min(tlsx, brsx) - PAD;
+        const ry = Math.min(tlsy, brsy) - PAD;
+        const w = Math.abs(brsx - tlsx) + PAD * 2;
+        const h = Math.abs(brsy - tlsy) + PAD * 2;
         const r = 12;
         ctx.beginPath();
         ctx.moveTo(rx + r, ry);
