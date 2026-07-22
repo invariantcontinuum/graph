@@ -165,3 +165,6 @@ Browser smoke must cover:
 ## 2026-07-31 - Exposing implicit keyboard shortcuts for canvas controls
 **Learning:** For users who rely on screen readers and keyboard navigation, implicit keyboard shortcuts that control UI state (such as 'f' to fit the graph) are effectively invisible unless documented or announced. Adding these to a hidden generic shortcuts overlay may still miss users trying to interact with specific canvas controls directly.
 **Action:** Added keyboard shortcut listener for "f" to fit the graph and explicitly advertised it via `aria-keyshortcuts="Escape Plus - ArrowUp ArrowDown ArrowLeft ArrowRight F"` on the main Graph canvas.
+## 2026-08-01 - Avoid tabIndex=-1 on aria-hidden decorative elements
+**Learning:** Adding `tabIndex={-1}` to purely decorative elements (like overlay canvases) that use `aria-hidden={true}` creates an accessibility conflict by making them programmatically focusable despite being hidden to screen readers.
+**Action:** Removed `tabIndex={-1}` from all decorative overlay canvases in the React bridge.

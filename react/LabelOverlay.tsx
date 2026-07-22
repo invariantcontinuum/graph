@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
 import { worldToScreen, screenZoom } from "./overlays/vpMath";
-import { useDprCanvas } from "./overlays/useDprCanvas";
+import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
+import { useEngineFrameState } from "./overlays/useEngineFrameState";
 
 export interface LabelOverlayProps {
   readonly engineRef: React.RefObject<GraphHandle | null>;
@@ -61,41 +62,14 @@ export function LabelOverlay({
   focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<FrameState>({ positions: null, vpMatrix: null });
-  const rafRef = useRef<number | null>(null);
+  const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
-  useDprCanvas(canvasRef);
-
-  // Subscribe to engine frame updates. Gated on `ready` because the engine
-  // ref is initially null and the `<Graph>` component only wires up the
-  // frame subscription after its internal `init` effect has run.
-  useEffect(() => {
-    if (!ready) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    const unsubscribe = engine.subscribeFrame(({ positions, vpMatrix }) => {
-      frameRef.current = { positions, vpMatrix };
-    });
-    return unsubscribe;
-  }, [engineRef, ready]);
-
-  // Render loop.
-  useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const dpr = window.devicePixelRatio || 1;
-
-    const tick = () => {
-      const ctx = cvs.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-
+  const renderFrame = useCallback(
+    (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
       const { positions, vpMatrix } = frameRef.current;
-      if (!positions || !vpMatrix) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
+      if (!positions || !vpMatrix) return;
 
+      const dpr = window.devicePixelRatio || 1;
       const zoom = screenZoom(vpMatrix, cvs.width, dpr);
       if (zoom >= minZoomToShowLabels) {
         drawAllLabels(ctx, {
@@ -110,22 +84,17 @@ export function LabelOverlay({
           theme,
         });
       }
+    },
+    [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels],
+  );
 
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [nodeIds, labels, nodeTypes, theme, minZoomToShowLabels]);
+  useOverlayRenderLoop(canvasRef, dirtyRef, renderFrame);
 
   return (
     <canvas
       ref={canvasRef}
       className="graph-label-overlay"
       aria-hidden={true}
-      tabIndex={-1}
       // The WASM shader dims non-focus fills via u_dim_opacity, so labels stay
       // at uniform brightness. We surface the focus-set size as a data
       // attribute so app CSS / devtools can read it without an extra render
