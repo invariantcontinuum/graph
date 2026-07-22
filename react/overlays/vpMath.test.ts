@@ -4,17 +4,15 @@ import { worldToScreen, screenZoom, bitKey } from "./vpMath";
 describe("vpMath", () => {
   test("identity VP maps world (0,0) to the screen center", () => {
     const vp = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-    const out = { sx: 0, sy: 0 };
-    worldToScreen(0, 0, vp, 800, 600, out);
-    expect(out.sx).toBeCloseTo(400);
-    expect(out.sy).toBeCloseTo(300);
+    const { sx, sy } = worldToScreen(0, 0, vp, 800, 600);
+    expect(sx).toBeCloseTo(400);
+    expect(sy).toBeCloseTo(300);
   });
 
   test("translated VP shifts screen projection", () => {
     const vp = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0.5,0,0,1]);
-    const out = { sx: 0, sy: 0 };
-    worldToScreen(0, 0, vp, 800, 600, out);
-    expect(out.sx).toBeCloseTo(600); // (+0.5 + 1) * 0.5 * 800
+    const { sx } = worldToScreen(0, 0, vp, 800, 600);
+    expect(sx).toBeCloseTo(600); // (+0.5 + 1) * 0.5 * 800
   });
 
   test("screenZoom recovers scale from VP", () => {

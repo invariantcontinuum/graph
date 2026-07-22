@@ -73,21 +73,14 @@ export function CompoundFramesOverlay({
       ctx.lineWidth   = 1;
       ctx.setLineDash([6, 4]);
 
-      const TL_OUT = { sx: 0, sy: 0 };
-      const BR_OUT = { sx: 0, sy: 0 };
-
       for (const [src, box] of boxes) {
-        worldToScreen(box.minX, box.minY, vp, cvs.width, cvs.height, TL_OUT);
-        worldToScreen(box.maxX, box.maxY, vp, cvs.width, cvs.height, BR_OUT);
-        const tl_sx = TL_OUT.sx;
-        const tl_sy = TL_OUT.sy;
-        const br_sx = BR_OUT.sx;
-        const br_sy = BR_OUT.sy;
+        const tl = worldToScreen(box.minX, box.minY, vp, cvs.width, cvs.height);
+        const br = worldToScreen(box.maxX, box.maxY, vp, cvs.width, cvs.height);
         const PAD = 24;
-        const rx = Math.min(tl_sx, br_sx) - PAD;
-        const ry = Math.min(tl_sy, br_sy) - PAD;
-        const w  = Math.abs(br_sx - tl_sx) + PAD * 2;
-        const h  = Math.abs(br_sy - tl_sy) + PAD * 2;
+        const rx = Math.min(tl.sx, br.sx) - PAD;
+        const ry = Math.min(tl.sy, br.sy) - PAD;
+        const w  = Math.abs(br.sx - tl.sx) + PAD * 2;
+        const h  = Math.abs(br.sy - tl.sy) + PAD * 2;
         const r  = 12;
         ctx.beginPath();
         ctx.moveTo(rx + r, ry);

@@ -61,7 +61,6 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
       const focusKey = bitKey(positions[focusOff], positions[focusOff + 1]);
 
       ctx.font = "600 10px 'Manrope', sans-serif";
-      const EDGE_OUT = { sx: 0, sy: 0 };
       for (let i = 0; i + 6 <= edgeData.length; i += 6) {
         const sx = edgeData[i], sy = edgeData[i + 1], tx = edgeData[i + 2], ty = edgeData[i + 3];
         const sKey = bitKey(sx, sy);
@@ -74,9 +73,7 @@ export function EdgeLabelsOverlay({ engineRef, theme, ready }: EdgeLabelsOverlay
 
         const mx = (sx + tx) / 2;
         const my = (sy + ty) / 2;
-        worldToScreen(mx, my, vp, cvs.width, cvs.height, EDGE_OUT);
-        const screenX = EDGE_OUT.sx;
-        const screenY = EDGE_OUT.sy;
+        const { sx: screenX, sy: screenY } = worldToScreen(mx, my, vp, cvs.width, cvs.height);
 
         const pad = 5;
         const w = ctx.measureText(label).width + pad * 2;

@@ -4,20 +4,20 @@
 // transform.
 
 /** Project world-space (wx, wy, z=0, w=1) through a column-major 4x4 VP matrix
- *  onto canvas pixel coordinates (y flipped because canvas origin is top-left).
- *  Mutates the `out` parameter to avoid allocating short-lived objects. */
+ *  onto canvas pixel coordinates (y flipped because canvas origin is top-left). */
 export function worldToScreen(
   wx: number,
   wy: number,
   vp: Float32Array,
   canvasWidth: number,
   canvasHeight: number,
-  out: { sx: number; sy: number },
-): void {
+): { sx: number; sy: number } {
   const cx = vp[0] * wx + vp[4] * wy + vp[12];
   const cy = vp[1] * wx + vp[5] * wy + vp[13];
-  out.sx = (cx + 1) * 0.5 * canvasWidth;
-  out.sy = (1 - cy) * 0.5 * canvasHeight;
+  return {
+    sx: (cx + 1) * 0.5 * canvasWidth,
+    sy: (1 - cy) * 0.5 * canvasHeight,
+  };
 }
 
 /** Approximate effective screen-space zoom from an orthographic VP matrix.

@@ -169,8 +169,6 @@ function drawAllLabels(
   }
 }
 
-const LABEL_OUT = { sx: 0, sy: 0 };
-
 function drawOneLabel(
   ctx: CanvasRenderingContext2D,
   frame: FrameContext,
@@ -192,8 +190,7 @@ function drawOneLabel(
   const id = nodeIds[index];
   const wx = positions[off];
   const wy = positions[off + 1];
-  worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height, LABEL_OUT);
-  const { sx, sy } = LABEL_OUT;
+  const { sx, sy } = worldToScreen(wx, wy, vpMatrix, cvs.width, cvs.height);
   if (isOffscreen(sx, sy, cvs)) return;
 
   const type = nodeTypes[id] ?? "";
