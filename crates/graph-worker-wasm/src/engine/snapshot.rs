@@ -115,22 +115,14 @@ impl WorkerEngine {
         self.node_type_keys.clear();
         self.edge_type_keys.clear();
 
-        let ordered_node_types: Vec<String> = self
-            .node_order
-            .iter()
-            .filter_map(|id| self.store.get_node(id).map(|n| n.node_type.clone()))
-            .collect();
-        for type_key in ordered_node_types {
-            push_unique(&mut self.node_type_keys, type_key);
+        for id in &self.node_order {
+            if let Some(node) = self.store.get_node(id) {
+                push_unique(&mut self.node_type_keys, &node.node_type);
+            }
         }
 
-        let ordered_edge_types: Vec<String> = self
-            .store
-            .edges()
-            .map(|edge| edge.edge_type.clone())
-            .collect();
-        for type_key in ordered_edge_types {
-            push_unique(&mut self.edge_type_keys, type_key);
+        for edge in self.store.edges() {
+            push_unique(&mut self.edge_type_keys, &edge.edge_type);
         }
     }
 }
