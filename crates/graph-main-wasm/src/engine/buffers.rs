@@ -36,9 +36,9 @@ impl RenderEngine {
         let status_override = self.theme.nodes.by_status.get(status);
 
         let shape_name = type_override
-            .and_then(|o| o.shape.clone())
-            .unwrap_or_else(|| default.shape.clone());
-        let shape = shape_index(&shape_name);
+            .and_then(|o| o.shape.as_deref())
+            .unwrap_or(default.shape.as_str());
+        let shape = shape_index(shape_name);
 
         let half_w = type_override
             .and_then(|o| o.half_width)
@@ -50,15 +50,15 @@ impl RenderEngine {
             .unwrap_or(default.size);
 
         let color_hex = type_override
-            .and_then(|o| o.color.clone())
-            .unwrap_or_else(|| default.color.clone());
-        let color = parse_color_tuple(&color_hex);
+            .and_then(|o| o.color.as_deref())
+            .unwrap_or(default.color.as_str());
+        let color = parse_color_tuple(color_hex);
 
         let border_color_hex = status_override
-            .and_then(|o| o.border_color.clone())
-            .or_else(|| type_override.and_then(|o| o.border_color.clone()))
-            .unwrap_or_else(|| default.border_color.clone());
-        let border_color = parse_color_tuple(&border_color_hex);
+            .and_then(|o| o.border_color.as_deref())
+            .or_else(|| type_override.and_then(|o| o.border_color.as_deref()))
+            .unwrap_or(default.border_color.as_str());
+        let border_color = parse_color_tuple(border_color_hex);
 
         let border_width = status_override
             .and_then(|o| o.border_width)
@@ -303,20 +303,20 @@ impl RenderEngine {
             .upload(&self.ctx.gl, &arrow_instances, arrow_count);
     }
 
-    fn resolve_edge_style(&self, type_idx: usize) -> EdgeStyle {
+    fn resolve_edge_style(&self, type_idx: usize) -> EdgeStyle<'_> {
         let type_name = self
             .edge_type_keys
             .get(type_idx)
             .map(String::as_str)
             .unwrap_or("depends");
 
-        let mut color_hex = self.theme.edges.default.color.clone();
+        let mut color_hex = self.theme.edges.default.color.as_str();
         let mut width = self.theme.edges.default.width;
         let mut dash = 0.0_f32;
         let mut animate = 0.0_f32;
         if let Some(ov) = self.theme.edges.by_type.get(type_name) {
             if let Some(ref c) = ov.color {
-                color_hex = c.clone();
+                color_hex = c.as_str();
             }
             if let Some(ref w) = ov.width {
                 width = *w;
@@ -344,14 +344,25 @@ fn clip_rect_endpoint(center: (f32, f32), toward: (f32, f32), half_dims: (f32, f
         return center;
     }
 
-    let half_w = (half_dims.0 + EDGE_NODE_GAP).max(1.0);
-    let half_h = (half_dims.1 + EDGE_NODE_GAP).max(1.0);
-    let scale = (dx.abs() / half_w).max(dy.abs() / half_h).max(1.0e-6);
+    let mut half_w = half_dims.0 + EDGE_NODE_GAP;
+    if half_w < 1.0 {
+        half_w = 1.0;
+    }
+    let mut half_h = half_dims.1 + EDGE_NODE_GAP;
+    if half_h < 1.0 {
+        half_h = 1.0;
+    }
+    let scale_w = dx.abs() / half_w;
+    let scale_h = dy.abs() / half_h;
+    let mut scale = if scale_w > scale_h { scale_w } else { scale_h };
+    if scale < 1.0e-6 {
+        scale = 1.0e-6;
+    }
     (center.0 + dx / scale, center.1 + dy / scale)
 }
 
-struct EdgeStyle {
-    color_hex: String,
+struct EdgeStyle<'a> {
+    color_hex: &'a str,
     width: f32,
     dash: f32,
     animate: f32,
@@ -363,7 +374,7 @@ struct PaintedEdge {
 }
 
 fn paint_edge_for_focus(
-    style: &EdgeStyle,
+    style: &EdgeStyle<'_>,
     spotlight_idx: Option<usize>,
     coord_to_idx: &std::collections::HashMap<(u32, u32), usize>,
     src: (f32, f32),
@@ -373,7 +384,7 @@ fn paint_edge_for_focus(
 ) -> PaintedEdge {
     let Some(focus_idx) = spotlight_idx else {
         return PaintedEdge {
-            color: parse_color_tuple(&style.color_hex),
+            color: parse_color_tuple(style.color_hex),
             width: style.width,
         };
     };
@@ -398,7 +409,7 @@ fn paint_edge_for_focus(
             width: style.width * FOCUS_EDGE_WIDTH_SCALE,
         }
     } else {
-        let mut color = parse_color_tuple(&style.color_hex);
+        let mut color = parse_color_tuple(style.color_hex);
         color[3] = (color[3] * spotlight_dim_opacity).clamp(0.0, 1.0);
         PaintedEdge {
             color,

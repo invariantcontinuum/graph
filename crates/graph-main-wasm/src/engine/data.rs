@@ -101,10 +101,10 @@ impl RenderEngine {
         let mut edge_counts: HashMap<&str, usize> = HashMap::new();
 
         for meta in self.node_metadata.values() {
-            *node_counts.entry(&meta.node_type).or_insert(0) += 1;
+            *node_counts.entry(meta.node_type.as_str()).or_insert(0) += 1;
         }
         for etype in self.edge_metadata.values() {
-            *edge_counts.entry(etype).or_insert(0) += 1;
+            *edge_counts.entry(etype.as_str()).or_insert(0) += 1;
         }
 
         let mut summary =

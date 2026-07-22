@@ -196,6 +196,23 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-11 - [Use squared distances to bypass sqrt() in hot picking loop]
 **Learning:** In the spatial grid picking loop (`pick` in `crates/graph-main-wasm/src/spatial.rs`), calculating the distance to candidate nodes involved a `.sqrt()` call for every candidate. Since this is an inner loop executing for potentially many candidate nodes, the floating-point square root operation adds measurable CPU overhead.
 **Action:** When comparing distances in performance-critical geometric loops (e.g., node picking, hit testing), bypass the expensive `sqrt()` operation by comparing squared distances (`dist_sq < max_d * max_d`).
+
+## 2026-08-01 - [Short-circuit redundant Canvas2D redraws]
+**Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), redrawing when the frame data hasn't changed wastes CPU. However, relying on WebGL `Float32Array` reference equality checks fails because the engine mutates them in-place. Furthermore, abstracting the `dirtyRef` early-exit check into a custom hook prevents SonarCloud code duplication errors and guarantees `ctx.clearRect()` is correctly called after the exit check to avoid blank canvases.
+**Action:** Created `useOverlayRenderLoop` to manage a boolean `dirtyRef` that is set in subscription callbacks and cleared during the render tick, replacing naive `requestAnimationFrame` loops in all overlay components.
+
+## 2026-07-21 - Bypass allocations in hot coordinate loops
+**Learning:** Returning short-lived parameter objects like {sx, sy} from utility functions inside requestAnimationFrame loops causes excessive memory churn and GC pauses.
+**Action:** Split return values into separate distinct X and Y functions that return primitives.
+## 2026-07-16 - Optimize hot loop string cloning with as_deref
+**Learning:** In Rust hot loops (e.g., per-node buffer rebuilding in WASM renderers or iteration over nodes), cloning `String` fields from configurations incurs unnecessary allocation overhead.
+**Action:** Use `.as_deref()` on `Option<String>` to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time.
+## 2026-07-19 - [Bypass string allocation in per-node and per-edge GPU buffer rebuilding]
+**Learning:** In Rust hot loops (like per-node or per-edge buffer rebuilding in WASM renderers), cloning `String` fields from configurations incurs unnecessary allocation overhead and memory churn.
+**Action:** Use `.as_deref()` or `.as_str()` on `Option<String>` or `String` fields to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time in hot loops.
+## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
+**Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
+**Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
 ## 2026-05-29 - [Short-circuit redundant Canvas2D redraws on idle frames]
 **Learning:** When short-circuiting a `requestAnimationFrame` render loop using a `dirtyRef` flag to skip idle frames, you must explicitly set `dirtyRef.current = true` inside the React component's main render body or its layout `useEffect`. Failing to do so causes a reactivity regression where React prop updates (e.g., themes, labels) do not trigger canvas redraws. Additionally, do not use reference equality checks on WebGL engine `Float32Array` buffers as the engine mutates these in-place; use the `dirtyRef` flag in the engine's subscription callback and on canvas resize events.
-**Action:** Implemented a `dirtyRef` flag in `LabelOverlay`, `GridOverlay`, `EdgeLabelsOverlay`, and `CompoundFramesOverlay` that is set to `true` on React prop updates, engine callbacks, and canvas resize events, short-circuiting the frame execution if `false`.
+**Action:** The codebase has evolved to handle this centrally via the `useOverlayRenderLoop` pattern.
