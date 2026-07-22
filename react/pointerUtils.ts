@@ -153,7 +153,6 @@ export function handlePointerUp(
   engine: any,
   callbacks: {
     onNodeClick?: (node: any) => void;
-    onNodeHover?: (node: any) => void;
   },
   nodeFromId: (id: string) => any,
   draggingNodeRef: React.MutableRefObject<string | null>,
