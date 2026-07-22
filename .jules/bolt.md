@@ -210,3 +210,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-19 - [Bypass string allocation in per-node and per-edge GPU buffer rebuilding]
 **Learning:** In Rust hot loops (like per-node or per-edge buffer rebuilding in WASM renderers), cloning `String` fields from configurations incurs unnecessary allocation overhead and memory churn.
 **Action:** Use `.as_deref()` or `.as_str()` on `Option<String>` or `String` fields to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time in hot loops.
+## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
+**Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
+**Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.

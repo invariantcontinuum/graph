@@ -344,9 +344,20 @@ fn clip_rect_endpoint(center: (f32, f32), toward: (f32, f32), half_dims: (f32, f
         return center;
     }
 
-    let half_w = (half_dims.0 + EDGE_NODE_GAP).max(1.0);
-    let half_h = (half_dims.1 + EDGE_NODE_GAP).max(1.0);
-    let scale = (dx.abs() / half_w).max(dy.abs() / half_h).max(1.0e-6);
+    let mut half_w = half_dims.0 + EDGE_NODE_GAP;
+    if half_w < 1.0 {
+        half_w = 1.0;
+    }
+    let mut half_h = half_dims.1 + EDGE_NODE_GAP;
+    if half_h < 1.0 {
+        half_h = 1.0;
+    }
+    let scale_w = dx.abs() / half_w;
+    let scale_h = dy.abs() / half_h;
+    let mut scale = if scale_w > scale_h { scale_w } else { scale_h };
+    if scale < 1.0e-6 {
+        scale = 1.0e-6;
+    }
     (center.0 + dx / scale, center.1 + dy / scale)
 }
 
