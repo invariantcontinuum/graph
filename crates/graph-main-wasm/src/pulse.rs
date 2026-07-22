@@ -1,7 +1,7 @@
 //! Per-frame border width modulation for nodes flagged by theme's
 //! `byStatus.pulse = true`. Amplitude +- 0.35, period 1200 ms.
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub const PULSE_PERIOD_MS: f64 = 1200.0;
 pub const PULSE_AMPLITUDE: f32 = 0.35;
@@ -22,10 +22,10 @@ impl PulseState {
     /// Recompute `pulse_indices` from node statuses + theme byStatus.pulse map.
     /// Status keys are raw strings (e.g. "violation", "drift") matching
     /// `ThemeConfig.nodes.by_status` keys — no interning required.
-    pub fn recompute(&mut self, node_statuses: &[String], status_pulse: &HashMap<String, bool>) {
+    pub fn recompute(&mut self, node_statuses: &[&str], status_pulse: &HashSet<&str>) {
         self.pulse_indices.clear();
         for (i, s) in node_statuses.iter().enumerate() {
-            if *status_pulse.get(s.as_str()).unwrap_or(&false) {
+            if status_pulse.contains(s) {
                 self.pulse_indices.push(i);
             }
         }
@@ -57,16 +57,10 @@ mod tests {
     #[test]
     fn recompute_filters_sorts_dedups() {
         let mut p = PulseState::new(0.0);
-        let mut map = HashMap::new();
-        map.insert("violation".to_string(), true);
+        let mut map = HashSet::new();
+        map.insert("violation");
         p.recompute(
-            &[
-                "violation".to_string(),
-                "healthy".to_string(),
-                "violation".to_string(),
-                "drift".to_string(),
-                "violation".to_string(),
-            ],
+            &["violation", "healthy", "violation", "drift", "violation"],
             &map,
         );
         assert_eq!(p.pulse_indices, vec![0, 2, 4]);
@@ -75,9 +69,9 @@ mod tests {
     #[test]
     fn multiplier_range_is_1_pm_035() {
         let mut p = PulseState::new(0.0);
-        let mut map = HashMap::new();
-        map.insert("violation".to_string(), true);
-        p.recompute(&["violation".to_string()], &map);
+        let mut map = HashSet::new();
+        map.insert("violation");
+        p.recompute(&["violation"], &map);
         for step in 0..=120 {
             let t = step as f64 * 10.0;
             let m = p.border_multiplier(0, t);

@@ -216,3 +216,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
 **Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
 **Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
+
+
+## 2026-07-22 - [Bypass string allocation in pulse recomputation]
+**Learning:** In hot loops and frequent updates, cloning strings from configuration or metadata incurs unnecessary allocation overhead and memory churn.
+**Action:** Use `.as_str()` on `String` fields and convert `HashMap<String, bool>` to `HashSet<&str>` to borrow string slices (`&str`) instead of `.clone()`, completely bypassing O(N) string allocations during metadata updates.
