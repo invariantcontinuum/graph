@@ -168,3 +168,6 @@ Browser smoke must cover:
 ## 2026-08-01 - Avoid tabIndex=-1 on aria-hidden decorative elements
 **Learning:** Adding `tabIndex={-1}` to purely decorative elements (like overlay canvases) that use `aria-hidden={true}` creates an accessibility conflict by making them programmatically focusable despite being hidden to screen readers.
 **Action:** Removed `tabIndex={-1}` from all decorative overlay canvases in the React bridge.
+## 2024-07-25 - Prevent Focus on Hidden Elements
+**Learning:** Adding `tabIndex={-1}` to elements with `aria-hidden={true}` (like decorative canvases) creates an accessibility conflict. The element is removed from the accessibility tree, but the `tabIndex` makes it programmatically focusable, which can cause confusing behavior for screen readers if focus is accidentally routed there.
+**Action:** Remove `tabIndex={-1}` from purely decorative elements that have `aria-hidden={true}` to ensure they are fully excluded from interaction models.
