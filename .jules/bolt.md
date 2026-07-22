@@ -204,3 +204,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-21 - Bypass allocations in hot coordinate loops
 **Learning:** Returning short-lived parameter objects like {sx, sy} from utility functions inside requestAnimationFrame loops causes excessive memory churn and GC pauses.
 **Action:** Split return values into separate distinct X and Y functions that return primitives.
+## 2026-07-16 - Optimize hot loop string cloning with as_deref
+**Learning:** In Rust hot loops (e.g., per-node buffer rebuilding in WASM renderers or iteration over nodes), cloning `String` fields from configurations incurs unnecessary allocation overhead.
+**Action:** Use `.as_deref()` on `Option<String>` to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time.
