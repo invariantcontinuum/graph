@@ -207,3 +207,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-16 - Optimize hot loop string cloning with as_deref
 **Learning:** In Rust hot loops (e.g., per-node buffer rebuilding in WASM renderers or iteration over nodes), cloning `String` fields from configurations incurs unnecessary allocation overhead.
 **Action:** Use `.as_deref()` on `Option<String>` to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time.
+## 2026-07-19 - [Bypass string allocation in per-node and per-edge GPU buffer rebuilding]
+**Learning:** In Rust hot loops (like per-node or per-edge buffer rebuilding in WASM renderers), cloning `String` fields from configurations incurs unnecessary allocation overhead and memory churn.
+**Action:** Use `.as_deref()` or `.as_str()` on `Option<String>` or `String` fields to borrow string slices (`&str`) instead of `.clone()` to bypass allocations and significantly improve execution time in hot loops.

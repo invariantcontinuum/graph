@@ -303,20 +303,20 @@ impl RenderEngine {
             .upload(&self.ctx.gl, &arrow_instances, arrow_count);
     }
 
-    fn resolve_edge_style(&self, type_idx: usize) -> EdgeStyle {
+    fn resolve_edge_style(&self, type_idx: usize) -> EdgeStyle<'_> {
         let type_name = self
             .edge_type_keys
             .get(type_idx)
             .map(String::as_str)
             .unwrap_or("depends");
 
-        let mut color_hex = self.theme.edges.default.color.clone();
+        let mut color_hex = self.theme.edges.default.color.as_str();
         let mut width = self.theme.edges.default.width;
         let mut dash = 0.0_f32;
         let mut animate = 0.0_f32;
         if let Some(ov) = self.theme.edges.by_type.get(type_name) {
             if let Some(ref c) = ov.color {
-                color_hex = c.clone();
+                color_hex = c.as_str();
             }
             if let Some(ref w) = ov.width {
                 width = *w;
@@ -350,8 +350,8 @@ fn clip_rect_endpoint(center: (f32, f32), toward: (f32, f32), half_dims: (f32, f
     (center.0 + dx / scale, center.1 + dy / scale)
 }
 
-struct EdgeStyle {
-    color_hex: String,
+struct EdgeStyle<'a> {
+    color_hex: &'a str,
     width: f32,
     dash: f32,
     animate: f32,
@@ -363,7 +363,7 @@ struct PaintedEdge {
 }
 
 fn paint_edge_for_focus(
-    style: &EdgeStyle,
+    style: &EdgeStyle<'_>,
     spotlight_idx: Option<usize>,
     coord_to_idx: &std::collections::HashMap<(u32, u32), usize>,
     src: (f32, f32),
@@ -373,7 +373,7 @@ fn paint_edge_for_focus(
 ) -> PaintedEdge {
     let Some(focus_idx) = spotlight_idx else {
         return PaintedEdge {
-            color: parse_color_tuple(&style.color_hex),
+            color: parse_color_tuple(style.color_hex),
             width: style.width,
         };
     };
@@ -398,7 +398,7 @@ fn paint_edge_for_focus(
             width: style.width * FOCUS_EDGE_WIDTH_SCALE,
         }
     } else {
-        let mut color = parse_color_tuple(&style.color_hex);
+        let mut color = parse_color_tuple(style.color_hex);
         color[3] = (color[3] * spotlight_dim_opacity).clamp(0.0, 1.0);
         PaintedEdge {
             color,
