@@ -216,3 +216,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
 **Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
 **Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
+
+
+## 2026-07-23 - Optimize hot loops in text measurement
+**Learning:** Array slicing/joining (`chars.slice().join("")`) and parameter object allocation (`return { end }`) inside the high-frequency Canvas `requestAnimationFrame` text wrapping loop cause severe GC pauses due to thousands of short-lived allocations per frame.
+**Action:** In hot render loops, always return scalar primitives and use iterative string concatenation (`chunk += chars[i]`) instead of mapping/slicing array structures to eliminate memory churn.
