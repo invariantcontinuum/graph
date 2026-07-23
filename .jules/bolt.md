@@ -216,3 +216,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
 **Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
 **Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
+
+
+## 2026-07-23 - [Iterative string concatenation for layout metrics]
+**Learning:** In hot JavaScript render loops, doing array slicing and joining (e.g., `chars.slice(start, i).join('')`) in a loop results in O(N^2) complexity and causes thousands of short-lived memory allocations, leading to severe GC pauses.
+**Action:** Use iterative string concatenation (`chunk += chars[i]`) instead when measuring text progressively in a loop.
