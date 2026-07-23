@@ -1,11 +1,7 @@
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { buildGraphTheme } from "./theme/buildTheme";
 import type { ThemeMode } from "./GraphScene";
-import {
-  connectionsFor,
-  formatMetaValue,
-  neighborName,
-} from "./nodeDetails";
+import { connectionsFor, formatMetaValue, neighborName } from "./nodeDetails";
 import type { EdgeData, NodeData } from "./types";
 
 export interface NodeDetailsPanelProps {
@@ -183,7 +179,13 @@ export function NodeDetailsPanel({
               }}
             >
               <dt style={{ color: theme.dimText }}>{key}</dt>
-              <dd style={{ margin: 0, textAlign: "right", wordBreak: "break-word" }}>
+              <dd
+                style={{
+                  margin: 0,
+                  textAlign: "right",
+                  wordBreak: "break-word",
+                }}
+              >
                 {formatMetaValue(value)}
               </dd>
             </div>
@@ -209,7 +211,13 @@ export function NodeDetailsPanel({
               const label = `${direction === "outgoing" ? "→" : "←"} ${neighborName(neighborId, nodesById)}`;
               const inner = (
                 <>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {label}
                   </span>
                   <span style={{ color: theme.dimText, flex: "none" }}>
@@ -238,7 +246,7 @@ export function NodeDetailsPanel({
                       type="button"
                       style={{ ...rowStyle, cursor: "pointer" }}
                       onClick={() => onNeighborClick(neighbor)}
-                      aria-label={`Inspect ${neighbor.name}`}
+                      aria-label={`Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name} (type: ${edge.type})`}
                     >
                       {inner}
                     </button>
