@@ -216,3 +216,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-12 - [Skip standard f32::max NaN checks for positive numbers in hot loops]
 **Learning:** In hot loops, standard library functions like `f32::max()` have inherent overhead because they perform IEEE-754 compliant NaN checks. If a mathematical guarantee ensures the value is non-negative, this overhead is unnecessary.
 **Action:** When determining the maximum of non-NaN floats in performance-critical paths, replace `.max()` with a simple `if val > max_val { max_val = val; }` block to skip NaN checks and improve throughput.
+
+
+## 2026-07-22 - [Bypass string and vector allocations in rebuild_type_keys]
+**Learning:** In worker-side graph mutations (`rebuild_type_keys`), cloning node and edge type strings to build a unique type list causes O(V+E) string allocations and unnecessary temporary vectors.
+**Action:** When building a deduplicated list of strings from a large collection, use `&str` references for the uniqueness check and `.to_string()` only when a new unique item is found, avoiding O(N) clones.

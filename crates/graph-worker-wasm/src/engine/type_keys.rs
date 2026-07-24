@@ -5,9 +5,9 @@
 //! position in the list. Using plain `Vec<String>` with a manual "push if
 //! new" check keeps the ordering deterministic (a `HashSet` would not).
 
-pub(super) fn push_unique(keys: &mut Vec<String>, type_key: String) {
-    if !keys.iter().any(|known| known == &type_key) {
-        keys.push(type_key);
+pub(super) fn push_unique(keys: &mut Vec<String>, type_key: &str) {
+    if !keys.iter().any(|known| known == type_key) {
+        keys.push(type_key.to_string());
     }
 }
 
