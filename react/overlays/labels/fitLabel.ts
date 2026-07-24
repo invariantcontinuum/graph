@@ -152,10 +152,12 @@ function fitChars(
   maxWidth: number,
 ): number {
   let best = start;
-  for (let i = start + 1; i <= chars.length; i++) {
-    const chunk = chars.slice(start, i).join("");
+  let chunk = "";
+  for (let i = start; i < chars.length; i++) {
+    chunk += chars[i];
+    // ⚡ Bolt: Iterative string concatenation avoids O(N^2) array slice/join memory churn
     if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i;
+    best = i + 1;
   }
   return best;
 }
