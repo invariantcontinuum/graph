@@ -16,9 +16,7 @@ const snapshot = {
     { id: "n1", name: "Order", type: "entity", status: "ok" },
     { id: "n2", name: "Fulfilment", type: "process", status: "ok" },
   ],
-  edges: [
-    { id: "e1", source: "n1", target: "n2", type: "triggers" },
-  ],
+  edges: [{ id: "e1", source: "n1", target: "n2", type: "triggers" }],
 };
 
 export function App() {
@@ -42,7 +40,10 @@ engine. The engine merges your overrides onto the default palette, so you only
 need to specify what differs.
 
 ```tsx
-import { GraphScene, type GraphThemeOverrides } from "@invariantcontinuum/graph/react";
+import {
+  GraphScene,
+  type GraphThemeOverrides,
+} from "@invariantcontinuum/graph/react";
 
 const themeOverrides: GraphThemeOverrides = {
   nodeTypes: {
@@ -65,7 +66,11 @@ const themeOverrides: GraphThemeOverrides = {
   },
 };
 
-<GraphScene themeMode="dark" snapshot={snapshot} themeOverrides={themeOverrides} />;
+<GraphScene
+  themeMode="dark"
+  snapshot={snapshot}
+  themeOverrides={themeOverrides}
+/>;
 ```
 
 Any node type not in `themeOverrides.nodeTypes` falls back to
@@ -79,14 +84,21 @@ matches the engine's view of the graph:
 
 ```tsx
 import { useState } from "react";
-import { GraphScene, type LegendSummary } from "@invariantcontinuum/graph/react";
+import {
+  GraphScene,
+  type LegendSummary,
+} from "@invariantcontinuum/graph/react";
 
 export function App() {
   const [legend, setLegend] = useState<LegendSummary | null>(null);
 
   return (
     <div className="flex">
-      <GraphScene themeMode="dark" snapshot={snapshot} onLegendChange={setLegend} />
+      <GraphScene
+        themeMode="dark"
+        snapshot={snapshot}
+        onLegendChange={setLegend}
+      />
       {legend && (
         <aside>
           <h3>Node types</h3>
@@ -119,6 +131,12 @@ const graphRef = useRef<GraphHandle | null>(null);
 // Later:
 graphRef.current?.panToNode("n1");
 graphRef.current?.focusFit("n1", 32);
+
+// Search for nodes by name
+const found = graphRef.current?.search("Order");
+if (found && found.length > 0) {
+  graphRef.current?.focusFit(found[0].id, 32);
+}
 ```
 
 ## Scene layering and click payloads

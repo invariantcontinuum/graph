@@ -54,6 +54,7 @@ export interface GraphHandle {
   relayout: (layout: LayoutType) => void;
   setTheme: (theme: unknown) => void;
   setData: (snapshot: GraphSnapshot) => void;
+  search: (query: string) => NodeData[];
   selectNode: (id: string | null) => void;
   /** Pan-only tween to center the camera on `id` without changing zoom.
    *  Used by canvas clicks (Cytoscape `cy.center(node)` parity). */
@@ -491,6 +492,12 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         requestRender();
       },
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
+      search: (query) => {
+        const lowerQuery = query.toLowerCase();
+        return Array.from(nodeDataByIdRef.current.values()).filter(
+          (node) => node.name && node.name.toLowerCase().includes(lowerQuery),
+        );
+      },
       selectNode: (id) => {
         engineRef.current?.set_focus(id ?? undefined);
         requestRender();
