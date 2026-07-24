@@ -174,3 +174,8 @@ Browser smoke must cover:
 ## 2024-07-25 - Prevent Focus on Hidden Elements
 **Learning:** Adding `tabIndex={-1}` to elements with `aria-hidden={true}` (like decorative canvases) creates an accessibility conflict. The element is removed from the accessibility tree, but the `tabIndex` makes it programmatically focusable, which can cause confusing behavior for screen readers if focus is accidentally routed there.
 **Action:** Remove `tabIndex={-1}` from purely decorative elements that have `aria-hidden={true}` to ensure they are fully excluded from interaction models.
+
+
+## 2026-07-22 - Embed adjacent visual context in aria-labels
+**Learning:** Screen reader users navigating interactively via the Tab key will skip non-focusable adjacent visual context (like edge connection types presented next to a button). Furthermore, setting an aria-label that only describes the target action (e.g., 'Inspect Node') overwrites the visible text content, hiding the rich edge information from assistive technology.
+**Action:** Embed crucial adjacent visual context (such as connection direction and edge type) directly into the interactive element's `aria-label` (e.g., 'Inspect Node, outgoing depends_on edge') so that context is preserved during programmatic focus.
