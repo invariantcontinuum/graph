@@ -152,8 +152,9 @@ function fitChars(
   maxWidth: number,
 ): number {
   let best = start;
+  let chunk = "";
   for (let i = start + 1; i <= chars.length; i++) {
-    const chunk = chars.slice(start, i).join("");
+    chunk += chars[i - 1];
     if (ctx.measureText(chunk).width > maxWidth) break;
     best = i;
   }
