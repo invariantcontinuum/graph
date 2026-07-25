@@ -221,3 +221,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-22 - [Bypass string and vector allocations in rebuild_type_keys]
 **Learning:** In worker-side graph mutations (`rebuild_type_keys`), cloning node and edge type strings to build a unique type list causes O(V+E) string allocations and unnecessary temporary vectors.
 **Action:** When building a deduplicated list of strings from a large collection, use `&str` references for the uniqueness check and `.to_string()` only when a new unique item is found, avoiding O(N) clones.
+
+
+## 2024-10-24 - [Eliminate O(N^2) string allocation in hot label layout loop]
+**Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array mapping, slicing, and string joining operations (like `chars.slice(start, i).join("")`) inside iterative sizing functions causes O(N^2) allocations. This results in severe Garbage Collection (GC) pauses when computing thousands of labels per frame.
+**Action:** Replace array slicing and joining with iterative string concatenation (e.g., `chunk += chars[i - 1]`) in character-fitting loops to eliminate massive numbers of short-lived allocations.
