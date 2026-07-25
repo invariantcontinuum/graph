@@ -221,3 +221,8 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-22 - [Bypass string and vector allocations in rebuild_type_keys]
 **Learning:** In worker-side graph mutations (`rebuild_type_keys`), cloning node and edge type strings to build a unique type list causes O(V+E) string allocations and unnecessary temporary vectors.
 **Action:** When building a deduplicated list of strings from a large collection, use `&str` references for the uniqueness check and `.to_string()` only when a new unique item is found, avoiding O(N) clones.
+
+
+## 2024-03-22 - [Avoid O(N^2) array mapping and string joining in Canvas loops]
+**Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), O(N^2) operations like `chars.slice(start, i).join("")` inside per-character loops create thousands of short-lived array and string allocations. This causes severe Garbage Collection (GC) pauses that drop FPS.
+**Action:** Replace array slicing and joining in iterative loops with scalar primitives and iterative string concatenation (`chunk += chars[i]`) to eliminate excessive memory churn.
