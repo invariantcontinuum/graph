@@ -131,6 +131,8 @@ export function NodeDetailsPanel({
       </div>
 
       <div
+        role="group"
+        aria-label="Node tags"
         style={{
           display: "flex",
           flexWrap: "wrap",
@@ -168,7 +170,10 @@ export function NodeDetailsPanel({
       </div>
 
       {metaEntries.length > 0 ? (
-        <dl style={{ margin: "12px 0 0", display: "grid", rowGap: 4 }}>
+        <dl
+          aria-label="Node metadata"
+          style={{ margin: "12px 0 0", display: "grid", rowGap: 4 }}
+        >
           {metaEntries.map(([key, value]) => (
             <div
               key={key}
@@ -193,7 +198,7 @@ export function NodeDetailsPanel({
         </dl>
       ) : null}
 
-      <div style={{ marginTop: 12 }}>
+      <div role="group" aria-label="Connected edges" style={{ marginTop: 12 }}>
         <div style={{ color: theme.dimText, marginBottom: 6 }}>
           {connections.length} connection{connections.length === 1 ? "" : "s"}
         </div>
@@ -257,7 +262,18 @@ export function NodeDetailsPanel({
               );
             })}
           </ul>
-        ) : null}
+        ) : (
+          <div
+            style={{
+              padding: "8px 0",
+              color: theme.dimText,
+              fontStyle: "italic",
+              textAlign: "center",
+            }}
+          >
+            No connected edges
+          </div>
+        )}
       </div>
     </aside>
   );

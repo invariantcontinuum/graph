@@ -179,3 +179,8 @@ Browser smoke must cover:
 ## 2026-07-22 - Embed adjacent visual context in aria-labels
 **Learning:** Screen reader users navigating interactively via the Tab key will skip non-focusable adjacent visual context (like edge connection types presented next to a button). Furthermore, setting an aria-label that only describes the target action (e.g., 'Inspect Node') overwrites the visible text content, hiding the rich edge information from assistive technology.
 **Action:** Embed crucial adjacent visual context (such as connection direction and edge type) directly into the interactive element's `aria-label` (e.g., 'Inspect Node, outgoing depends_on edge') so that context is preserved during programmatic focus.
+
+
+## 2026-08-05 - Provide semantic grouping and empty states in inspection panels
+**Learning:** In complex inspection panels, unlabelled logical subgroups (like tags, metadata, or connections) lack structural context for screen readers, while dynamic lists that simply render `null` when empty leave users questioning if data failed to load.
+**Action:** Wrapped logical subgroups in `react/NodeDetailsPanel.tsx` with `role="group"` and `aria-label`s, and replaced the empty connections `null` render with an explicit "No connected edges" visual state.
