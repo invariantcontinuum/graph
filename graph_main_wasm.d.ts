@@ -6,6 +6,10 @@ export class RenderEngine {
     [Symbol.dispose](): void;
     constructor(canvas: HTMLCanvasElement);
     /**
+     * Debug/testing helper: return the current logical edge endpoint buffer.
+     */
+    debug_edge_data(): Float32Array;
+    /**
      * Debug: return current dim tween state so the host can confirm spotlight
      * is reaching the GPU.
      */
@@ -56,6 +60,7 @@ export class RenderEngine {
     handle_pan_start(x: number, y: number): void;
     handle_zoom(delta: number, x: number, y: number): void;
     needs_frame(): boolean;
+    pan_by(dx: number, dy: number): void;
     /**
      * Pan the camera to center on the node with id `id`, preserving the
      * current zoom level. Legacy Cytoscape `cy.center(node)` equivalent.
@@ -105,13 +110,31 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_renderengine_free: (a: number, b: number) => void;
     readonly renderengine_create: (a: any) => [number, number, number];
-    readonly init: () => void;
-    readonly renderengine_debug_focus_state: (a: number) => any;
-    readonly renderengine_drain_worker_messages: (a: number) => any;
-    readonly renderengine_fit: (a: number, b: number) => void;
-    readonly renderengine_focus_fit: (a: number, b: number, c: number, d: number) => void;
+    readonly renderengine_debug_edge_data: (a: number) => any;
     readonly renderengine_frame: (a: number, b: number) => number;
     readonly renderengine_get_legend: (a: number) => any;
+    readonly renderengine_needs_frame: (a: number) => number;
+    readonly renderengine_rehydrate: (a: number) => void;
+    readonly renderengine_request_render: (a: number) => void;
+    readonly renderengine_set_community_hulls: (a: number, b: number) => void;
+    readonly renderengine_set_edge_metadata: (a: number, b: any, c: any) => [number, number];
+    readonly renderengine_set_edge_type_keys: (a: number, b: number, c: number) => void;
+    readonly renderengine_set_node_ids: (a: number, b: number, c: number) => void;
+    readonly renderengine_set_node_metadata: (a: number, b: any, c: any, d: any) => [number, number];
+    readonly renderengine_set_theme: (a: number, b: any) => [number, number];
+    readonly renderengine_subscribe_edges: (a: number, b: any) => number;
+    readonly renderengine_subscribe_frame: (a: number, b: any) => void;
+    readonly renderengine_unsubscribe_edges: (a: number, b: number) => void;
+    readonly renderengine_update_edges: (a: number, b: number, c: number, d: number) => void;
+    readonly renderengine_update_positions: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly renderengine_debug_focus_state: (a: number) => any;
+    readonly renderengine_fit: (a: number, b: number) => void;
+    readonly renderengine_focus_fit: (a: number, b: number, c: number, d: number) => void;
+    readonly renderengine_pan_to_node: (a: number, b: number, c: number) => void;
+    readonly renderengine_set_focus: (a: number, b: number, c: number) => void;
+    readonly renderengine_zoom_in: (a: number) => void;
+    readonly renderengine_zoom_out: (a: number) => void;
+    readonly renderengine_drain_worker_messages: (a: number) => any;
     readonly renderengine_handle_click: (a: number, b: number, c: number) => [number, number];
     readonly renderengine_handle_hover: (a: number, b: number, c: number) => [number, number];
     readonly renderengine_handle_node_drag_end: (a: number) => void;
@@ -121,24 +144,8 @@ export interface InitOutput {
     readonly renderengine_handle_pan_move: (a: number, b: number, c: number) => void;
     readonly renderengine_handle_pan_start: (a: number, b: number, c: number) => void;
     readonly renderengine_handle_zoom: (a: number, b: number, c: number, d: number) => void;
-    readonly renderengine_needs_frame: (a: number) => number;
-    readonly renderengine_pan_to_node: (a: number, b: number, c: number) => void;
-    readonly renderengine_rehydrate: (a: number) => void;
-    readonly renderengine_request_render: (a: number) => void;
-    readonly renderengine_set_community_hulls: (a: number, b: number) => void;
-    readonly renderengine_set_edge_metadata: (a: number, b: any, c: any) => [number, number];
-    readonly renderengine_set_edge_type_keys: (a: number, b: number, c: number) => void;
-    readonly renderengine_set_focus: (a: number, b: number, c: number) => void;
-    readonly renderengine_set_node_ids: (a: number, b: number, c: number) => void;
-    readonly renderengine_set_node_metadata: (a: number, b: any, c: any, d: any) => [number, number];
-    readonly renderengine_set_theme: (a: number, b: any) => [number, number];
-    readonly renderengine_subscribe_edges: (a: number, b: any) => number;
-    readonly renderengine_subscribe_frame: (a: number, b: any) => void;
-    readonly renderengine_unsubscribe_edges: (a: number, b: number) => void;
-    readonly renderengine_update_edges: (a: number, b: number, c: number, d: number) => void;
-    readonly renderengine_update_positions: (a: number, b: number, c: number, d: number, e: number) => void;
-    readonly renderengine_zoom_in: (a: number) => void;
-    readonly renderengine_zoom_out: (a: number) => void;
+    readonly renderengine_pan_by: (a: number, b: number, c: number) => void;
+    readonly init: () => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

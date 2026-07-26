@@ -24,6 +24,14 @@ export class RenderEngine {
         return this;
     }
     /**
+     * Debug/testing helper: return the current logical edge endpoint buffer.
+     * @returns {Float32Array}
+     */
+    debug_edge_data() {
+        const ret = wasm.renderengine_debug_edge_data(this.__wbg_ptr);
+        return ret;
+    }
+    /**
      * Debug: return current dim tween state so the host can confirm spotlight
      * is reaching the GPU.
      * @returns {any}
@@ -171,6 +179,13 @@ export class RenderEngine {
     needs_frame() {
         const ret = wasm.renderengine_needs_frame(this.__wbg_ptr);
         return ret !== 0;
+    }
+    /**
+     * @param {number} dx
+     * @param {number} dy
+     */
+    pan_by(dx, dy) {
+        wasm.renderengine_pan_by(this.__wbg_ptr, dx, dy);
     }
     /**
      * Pan the camera to center on the node with id `id`, preserving the
@@ -597,6 +612,10 @@ function __wbg_get_imports() {
             const ret = arg0.length;
             return ret;
         },
+        __wbg_length_fd4646b401926788: function(arg0) {
+            const ret = arg0.length;
+            return ret;
+        },
         __wbg_linkProgram_d86c69f8f86f3031: function(arg0, arg1) {
             arg0.linkProgram(arg1);
         },
@@ -660,6 +679,9 @@ function __wbg_get_imports() {
             const ret = Reflect.set(arg0, arg1, arg2);
             return ret;
         }, arguments); },
+        __wbg_set_a98c8da6557e63de: function(arg0, arg1, arg2) {
+            arg0.set(getArrayF32FromWasm0(arg1, arg2));
+        },
         __wbg_set_height_26ab95ff99e2b620: function(arg0, arg1) {
             arg0.height = arg1 >>> 0;
         },
