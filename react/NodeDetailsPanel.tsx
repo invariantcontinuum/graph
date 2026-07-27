@@ -131,6 +131,8 @@ export function NodeDetailsPanel({
       </div>
 
       <div
+        role="group"
+        aria-label="Node properties"
         style={{
           display: "flex",
           flexWrap: "wrap",
@@ -167,33 +169,39 @@ export function NodeDetailsPanel({
         ) : null}
       </div>
 
-      {metaEntries.length > 0 ? (
-        <dl style={{ margin: "12px 0 0", display: "grid", rowGap: 4 }}>
-          {metaEntries.map(([key, value]) => (
-            <div
-              key={key}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              <dt style={{ color: theme.dimText }}>{key}</dt>
-              <dd
+      <div role="group" aria-label="Node metadata" style={{ marginTop: 12 }}>
+        {metaEntries.length > 0 ? (
+          <dl style={{ margin: "0", display: "grid", rowGap: 4 }}>
+            {metaEntries.map(([key, value]) => (
+              <div
+                key={key}
                 style={{
-                  margin: 0,
-                  textAlign: "right",
-                  wordBreak: "break-word",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
                 }}
               >
-                {formatMetaValue(value)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
+                <dt style={{ color: theme.dimText }}>{key}</dt>
+                <dd
+                  style={{
+                    margin: 0,
+                    textAlign: "right",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {formatMetaValue(value)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <div style={{ color: theme.dimText, fontStyle: "italic" }}>
+            No metadata
+          </div>
+        )}
+      </div>
 
-      <div style={{ marginTop: 12 }}>
+      <div role="group" aria-label="Connected edges" style={{ marginTop: 12 }}>
         <div style={{ color: theme.dimText, marginBottom: 6 }}>
           {connections.length} connection{connections.length === 1 ? "" : "s"}
         </div>
@@ -257,7 +265,11 @@ export function NodeDetailsPanel({
               );
             })}
           </ul>
-        ) : null}
+        ) : (
+          <div style={{ color: theme.dimText, fontStyle: "italic" }}>
+            No connected edges
+          </div>
+        )}
       </div>
     </aside>
   );
