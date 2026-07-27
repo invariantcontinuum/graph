@@ -221,3 +221,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-22 - [Bypass string and vector allocations in rebuild_type_keys]
 **Learning:** In worker-side graph mutations (`rebuild_type_keys`), cloning node and edge type strings to build a unique type list causes O(V+E) string allocations and unnecessary temporary vectors.
 **Action:** When building a deduplicated list of strings from a large collection, use `&str` references for the uniqueness check and `.to_string()` only when a new unique item is found, avoiding O(N) clones.
+
+## 2026-07-27 - Prevent O(N) String allocations in pulse recomputation
+**Learning:** In hot loops like per-node buffer rebuilding in WASM renderers, cloning String fields from configurations incurs unnecessary allocation overhead.
+**Action:** Replaced String cloning in `recompute_pulse` with `&str` borrows directly accessing the theme and node metadata without temporary vectors, bypassing allocations and improving execution time.
