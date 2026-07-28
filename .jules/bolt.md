@@ -237,3 +237,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-23 - [Iterative string concatenation for layout metrics]
 **Learning:** In hot JavaScript render loops, doing array slicing and joining (e.g., `chars.slice(start, i).join('')`) in a loop results in O(N^2) complexity and causes thousands of short-lived memory allocations, leading to severe GC pauses.
 **Action:** Use iterative string concatenation (`chunk += chars[i]`) instead when measuring text progressively in a loop.
+
+## 2026-07-24 - Eliminate O(N^2) array slicing in fitChars hot loop
+**Learning:** In Canvas `requestAnimationFrame` loops, repeated O(N^2) array string slicing like `chars.slice(start, i).join("")` causes severe Garbage Collection pauses due to thousands of short-lived allocations per frame.
+**Action:** Use iterative string concatenation (`chunk += chars[i]`) instead to eliminate unnecessary memory churn.

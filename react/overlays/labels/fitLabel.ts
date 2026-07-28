@@ -100,10 +100,10 @@ function wrapIntoLines(
   let cursor = 0;
 
   while (cursor < chars.length && lines.length < maxLines) {
-    const end = chooseLineEnd(ctx, chars, cursor, maxWidth);
-    if (end <= cursor) break;
-    const line = chars.slice(cursor, end).join("").trim();
-    cursor = skipLeadingSpaces(chars, end);
+    const next = chooseLineEnd(ctx, chars, cursor, maxWidth);
+    if (next.end <= cursor) break;
+    const line = chars.slice(cursor, next.end).join("").trim();
+    cursor = skipLeadingSpaces(chars, next.end);
     if (line) lines.push(line);
   }
 
@@ -116,11 +116,11 @@ function chooseLineEnd(
   chars: string[],
   start: number,
   maxWidth: number,
-): number {
+): { end: number } {
   const hardEnd = fitChars(ctx, chars, start, maxWidth);
-  if (hardEnd >= chars.length) return hardEnd;
+  if (hardEnd >= chars.length) return { end: hardEnd };
   const softEnd = findSoftBreak(chars, start, hardEnd);
-  return softEnd > start + 1 ? softEnd : hardEnd;
+  return { end: softEnd > start + 1 ? softEnd : hardEnd };
 }
 
 function skipLeadingSpaces(chars: string[], from: number): number {
@@ -153,10 +153,10 @@ function fitChars(
 ): number {
   let best = start;
   let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
+  for (let i = start + 1; i <= chars.length; i++) {
+    chunk += chars[i - 1];
     if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+    best = i;
   }
   return best;
 }
