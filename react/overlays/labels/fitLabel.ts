@@ -20,11 +20,13 @@ export function fitLabelInBox(
   const text = normalizeLabel(rawText);
   if (!text) return null;
 
+  const chars = Array.from(text);
+
   const step = Math.max(0.5, 0.5 * dpr);
   for (let fontPx = baseFontPx; fontPx >= minFontPx - 0.01; fontPx -= step) {
     const fitted = tryFitAtSize(
       ctx,
-      text,
+      chars,
       fontPx,
       maxWidth,
       maxHeight,
@@ -49,7 +51,7 @@ export function fitLabelInBox(
 
 function tryFitAtSize(
   ctx: CanvasRenderingContext2D,
-  text: string,
+  chars: string[],
   fontPx: number,
   maxWidth: number,
   maxHeight: number,
@@ -60,7 +62,7 @@ function tryFitAtSize(
   ctx.font = `${fontWeight} ${fontPx}px ${fontFamily}`;
   const lineHeight = Math.max(fontPx * LINE_HEIGHT_RATIO, fontPx + 1 * dpr);
   const maxLines = Math.max(1, Math.min(4, Math.floor(maxHeight / lineHeight)));
-  const lines = wrapIntoLines(ctx, text, maxWidth, maxLines);
+  const lines = wrapIntoLines(ctx, chars, maxWidth, maxLines);
   if (lines.length === 0) return null;
   if (lines.length * lineHeight > maxHeight + 0.5 * dpr) return null;
   return { lines, fontPx, lineHeight };
@@ -91,19 +93,18 @@ function fallbackSingleLine(
 
 function wrapIntoLines(
   ctx: CanvasRenderingContext2D,
-  text: string,
+  chars: string[],
   maxWidth: number,
   maxLines: number,
 ): string[] {
-  const chars = Array.from(text);
   const lines: string[] = [];
   let cursor = 0;
 
   while (cursor < chars.length && lines.length < maxLines) {
-    const next = chooseLineEnd(ctx, chars, cursor, maxWidth);
-    if (next.end <= cursor) break;
-    const line = chars.slice(cursor, next.end).join("").trim();
-    cursor = skipLeadingSpaces(chars, next.end);
+    const nextEnd = chooseLineEnd(ctx, chars, cursor, maxWidth);
+    if (nextEnd <= cursor) break;
+    const line = chars.slice(cursor, nextEnd).join("").trim();
+    cursor = skipLeadingSpaces(chars, nextEnd);
     if (line) lines.push(line);
   }
 
@@ -116,11 +117,11 @@ function chooseLineEnd(
   chars: string[],
   start: number,
   maxWidth: number,
-): { end: number } {
+): number {
   const hardEnd = fitChars(ctx, chars, start, maxWidth);
-  if (hardEnd >= chars.length) return { end: hardEnd };
+  if (hardEnd >= chars.length) return hardEnd;
   const softEnd = findSoftBreak(chars, start, hardEnd);
-  return { end: softEnd > start + 1 ? softEnd : hardEnd };
+  return softEnd > start + 1 ? softEnd : hardEnd;
 }
 
 function skipLeadingSpaces(chars: string[], from: number): number {

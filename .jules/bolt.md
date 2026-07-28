@@ -259,3 +259,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-15 - [Avoid O(N^2) array slicing in hot string joining loops]
 **Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array operations like `chars.slice(start, i).join("")` inside a per-character loop causes O(N^2) allocations, leading to severe Garbage Collection (GC) pauses and frame drops.
 **Action:** Replace `chars.slice(...).join("")` in iterative loops with incremental string concatenation (`chunk += chars[i]`) to eliminate the inner array allocation and avoid GC churn.
+
+## 2026-08-16 - [Hoist Array.from and primitives in text measurement loops]
+**Learning:** In the Canvas text measurement loop `fitLabelInBox` (running per frame for every label), calling `Array.from(text)` inside the font-size stepping loop causes thousands of redundant array allocations per frame. Furthermore, returning short-lived parameter objects (like `{ end: number }`) in nested calls adds to GC churn.
+**Action:** Hoist array conversions outside of inner rendering loops, and replace short-lived return objects with primitives to eliminate memory churn and prevent GC pauses.
