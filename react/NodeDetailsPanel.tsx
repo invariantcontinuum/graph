@@ -132,7 +132,7 @@ export function NodeDetailsPanel({
 
       <div
         role="group"
-        aria-label="Node tags"
+        aria-label="Node attributes"
         style={{
           display: "flex",
           flexWrap: "wrap",
@@ -196,7 +196,12 @@ export function NodeDetailsPanel({
           </dl>
         ) : (
           <div
-            style={{ color: theme.dimText, fontStyle: "italic", fontSize: 13 }}
+            style={{
+              color: theme.dimText,
+              fontStyle: "italic",
+              fontSize: 12,
+              padding: "4px 0",
+            }}
           >
             No metadata available
           </div>
@@ -270,10 +275,10 @@ export function NodeDetailsPanel({
         ) : (
           <div
             style={{
-              padding: "8px 0",
               color: theme.dimText,
               fontStyle: "italic",
-              textAlign: "center",
+              fontSize: 12,
+              padding: "4px 0",
             }}
           >
             No connected edges
