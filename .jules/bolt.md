@@ -256,3 +256,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-27 - [Replace O(N^2) string building with iterative concatenation]
 **Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using `chars.slice(start, i).join("")` inside a per-character loop causes O(N^2) string allocations and severe Garbage Collection (GC) pauses that drop FPS.
 **Action:** Instead of repeatedly slicing and joining an array of characters, use iterative string concatenation (e.g., `chunk += chars[i - 1]`) to eliminate the intermediate array allocations and massively improve execution speed.
+## 2026-08-15 - [Avoid O(N^2) array slicing in hot string joining loops]
+**Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array operations like `chars.slice(start, i).join("")` inside a per-character loop causes O(N^2) allocations, leading to severe Garbage Collection (GC) pauses and frame drops.
+**Action:** Replace `chars.slice(...).join("")` in iterative loops with incremental string concatenation (`chunk += chars[i]`) to eliminate the inner array allocation and avoid GC churn.
