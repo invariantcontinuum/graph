@@ -256,7 +256,7 @@ export function NodeDetailsPanel({
                       type="button"
                       style={{ ...rowStyle, cursor: "pointer" }}
                       onClick={() => onNeighborClick(neighbor)}
-                      aria-label={`Inspect ${neighbor.name}, ${direction === "outgoing" ? "outgoing" : "incoming"} ${edge.type} edge`}
+                      aria-label={`Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name} (type: ${edge.type})`}
                     >
                       {inner}
                     </button>

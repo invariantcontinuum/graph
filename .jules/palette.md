@@ -183,3 +183,7 @@ Browser smoke must cover:
 ## 2024-08-05 - Explicit Semantic Grouping and Empty States in Inspection Panels
 **Learning:** In side panels that display diverse information, rendering empty states as `null` leaves users wondering if data is loading or intentionally absent. Additionally, without structural semantic roles (`role="group"`), these subgroups blur together in the accessibility tree for screen reader users.
 **Action:** Wrapped logical subgroups (properties, metadata, connections) with `role="group"` and `aria-label`s. Replaced `null` renders for empty dynamic lists with explicit visual empty states to confirm the intentional absence of data.
+
+## 2026-07-23 - Prevent Context Loss in Interactive Lists
+**Learning:** When interactive elements (like buttons) are embedded in a list with adjacent visual context (like edge connection types and direction arrows), screen reader users navigating via Tab lose this context because the button's `aria-label` completely overrides the visual child text. Furthermore, failing to include the visible text inside the `aria-label` violates WCAG 2.5.3 (Label in Name) and can break Voice Control software.
+**Action:** Always embed the expanded natural language equivalent of adjacent context directly into the element's `aria-label`, ensuring the contiguous visible text is included.
