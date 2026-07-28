@@ -207,3 +207,7 @@ Browser smoke must cover:
 ## 2024-10-25 - Provide context for ambiguous data chips
 **Learning:** Displaying bare property values as "chips" (e.g., `[Service]`, `[Active]`) without explicit labels forces sighted users to guess their meaning and provides no context to screen readers. Furthermore, using raw values as React keys throws errors if two properties have identical values.
 **Action:** Map chip values to explicit semantic labels, assigning `title` (for visual hover) and `aria-label` (for screen readers), and use the distinct property name as the React key.
+
+## 2026-07-26 - Add keyboard navigation to canvas
+**Learning:** Canvas-first interaction needs non-pointer access, so we added keyboard handlers to the Graph component to allow panning, zooming, fitting, and clearing selection.
+**Action:** Added onKeyDown handler to react/Graph.tsx mapping arrow keys to panning, +/- to zooming, F to fit, and Escape to clear selection.
