@@ -225,3 +225,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-15 - [Bypass O(N^2) array slicing in fitChars loop]
 **Learning:** In the Canvas text measurement loop `fitChars` (running per frame for every label), repeatedly calling `chars.slice(start, i).join("")` creates thousands of short-lived arrays and strings, causing severe Garbage Collection (GC) pauses and dropped FPS.
 **Action:** Replace `slice().join("")` inside hot loops with iterative string concatenation (`chunk += chars[i]`) to eliminate O(N^2) temporary allocations while measuring text widths.
+## 2026-07-22 - [Bypass string allocation in pulse recomputation]
+**Learning:** In hot loops and frequent updates, cloning strings from configuration or metadata incurs unnecessary allocation overhead and memory churn.
+**Action:** Use `.as_str()` on `String` fields and convert `HashMap<String, bool>` to `HashSet<&str>` to borrow string slices (`&str`) instead of `.clone()`, completely bypassing O(N) string allocations during metadata updates.

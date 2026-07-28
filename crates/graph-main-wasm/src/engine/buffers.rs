@@ -85,22 +85,24 @@ impl RenderEngine {
     /// Rebuild `pulse_indices` from `node_ids` order + theme byStatus.pulse map.
     /// Must be called whenever `node_metadata` or `theme` changes.
     pub(super) fn recompute_pulse(&mut self) {
-        let status_pulse: std::collections::HashMap<String, bool> = self
+        let status_pulse: std::collections::HashSet<&str> = self
             .theme
             .nodes
             .by_status
             .iter()
             .filter(|(_, v)| v.pulse)
-            .map(|(k, _)| (k.clone(), true))
+            .map(|(k, _)| k.as_str())
             .collect();
-        let node_statuses: Vec<String> = self
+        // ⚡ Bolt: Use `Vec<&str>` and borrow `.as_str()` instead of `.clone()`
+        // to prevent O(N) string allocations during metadata updates.
+        let node_statuses: Vec<&str> = self
             .node_ids
             .iter()
             .map(|id| {
                 self.node_metadata
                     .get(id)
-                    .map(|m| m.status.clone())
-                    .unwrap_or_else(|| "healthy".to_string())
+                    .map(|m| m.status.as_str())
+                    .unwrap_or("healthy")
             })
             .collect();
         self.pulse.recompute(&node_statuses, &status_pulse);
