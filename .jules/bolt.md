@@ -263,3 +263,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-16 - [Hoist Array.from and primitives in text measurement loops]
 **Learning:** In the Canvas text measurement loop `fitLabelInBox` (running per frame for every label), calling `Array.from(text)` inside the font-size stepping loop causes thousands of redundant array allocations per frame. Furthermore, returning short-lived parameter objects (like `{ end: number }`) in nested calls adds to GC churn.
 **Action:** Hoist array conversions outside of inner rendering loops, and replace short-lived return objects with primitives to eliminate memory churn and prevent GC pauses.
+
+## 2026-08-16 - [Hoist string-to-array conversions in Canvas text measurement]
+**Learning:** In hot frontend render paths (like Canvas text measurement or font-size stepping loops), performing `Array.from(text)` inside the loop creates redundant string-to-array conversions, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
+**Action:** Hoist array conversions outside of inner layout loops and pass the pre-computed array down to helper functions to avoid redundant allocations.
