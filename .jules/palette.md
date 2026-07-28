@@ -191,3 +191,7 @@ Browser smoke must cover:
 ## 2024-07-24 - Semantic groups and explicit visual empty states in inspection panels
 **Learning:** Inspection panels (like NodeDetailsPanel) often render discrete logical groups (properties, metadata, connections) without semantic grouping. This causes screen readers to read a flat list of text without context. Furthermore, when dynamic lists (like connected edges) return empty, falling back to rendering `null` provides no visual or structural feedback to the user that the system explicitly verified the absence of data, making the UI feel broken or incomplete.
 **Action:** Always wrap logical subgroups in structural elements with semantic roles (e.g., `role="group"` or `role="region"`) and descriptive `aria-label`s. Ensure dynamic lists have explicit styled empty states (e.g., "No connected edges" inside a dashed border) rather than rendering nothing.
+
+## 2026-08-05 - Provide semantic grouping and empty states in inspection panels
+**Learning:** In complex inspection panels, unlabelled logical subgroups (like tags, metadata, or connections) lack structural context for screen readers, while dynamic lists that simply render `null` when empty leave users questioning if data failed to load.
+**Action:** Wrapped logical subgroups in `react/NodeDetailsPanel.tsx` with `role="group"` and `aria-label`s, and replaced the empty connections `null` render with an explicit "No connected edges" visual state.
