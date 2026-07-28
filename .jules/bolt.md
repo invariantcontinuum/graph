@@ -241,3 +241,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-24 - Eliminate O(N^2) array slicing in fitChars hot loop
 **Learning:** In Canvas `requestAnimationFrame` loops, repeated O(N^2) array string slicing like `chars.slice(start, i).join("")` causes severe Garbage Collection pauses due to thousands of short-lived allocations per frame.
 **Action:** Use iterative string concatenation (`chunk += chars[i]`) instead to eliminate unnecessary memory churn.
+
+## 2024-07-24 - [Avoid O(N^2) array operations in Canvas text measurement loops]
+**Learning:** In hot JavaScript render loops (e.g., Canvas text wrapping algorithms running every frame), using `chars.slice(start, i).join("")` inside a character-by-character loop causes O(N^2) memory churn and garbage collection pauses due to thousands of short-lived array and string allocations.
+**Action:** Use iterative string concatenation (`chunk += chars[i]`) in text measurement loops to eliminate short-lived array allocations and reduce GC overhead.
