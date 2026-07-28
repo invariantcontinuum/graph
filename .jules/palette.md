@@ -199,3 +199,7 @@ Browser smoke must cover:
 ## 2024-07-26 - Semantic grouping and explicit empty states in inspection panels
 **Learning:** In inspection panels, screen reader users miss the logical grouping of properties, metadata, and connections if they aren't explicitly grouped. Furthermore, when dynamic lists (like metadata or connections) are empty and render `null`, the absence of data is ambiguous visually and programmatically.
 **Action:** Wrap logical subgroups (properties, metadata, connections) with semantic roles (`role="group"` or `role="region"`) and `aria-label`s. Replace `null` renders for empty dynamic lists with explicit visual empty states to confirm the absence of data.
+
+## 2026-08-01 - Add Semantic Roles and Explicit Empty States
+**Learning:** In inspection panels, omitting semantic roles for grouped content makes it difficult for screen reader users to navigate logical sections. Moreover, rendering `null` for empty dynamic lists (like metadata or connections) fails to explicitly confirm to the user that data is actually absent.
+**Action:** Wrapped logical subgroups (properties, metadata, connections) in `react/NodeDetailsPanel.tsx` with `role="group"` and `aria-label`s. Replaced `null` renders with explicit empty states ("No metadata" and "No connected edges") to confirm the absence of data.

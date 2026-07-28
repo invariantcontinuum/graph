@@ -132,7 +132,7 @@ export function NodeDetailsPanel({
 
       <div
         role="group"
-        aria-label="Node attributes"
+        aria-label="Node properties"
         style={{
           display: "flex",
           flexWrap: "wrap",
@@ -171,7 +171,7 @@ export function NodeDetailsPanel({
 
       <div role="group" aria-label="Node metadata" style={{ marginTop: 12 }}>
         {metaEntries.length > 0 ? (
-          <dl style={{ margin: 0, display: "grid", rowGap: 4 }}>
+          <dl style={{ margin: "0", display: "grid", rowGap: 4 }}>
             {metaEntries.map(([key, value]) => (
               <div
                 key={key}
@@ -195,15 +195,8 @@ export function NodeDetailsPanel({
             ))}
           </dl>
         ) : (
-          <div
-            style={{
-              color: theme.dimText,
-              fontStyle: "italic",
-              fontSize: 12,
-              padding: "4px 0",
-            }}
-          >
-            No metadata available
+          <div style={{ color: theme.dimText, fontStyle: "italic" }}>
+            No metadata
           </div>
         )}
       </div>
@@ -273,14 +266,7 @@ export function NodeDetailsPanel({
             })}
           </ul>
         ) : (
-          <div
-            style={{
-              color: theme.dimText,
-              fontStyle: "italic",
-              fontSize: 12,
-              padding: "4px 0",
-            }}
-          >
+          <div style={{ color: theme.dimText, fontStyle: "italic" }}>
             No connected edges
           </div>
         )}
