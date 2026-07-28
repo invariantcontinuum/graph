@@ -153,10 +153,10 @@ function fitChars(
 ): number {
   let best = start;
   let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
+  for (let i = start + 1; i <= chars.length; i++) {
+    chunk += chars[i - 1];
     if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+    best = i;
   }
   return best;
 }

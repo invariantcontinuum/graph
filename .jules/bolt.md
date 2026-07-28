@@ -253,3 +253,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-03-22 - [Avoid O(N^2) array mapping and string joining in Canvas loops]
 **Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), O(N^2) operations like `chars.slice(start, i).join("")` inside per-character loops create thousands of short-lived array and string allocations. This causes severe Garbage Collection (GC) pauses that drop FPS.
 **Action:** Replace array slicing and joining in iterative loops with scalar primitives and iterative string concatenation (`chunk += chars[i]`) to eliminate excessive memory churn.
+## 2026-07-27 - [Replace O(N^2) string building with iterative concatenation]
+**Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using `chars.slice(start, i).join("")` inside a per-character loop causes O(N^2) string allocations and severe Garbage Collection (GC) pauses that drop FPS.
+**Action:** Instead of repeatedly slicing and joining an array of characters, use iterative string concatenation (e.g., `chunk += chars[i - 1]`) to eliminate the intermediate array allocations and massively improve execution speed.
