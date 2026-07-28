@@ -221,3 +221,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-22 - [Bypass string and vector allocations in rebuild_type_keys]
 **Learning:** In worker-side graph mutations (`rebuild_type_keys`), cloning node and edge type strings to build a unique type list causes O(V+E) string allocations and unnecessary temporary vectors.
 **Action:** When building a deduplicated list of strings from a large collection, use `&str` references for the uniqueness check and `.to_string()` only when a new unique item is found, avoiding O(N) clones.
+
+## 2026-08-15 - [Bypass O(N^2) array slicing in fitChars loop]
+**Learning:** In the Canvas text measurement loop `fitChars` (running per frame for every label), repeatedly calling `chars.slice(start, i).join("")` creates thousands of short-lived arrays and strings, causing severe Garbage Collection (GC) pauses and dropped FPS.
+**Action:** Replace `slice().join("")` inside hot loops with iterative string concatenation (`chunk += chars[i]`) to eliminate O(N^2) temporary allocations while measuring text widths.
