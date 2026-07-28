@@ -20,11 +20,13 @@ export function fitLabelInBox(
   const text = normalizeLabel(rawText);
   if (!text) return null;
 
+  const chars = Array.from(text);
+
   const step = Math.max(0.5, 0.5 * dpr);
   for (let fontPx = baseFontPx; fontPx >= minFontPx - 0.01; fontPx -= step) {
     const fitted = tryFitAtSize(
       ctx,
-      text,
+      chars,
       fontPx,
       maxWidth,
       maxHeight,
@@ -49,7 +51,7 @@ export function fitLabelInBox(
 
 function tryFitAtSize(
   ctx: CanvasRenderingContext2D,
-  text: string,
+  chars: string[],
   fontPx: number,
   maxWidth: number,
   maxHeight: number,
@@ -60,7 +62,7 @@ function tryFitAtSize(
   ctx.font = `${fontWeight} ${fontPx}px ${fontFamily}`;
   const lineHeight = Math.max(fontPx * LINE_HEIGHT_RATIO, fontPx + 1 * dpr);
   const maxLines = Math.max(1, Math.min(4, Math.floor(maxHeight / lineHeight)));
-  const lines = wrapIntoLines(ctx, text, maxWidth, maxLines);
+  const lines = wrapIntoLines(ctx, chars, maxWidth, maxLines);
   if (lines.length === 0) return null;
   if (lines.length * lineHeight > maxHeight + 0.5 * dpr) return null;
   return { lines, fontPx, lineHeight };
@@ -91,11 +93,10 @@ function fallbackSingleLine(
 
 function wrapIntoLines(
   ctx: CanvasRenderingContext2D,
-  text: string,
+  chars: string[],
   maxWidth: number,
   maxLines: number,
 ): string[] {
-  const chars = Array.from(text);
   const lines: string[] = [];
   let cursor = 0;
 

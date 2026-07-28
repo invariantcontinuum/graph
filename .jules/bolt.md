@@ -225,3 +225,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-15 - [Bypass O(N^2) array slicing in fitChars loop]
 **Learning:** In the Canvas text measurement loop `fitChars` (running per frame for every label), repeatedly calling `chars.slice(start, i).join("")` creates thousands of short-lived arrays and strings, causing severe Garbage Collection (GC) pauses and dropped FPS.
 **Action:** Replace `slice().join("")` inside hot loops with iterative string concatenation (`chunk += chars[i]`) to eliminate O(N^2) temporary allocations while measuring text widths.
+
+## 2026-08-16 - [Hoist string-to-array conversions in Canvas text measurement]
+**Learning:** In hot frontend render paths (like Canvas text measurement or font-size stepping loops), performing `Array.from(text)` inside the loop creates redundant string-to-array conversions, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
+**Action:** Hoist array conversions outside of inner layout loops and pass the pre-computed array down to helper functions to avoid redundant allocations.
