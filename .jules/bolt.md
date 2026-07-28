@@ -249,3 +249,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-24 - [Eliminate O(N^2) string allocation in hot label layout loop]
 **Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array mapping, slicing, and string joining operations (like `chars.slice(start, i).join("")`) inside iterative sizing functions causes O(N^2) allocations. This results in severe Garbage Collection (GC) pauses when computing thousands of labels per frame.
 **Action:** Replace array slicing and joining with iterative string concatenation (e.g., `chunk += chars[i - 1]`) in character-fitting loops to eliminate massive numbers of short-lived allocations.
+
+## 2024-03-22 - [Avoid O(N^2) array mapping and string joining in Canvas loops]
+**Learning:** In hot frontend render paths that run every frame (e.g., Canvas2D `requestAnimationFrame` loops), O(N^2) operations like `chars.slice(start, i).join("")` inside per-character loops create thousands of short-lived array and string allocations. This causes severe Garbage Collection (GC) pauses that drop FPS.
+**Action:** Replace array slicing and joining in iterative loops with scalar primitives and iterative string concatenation (`chunk += chars[i]`) to eliminate excessive memory churn.
