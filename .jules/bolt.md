@@ -245,3 +245,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-07-24 - [Avoid O(N^2) array operations in Canvas text measurement loops]
 **Learning:** In hot JavaScript render loops (e.g., Canvas text wrapping algorithms running every frame), using `chars.slice(start, i).join("")` inside a character-by-character loop causes O(N^2) memory churn and garbage collection pauses due to thousands of short-lived array and string allocations.
 **Action:** Use iterative string concatenation (`chunk += chars[i]`) in text measurement loops to eliminate short-lived array allocations and reduce GC overhead.
+
+## 2024-10-24 - [Eliminate O(N^2) string allocation in hot label layout loop]
+**Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array mapping, slicing, and string joining operations (like `chars.slice(start, i).join("")`) inside iterative sizing functions causes O(N^2) allocations. This results in severe Garbage Collection (GC) pauses when computing thousands of labels per frame.
+**Action:** Replace array slicing and joining with iterative string concatenation (e.g., `chunk += chars[i - 1]`) in character-fitting loops to eliminate massive numbers of short-lived allocations.
