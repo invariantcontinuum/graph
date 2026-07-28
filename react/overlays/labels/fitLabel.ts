@@ -100,10 +100,10 @@ function wrapIntoLines(
   let cursor = 0;
 
   while (cursor < chars.length && lines.length < maxLines) {
-    const next = chooseLineEnd(ctx, chars, cursor, maxWidth);
-    if (next.end <= cursor) break;
-    const line = chars.slice(cursor, next.end).join("").trim();
-    cursor = skipLeadingSpaces(chars, next.end);
+    const end = chooseLineEnd(ctx, chars, cursor, maxWidth);
+    if (end <= cursor) break;
+    const line = chars.slice(cursor, end).join("").trim();
+    cursor = skipLeadingSpaces(chars, end);
     if (line) lines.push(line);
   }
 
@@ -116,11 +116,11 @@ function chooseLineEnd(
   chars: string[],
   start: number,
   maxWidth: number,
-): { end: number } {
+): number {
   const hardEnd = fitChars(ctx, chars, start, maxWidth);
-  if (hardEnd >= chars.length) return { end: hardEnd };
+  if (hardEnd >= chars.length) return hardEnd;
   const softEnd = findSoftBreak(chars, start, hardEnd);
-  return { end: softEnd > start + 1 ? softEnd : hardEnd };
+  return softEnd > start + 1 ? softEnd : hardEnd;
 }
 
 function skipLeadingSpaces(chars: string[], from: number): number {

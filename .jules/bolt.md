@@ -231,3 +231,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-27 - Prevent O(N) String allocations in pulse recomputation
 **Learning:** In hot loops like per-node buffer rebuilding in WASM renderers, cloning String fields from configurations incurs unnecessary allocation overhead.
 **Action:** Replaced String cloning in `recompute_pulse` with `&str` borrows directly accessing the theme and node metadata without temporary vectors, bypassing allocations and improving execution time.
+## 2026-07-23 - Optimize hot loops in text measurement
+**Learning:** Array slicing/joining (`chars.slice().join("")`) and parameter object allocation (`return { end }`) inside the high-frequency Canvas `requestAnimationFrame` text wrapping loop cause severe GC pauses due to thousands of short-lived allocations per frame.
+**Action:** In hot render loops, always return scalar primitives and use iterative string concatenation (`chunk += chars[i]`) instead of mapping/slicing array structures to eliminate memory churn.
