@@ -183,3 +183,7 @@ Browser smoke must cover:
 ## 2024-08-05 - Explicit Semantic Grouping and Empty States in Inspection Panels
 **Learning:** In side panels that display diverse information, rendering empty states as `null` leaves users wondering if data is loading or intentionally absent. Additionally, without structural semantic roles (`role="group"`), these subgroups blur together in the accessibility tree for screen reader users.
 **Action:** Wrapped logical subgroups (properties, metadata, connections) with `role="group"` and `aria-label`s. Replaced `null` renders for empty dynamic lists with explicit visual empty states to confirm the intentional absence of data.
+
+## 2024-10-25 - Provide context for ambiguous data chips
+**Learning:** Displaying bare property values as "chips" (e.g., `[Service]`, `[Active]`) without explicit labels forces sighted users to guess their meaning and provides no context to screen readers. Furthermore, using raw values as React keys throws errors if two properties have identical values.
+**Action:** Map chip values to explicit semantic labels, assigning `title` (for visual hover) and `aria-label` (for screen readers), and use the distinct property name as the React key.
