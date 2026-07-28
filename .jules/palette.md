@@ -187,3 +187,7 @@ Browser smoke must cover:
 ## 2026-07-23 - Prevent Context Loss in Interactive Lists
 **Learning:** When interactive elements (like buttons) are embedded in a list with adjacent visual context (like edge connection types and direction arrows), screen reader users navigating via Tab lose this context because the button's `aria-label` completely overrides the visual child text. Furthermore, failing to include the visible text inside the `aria-label` violates WCAG 2.5.3 (Label in Name) and can break Voice Control software.
 **Action:** Always embed the expanded natural language equivalent of adjacent context directly into the element's `aria-label`, ensuring the contiguous visible text is included.
+
+## 2024-07-24 - Semantic groups and explicit visual empty states in inspection panels
+**Learning:** Inspection panels (like NodeDetailsPanel) often render discrete logical groups (properties, metadata, connections) without semantic grouping. This causes screen readers to read a flat list of text without context. Furthermore, when dynamic lists (like connected edges) return empty, falling back to rendering `null` provides no visual or structural feedback to the user that the system explicitly verified the absence of data, making the UI feel broken or incomplete.
+**Action:** Always wrap logical subgroups in structural elements with semantic roles (e.g., `role="group"` or `role="region"`) and descriptive `aria-label`s. Ensure dynamic lists have explicit styled empty states (e.g., "No connected edges" inside a dashed border) rather than rendering nothing.

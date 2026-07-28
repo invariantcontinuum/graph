@@ -203,7 +203,7 @@ export function NodeDetailsPanel({
         )}
       </div>
 
-      <div role="group" aria-label="Node connections" style={{ marginTop: 12 }}>
+      <div role="region" aria-label="Connected edges" style={{ marginTop: 12 }}>
         <div style={{ color: theme.dimText, marginBottom: 6 }}>
           {connections.length} connection{connections.length === 1 ? "" : "s"}
         </div>
@@ -270,10 +270,12 @@ export function NodeDetailsPanel({
         ) : (
           <div
             style={{
+              padding: "12px",
+              textAlign: "center",
               color: theme.dimText,
-              fontStyle: "italic",
-              fontSize: 13,
-              marginTop: 4,
+              border: `1px dashed ${border}`,
+              borderRadius: 6,
+              fontSize: 12,
             }}
           >
             No connected edges
