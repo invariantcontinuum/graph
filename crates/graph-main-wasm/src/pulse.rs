@@ -1,8 +1,6 @@
 //! Per-frame border width modulation for nodes flagged by theme's
 //! `byStatus.pulse = true`. Amplitude +- 0.35, period 1200 ms.
 
-use std::collections::HashSet;
-
 pub const PULSE_PERIOD_MS: f64 = 1200.0;
 pub const PULSE_AMPLITUDE: f32 = 0.35;
 
@@ -17,20 +15,6 @@ impl PulseState {
             pulse_indices: Vec::new(),
             start_time_ms,
         }
-    }
-
-    /// Recompute `pulse_indices` from node statuses + theme byStatus.pulse map.
-    /// Status keys are raw strings (e.g. "violation", "drift") matching
-    /// `ThemeConfig.nodes.by_status` keys — no interning required.
-    pub fn recompute(&mut self, node_statuses: &[&str], status_pulse: &HashSet<&str>) {
-        self.pulse_indices.clear();
-        for (i, s) in node_statuses.iter().enumerate() {
-            if status_pulse.contains(s) {
-                self.pulse_indices.push(i);
-            }
-        }
-        self.pulse_indices.sort_unstable();
-        self.pulse_indices.dedup();
     }
 
     pub fn is_pulsing(&self, idx: usize) -> bool {
@@ -55,23 +39,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn recompute_filters_sorts_dedups() {
-        let mut p = PulseState::new(0.0);
-        let mut map = HashSet::new();
-        map.insert("violation");
-        p.recompute(
-            &["violation", "healthy", "violation", "drift", "violation"],
-            &map,
-        );
-        assert_eq!(p.pulse_indices, vec![0, 2, 4]);
-    }
-
-    #[test]
     fn multiplier_range_is_1_pm_035() {
         let mut p = PulseState::new(0.0);
-        let mut map = HashSet::new();
-        map.insert("violation");
-        p.recompute(&["violation"], &map);
+        p.pulse_indices = vec![0];
         for step in 0..=120 {
             let t = step as f64 * 10.0;
             let m = p.border_multiplier(0, t);

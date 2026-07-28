@@ -228,3 +228,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-22 - [Bypass string allocation in pulse recomputation]
 **Learning:** In hot loops and frequent updates, cloning strings from configuration or metadata incurs unnecessary allocation overhead and memory churn.
 **Action:** Use `.as_str()` on `String` fields and convert `HashMap<String, bool>` to `HashSet<&str>` to borrow string slices (`&str`) instead of `.clone()`, completely bypassing O(N) string allocations during metadata updates.
+## 2026-07-27 - Prevent O(N) String allocations in pulse recomputation
+**Learning:** In hot loops like per-node buffer rebuilding in WASM renderers, cloning String fields from configurations incurs unnecessary allocation overhead.
+**Action:** Replaced String cloning in `recompute_pulse` with `&str` borrows directly accessing the theme and node metadata without temporary vectors, bypassing allocations and improving execution time.

@@ -85,27 +85,26 @@ impl RenderEngine {
     /// Rebuild `pulse_indices` from `node_ids` order + theme byStatus.pulse map.
     /// Must be called whenever `node_metadata` or `theme` changes.
     pub(super) fn recompute_pulse(&mut self) {
-        let status_pulse: std::collections::HashSet<&str> = self
-            .theme
-            .nodes
-            .by_status
-            .iter()
-            .filter(|(_, v)| v.pulse)
-            .map(|(k, _)| k.as_str())
-            .collect();
-        // ⚡ Bolt: Use `Vec<&str>` and borrow `.as_str()` instead of `.clone()`
-        // to prevent O(N) string allocations during metadata updates.
-        let node_statuses: Vec<&str> = self
-            .node_ids
-            .iter()
-            .map(|id| {
-                self.node_metadata
-                    .get(id)
-                    .map(|m| m.status.as_str())
-                    .unwrap_or("healthy")
-            })
-            .collect();
-        self.pulse.recompute(&node_statuses, &status_pulse);
+        self.pulse.pulse_indices.clear();
+        for (i, id) in self.node_ids.iter().enumerate() {
+            let status = self
+                .node_metadata
+                .get(id)
+                .map(|m| m.status.as_str())
+                .unwrap_or("healthy");
+
+            if self
+                .theme
+                .nodes
+                .by_status
+                .get(status)
+                .is_some_and(|s| s.pulse)
+            {
+                self.pulse.pulse_indices.push(i);
+            }
+        }
+        self.pulse.pulse_indices.sort_unstable();
+        self.pulse.pulse_indices.dedup();
     }
 
     /// Rebuild cached per-node half-dimensions used by `hit_test_node`.
