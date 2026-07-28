@@ -140,22 +140,32 @@ export function NodeDetailsPanel({
           marginTop: 8,
         }}
       >
-        {[node.type, node.status, node.domain].map((chip) => (
-          <span
-            key={chip}
-            style={{
-              border: `1px solid ${border}`,
-              borderRadius: 999,
-              padding: "1px 8px",
-              fontSize: 12,
-              color: theme.dimText,
-            }}
-          >
-            {chip}
-          </span>
-        ))}
+        {[
+          { label: "Type", value: node.type },
+          { label: "Status", value: node.status },
+          { label: "Domain", value: node.domain },
+        ]
+          .filter((chip) => chip.value)
+          .map((chip) => (
+            <span
+              key={chip.label}
+              title={`${chip.label}: ${chip.value}`}
+              aria-label={`${chip.label}: ${chip.value}`}
+              style={{
+                border: `1px solid ${border}`,
+                borderRadius: 999,
+                padding: "1px 8px",
+                fontSize: 12,
+                color: theme.dimText,
+              }}
+            >
+              {chip.value}
+            </span>
+          ))}
         {node.community !== undefined ? (
           <span
+            title={`Community: cluster ${node.community}`}
+            aria-label={`Community: cluster ${node.community}`}
             style={{
               border: `1px solid ${border}`,
               borderRadius: 999,
