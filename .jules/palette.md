@@ -211,3 +211,7 @@ Browser smoke must cover:
 ## 2026-07-26 - Add keyboard navigation to canvas
 **Learning:** Canvas-first interaction needs non-pointer access, so we added keyboard handlers to the Graph component to allow panning, zooming, fitting, and clearing selection.
 **Action:** Added onKeyDown handler to react/Graph.tsx mapping arrow keys to panning, +/- to zooming, F to fit, and Escape to clear selection.
+
+## 2024-10-27 - Expose shortcuts via tooltips and handle CSS ellipsis
+**Learning:** Icon-only buttons with keyboard shortcuts (like 'Close') hide both their function and shortcut from sighted users when lacking a `title` tooltip. Additionally, text truncated via CSS `ellipsis` becomes entirely inaccessible to sighted users without a hover tooltip.
+**Action:** Always provide `title` attributes on icon-only buttons (including the shortcut if applicable) and on any container where `textOverflow: 'ellipsis'` is applied.
