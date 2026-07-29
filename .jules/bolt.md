@@ -271,3 +271,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-29 - Reuse Vector Allocations in Overlap Resolution
 **Learning:** Calling `HashMap::clear()` keeps the map's capacity but drops all its values, which in this case were `Vec<usize>`. In a hot layout loop that executes every frame, recreating and reallocating these vectors causes unnecessary heap allocation and memory churn.
 **Action:** Replaced `buckets.clear()` with a loop that calls `.clear()` on each inner vector (`buckets.values_mut()`), followed by `entry().or_default().push()`. This reuses the vectors' allocated capacities and resulted in a measurable ~10% performance improvement (437ms to 396ms).
+
+## 2024-05-18 - [Eliminate O(N) array slicing in line wrapping]
+**Learning:** In the `fitLabel` wrapping logic, using `chars.slice(start, end).join("")` creates temporary arrays and strings, causing unnecessary GC churn in hot rendering loops.
+**Action:** Replaced `slice().join("")` with iterative string concatenation to eliminate short-lived array allocations.
