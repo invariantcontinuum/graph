@@ -112,6 +112,7 @@ export function NodeDetailsPanel({
           <button
             type="button"
             onClick={onClose}
+            title="Close node details (Escape)"
             aria-label="Close node details"
             aria-keyshortcuts="Escape"
             style={{
@@ -257,14 +258,15 @@ export function NodeDetailsPanel({
                 textAlign: "left",
               };
               const neighbor = nodesById.get(neighborId);
+              const fullText = `${label} ${edge.type}`;
               return (
-                <li key={edge.id}>
+                <li key={edge.id} title={fullText}>
                   {onNeighborClick && neighbor ? (
                     <button
                       type="button"
                       style={{ ...rowStyle, cursor: "pointer" }}
                       onClick={() => onNeighborClick(neighbor)}
-                      aria-label={`Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name} (type: ${edge.type})`}
+                      aria-label={`${fullText}, Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name}`}
                     >
                       {inner}
                     </button>
