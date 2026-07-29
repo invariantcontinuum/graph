@@ -17,11 +17,15 @@ pub(super) fn resolve_overlaps(
         return;
     }
 
-    // Clear the map but keep capacity.
-    buckets.clear();
+    // Reuse vector allocations by clearing instead of recreating
+    for bucket in buckets.values_mut() {
+        bucket.clear();
+    }
 
     for (i, &(x, y)) in positions.iter().enumerate() {
-        buckets.entry(bucket_key(x, y)).or_default().push(i);
+        let key = bucket_key(x, y);
+        // Entry API avoids double lookup but pushes to existing vectors
+        buckets.entry(key).or_default().push(i);
     }
 
     apply_pushes(positions, buckets);
