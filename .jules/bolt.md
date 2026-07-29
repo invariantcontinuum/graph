@@ -271,3 +271,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-29 - Reuse Vector Allocations in Overlap Resolution
 **Learning:** Calling `HashMap::clear()` keeps the map's capacity but drops all its values, which in this case were `Vec<usize>`. In a hot layout loop that executes every frame, recreating and reallocating these vectors causes unnecessary heap allocation and memory churn.
 **Action:** Replaced `buckets.clear()` with a loop that calls `.clear()` on each inner vector (`buckets.values_mut()`), followed by `entry().or_default().push()`. This reuses the vectors' allocated capacities and resulted in a measurable ~10% performance improvement (437ms to 396ms).
+
+## 2026-07-30 - [Bypass O(N^2) array slicing in hot Canvas text measurement]
+**Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array operations like `chars.slice(start, end).join("")` inside per-character wrapping loops creates O(N^2) memory churn, causing severe Garbage Collection (GC) pauses.
+**Action:** Replace `chars.slice(...).join("")` with iterative string concatenation (`let chunk = ""; for (...) chunk += chars[i];`) to eliminate array allocations and avoid GC churn.

@@ -103,7 +103,9 @@ function wrapIntoLines(
   while (cursor < chars.length && lines.length < maxLines) {
     const nextEnd = chooseLineEnd(ctx, chars, cursor, maxWidth);
     if (nextEnd <= cursor) break;
-    const line = chars.slice(cursor, nextEnd).join("").trim();
+    let line = "";
+    for (let i = cursor; i < nextEnd; i++) line += chars[i];
+    line = line.trim();
     cursor = skipLeadingSpaces(chars, nextEnd);
     if (line) lines.push(line);
   }
@@ -138,7 +140,9 @@ function appendEllipsizedRemainder(
   maxWidth: number,
 ): string[] {
   if (cursor >= chars.length) return lines;
-  const remaining = chars.slice(cursor).join("").trim();
+  let remaining = "";
+  for (let i = cursor; i < chars.length; i++) remaining += chars[i];
+  remaining = remaining.trim();
   if (!remaining) return lines;
   const lastLine = lines.at(-1) ?? "";
   const combined = `${lastLine} ${remaining}`;
