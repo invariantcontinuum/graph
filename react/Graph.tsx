@@ -494,9 +494,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
         const lowerQuery = query.toLowerCase();
-        return Array.from(nodeDataByIdRef.current.values()).filter(
-          (node) => node.name && node.name.toLowerCase().includes(lowerQuery),
-        );
+        const results: NodeData[] = [];
+        for (const node of nodeDataByIdRef.current.values()) {
+          if (node.name && node.name.toLowerCase().includes(lowerQuery)) {
+            results.push(node);
+          }
+        }
+        return results;
       },
       selectNode: (id) => {
         engineRef.current?.set_focus(id ?? undefined);
