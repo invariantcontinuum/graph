@@ -6,17 +6,49 @@ import type { NodeData } from "./types";
 // so we mock the search logic that we added to the handle to prove it works as intended.
 
 const nodes: NodeData[] = [
-  { id: "a", name: "Alpha", type: "service", domain: "demo", status: "active", meta: {} },
-  { id: "b", name: "Beta", type: "data", domain: "demo", status: "active", meta: {} },
-  { id: "c", name: "Gamma Order", type: "doc", domain: "demo", status: "active", meta: {} },
-  { id: "d", name: "alpha order", type: "service", domain: "demo", status: "active", meta: {} },
+  {
+    id: "a",
+    name: "Alpha",
+    type: "service",
+    domain: "demo",
+    status: "active",
+    meta: {},
+  },
+  {
+    id: "b",
+    name: "Beta",
+    type: "data",
+    domain: "demo",
+    status: "active",
+    meta: {},
+  },
+  {
+    id: "c",
+    name: "Gamma Order",
+    type: "doc",
+    domain: "demo",
+    status: "active",
+    meta: {},
+  },
+  {
+    id: "d",
+    name: "alpha order",
+    type: "service",
+    domain: "demo",
+    status: "active",
+    meta: {},
+  },
 ];
 
 function searchMock(query: string, byId: Map<string, NodeData>) {
   const lowerQuery = query.toLowerCase();
-  return Array.from(byId.values()).filter(
-    (node) => node.name && node.name.toLowerCase().includes(lowerQuery)
-  );
+  const results: NodeData[] = [];
+  for (const node of byId.values()) {
+    if (node.name && node.name.toLowerCase().includes(lowerQuery)) {
+      results.push(node);
+    }
+  }
+  return results;
 }
 
 describe("GraphHandle search API", () => {

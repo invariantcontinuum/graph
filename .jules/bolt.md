@@ -275,3 +275,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-30 - [Bypass O(N^2) array slicing in hot Canvas text measurement]
 **Learning:** In hot JavaScript render loops (e.g., Canvas `requestAnimationFrame`), using array operations like `chars.slice(start, end).join("")` inside per-character wrapping loops creates O(N^2) memory churn, causing severe Garbage Collection (GC) pauses.
 **Action:** Replace `chars.slice(...).join("")` with iterative string concatenation (`let chunk = ""; for (...) chunk += chars[i];`) to eliminate array allocations and avoid GC churn.
+
+## 2024-05-18 - [Replace Array.from().filter() with iterator loop in search]
+**Learning:** In frontend functions that iterate over large data structures (like searching a Map of 100k nodes as the user types), calling `Array.from(map.values()).filter(...)` creates a massive intermediate array allocation for every keystroke. This causes excessive memory churn and severe Garbage Collection (GC) pauses that degrade UI responsiveness.
+**Action:** Replaced `Array.from().filter()` with a `for...of` iterator loop that only allocates memory for the matched results, improving search performance and eliminating the intermediate O(N) allocation overhead.
