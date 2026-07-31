@@ -17,7 +17,7 @@ pub(super) struct QuadNode {
     cy: f32,
     mass: f32,
     bounds: Bounds,
-    children: Option<Box<[Option<QuadNode>; 4]>>,
+    children: Option<Box<[QuadNode; 4]>>,
     body: Option<(f32, f32)>,
 }
 
@@ -63,7 +63,7 @@ impl QuadNode {
 
             let q = node.quadrant(x, y);
             // SAFETY: `ensure_children` just wrote Some(children) with all four quadrants populated.
-            current = node.children.as_mut().unwrap()[q].as_mut().unwrap() as *mut QuadNode;
+            current = &mut node.children.as_mut().unwrap()[q] as *mut QuadNode;
             depth += 1;
         }
     }
@@ -108,29 +108,21 @@ impl QuadNode {
                 // ⚡ Bolt: Only push nodes with mass > 0.0 to the stack.
                 // This avoids pushing empty nodes, which saves us from having to pop them
                 // off the stack and check `if node.mass == 0.0` in the next iteration.
-                #[allow(clippy::collapsible_if)]
-                if let Some(c3) = c[3].as_ref() {
-                    if c3.mass > 0.0 {
-                        stack.push(c3);
-                    }
+                let c3 = &c[3];
+                if c3.mass > 0.0 {
+                    stack.push(c3);
                 }
-                #[allow(clippy::collapsible_if)]
-                if let Some(c2) = c[2].as_ref() {
-                    if c2.mass > 0.0 {
-                        stack.push(c2);
-                    }
+                let c2 = &c[2];
+                if c2.mass > 0.0 {
+                    stack.push(c2);
                 }
-                #[allow(clippy::collapsible_if)]
-                if let Some(c1) = c[1].as_ref() {
-                    if c1.mass > 0.0 {
-                        stack.push(c1);
-                    }
+                let c1 = &c[1];
+                if c1.mass > 0.0 {
+                    stack.push(c1);
                 }
-                #[allow(clippy::collapsible_if)]
-                if let Some(c0) = c[0].as_ref() {
-                    if c0.mass > 0.0 {
-                        stack.push(c0);
-                    }
+                let c0 = &c[0];
+                if c0.mass > 0.0 {
+                    stack.push(c0);
                 }
             }
         }
@@ -169,17 +161,17 @@ impl QuadNode {
         // and eliminate the child_bounds method helper and bounds-checked iterators
         // to save CPU cycles in the tree construction hot-path.
         self.children = Some(Box::new([
-            Some(QuadNode::new(x_min, y_min, mx, my)),
-            Some(QuadNode::new(mx, y_min, x_max, my)),
-            Some(QuadNode::new(x_min, my, mx, y_max)),
-            Some(QuadNode::new(mx, my, x_max, y_max)),
+            QuadNode::new(x_min, y_min, mx, my),
+            QuadNode::new(mx, y_min, x_max, my),
+            QuadNode::new(x_min, my, mx, y_max),
+            QuadNode::new(mx, my, x_max, y_max),
         ]));
     }
 
     fn push_existing_body_down(&mut self, depth: usize) {
         if let Some((bx, by)) = self.body.take() {
             let bq = self.quadrant(bx, by);
-            let child = self.children.as_mut().unwrap()[bq].as_mut().unwrap();
+            let child = &mut self.children.as_mut().unwrap()[bq];
             child.insert_at_depth(bx, by, depth + 1);
         }
     }
