@@ -279,3 +279,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-05-18 - [Replace Array.from().filter() with iterator loop in search]
 **Learning:** In frontend functions that iterate over large data structures (like searching a Map of 100k nodes as the user types), calling `Array.from(map.values()).filter(...)` creates a massive intermediate array allocation for every keystroke. This causes excessive memory churn and severe Garbage Collection (GC) pauses that degrade UI responsiveness.
 **Action:** Replaced `Array.from().filter()` with a `for...of` iterator loop that only allocates memory for the matched results, improving search performance and eliminating the intermediate O(N) allocation overhead.
+
+## 2026-07-31 - [Use fixed arrays instead of Option-wrapped arrays for fully populated quadtree nodes]
+**Learning:** In Rust tree structures (e.g., Barnes-Hut quadtrees), if child node arrays are always fully populated upon allocation, wrapping elements in Options (`[Option<QuadNode>; 4]`) wastes memory layout with Option padding and incurs redundant unwrap checks in hot traversal loops.
+**Action:** Use fixed arrays of structs (`[QuadNode; 4]`) rather than `Option`-wrapped elements to tighten memory layout, remove padding, and eliminate redundant unwrap checks in hot paths.
