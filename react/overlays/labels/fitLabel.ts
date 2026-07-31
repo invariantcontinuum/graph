@@ -8,7 +8,8 @@ const LINE_HEIGHT_RATIO = 1.16;
 
 export function fitLabelInBox(
   ctx: CanvasRenderingContext2D,
-  rawText: string,
+  text: string,
+  chars: string[],
   maxWidth: number,
   maxHeight: number,
   fontFamily: string,
@@ -17,10 +18,7 @@ export function fitLabelInBox(
   minFontPx: number,
   dpr: number,
 ): FittedLabel | null {
-  const text = normalizeLabel(rawText);
   if (!text) return null;
-
-  const chars = Array.from(text);
 
   const step = Math.max(0.5, 0.5 * dpr);
   for (let fontPx = baseFontPx; fontPx >= minFontPx - 0.01; fontPx -= step) {
@@ -194,12 +192,13 @@ function ellipsize(
   let hi = text.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if (ctx.measureText(text.slice(0, mid) + ell).width <= maxW) lo = mid;
+    let chunk = "";
+    for (let i = 0; i < mid; i++) chunk += text[i];
+    chunk += ell;
+    if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  return text.slice(0, lo) + ell;
-}
-
-function normalizeLabel(raw: string): string {
-  return raw.replaceAll(/\s+/g, " ").trim();
+  let res = "";
+  for (let i = 0; i < lo; i++) res += text[i];
+  return res + ell;
 }

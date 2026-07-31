@@ -10,7 +10,7 @@ const ctx = {
 } as unknown as CanvasRenderingContext2D;
 
 function fit(
-  text: string,
+  rawText: string,
   maxWidth = 100,
   maxHeight = 40,
   fontFamily = "sans-serif",
@@ -19,9 +19,12 @@ function fit(
   minFontPx = 7,
   dpr = 1,
 ) {
+  const text = rawText.replaceAll(/\s+/g, " ").trim();
+  const chars = Array.from(text);
   return fitLabelInBox(
     ctx,
     text,
+    chars,
     maxWidth,
     maxHeight,
     fontFamily,
