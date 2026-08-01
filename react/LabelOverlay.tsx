@@ -1,7 +1,11 @@
 import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
-import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
+import {
+  fitLabelInBox,
+  normalizeLabel,
+  type FittedLabel,
+} from "./overlays/labels/fitLabel";
 import { worldToScreenX, worldToScreenY, screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
@@ -62,6 +66,9 @@ export function LabelOverlay({
   focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textCacheRef = useRef<Map<string, { text: string; chars: string[] }>>(
+    new Map(),
+  );
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
@@ -82,6 +89,7 @@ export function LabelOverlay({
           labels,
           nodeTypes,
           theme,
+          textCache: textCacheRef.current,
         });
       }
     },
@@ -123,6 +131,7 @@ interface FrameContext {
   labels: Record<string, string>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
+  textCache: Map<string, { text: string; chars: string[] }>;
 }
 
 function drawAllLabels(
@@ -191,9 +200,21 @@ function drawOneLabel(
     MAX_LABEL_FONT_PX * dpr,
   );
 
+  const rawLabel = labels[id] ?? "";
+  // ⚡ Bolt: Cache expensive per-item operations (string normalization and Array.from)
+  // lazily during the render tick to avoid O(N) memory churn every frame
+  // without incurring an upfront O(total) UI freeze.
+  let cached = frame.textCache.get(rawLabel);
+  if (!cached) {
+    const text = normalizeLabel(rawLabel);
+    cached = { text, chars: Array.from(text) };
+    frame.textCache.set(rawLabel, cached);
+  }
+
   const fitted = fitLabelInBox(
     ctx,
-    labels[id] ?? "",
+    cached.text,
+    cached.chars,
     textBoxW,
     textBoxH,
     fontFamily,
