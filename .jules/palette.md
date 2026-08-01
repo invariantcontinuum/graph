@@ -215,3 +215,7 @@ Browser smoke must cover:
 ## 2024-10-27 - Expose shortcuts via tooltips and handle CSS ellipsis
 **Learning:** Icon-only buttons with keyboard shortcuts (like 'Close') hide both their function and shortcut from sighted users when lacking a `title` tooltip. Additionally, text truncated via CSS `ellipsis` becomes entirely inaccessible to sighted users without a hover tooltip.
 **Action:** Always provide `title` attributes on icon-only buttons (including the shortcut if applicable) and on any container where `textOverflow: 'ellipsis'` is applied.
+
+## 2024-10-27 - Apply true single ellipsis character for text truncation
+**Learning:** Truncating text by simply slicing the string without any visual indication can be confusing, as users might mistake the truncated string for the full value. Adding an ellipsis makes it clear that the text has been shortened, and using the true single ellipsis character ('…') instead of three periods ('...') applies typographic visual polish.
+**Action:** Appended the true single ellipsis character ('…') to truncated source IDs in `react/CompoundFramesOverlay.tsx` to provide visual feedback of truncation with typographic polish.
