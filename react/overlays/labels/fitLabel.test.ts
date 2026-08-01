@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { fitLabelInBox } from "./fitLabel";
+import { fitLabelInBox, normalizeLabel } from "./fitLabel";
 
 // jsdom does not provide a real Canvas2D context; mock the surface used by
 // fitLabelInBox. An average of ~6 px/char is close enough for the wrap logic
@@ -10,7 +10,7 @@ const ctx = {
 } as unknown as CanvasRenderingContext2D;
 
 function fit(
-  text: string,
+  rawText: string,
   maxWidth = 100,
   maxHeight = 40,
   fontFamily = "sans-serif",
@@ -19,9 +19,12 @@ function fit(
   minFontPx = 7,
   dpr = 1,
 ) {
+  const text = normalizeLabel(rawText);
+  const chars = Array.from(text);
   return fitLabelInBox(
     ctx,
     text,
+    chars,
     maxWidth,
     maxHeight,
     fontFamily,

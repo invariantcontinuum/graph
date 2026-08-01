@@ -283,3 +283,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-31 - [Use fixed arrays instead of Option-wrapped arrays for fully populated quadtree nodes]
 **Learning:** In Rust tree structures (e.g., Barnes-Hut quadtrees), if child node arrays are always fully populated upon allocation, wrapping elements in Options (`[Option<QuadNode>; 4]`) wastes memory layout with Option padding and incurs redundant unwrap checks in hot traversal loops.
 **Action:** Use fixed arrays of structs (`[QuadNode; 4]`) rather than `Option`-wrapped elements to tighten memory layout, remove padding, and eliminate redundant unwrap checks in hot paths.
+
+## 2024-10-24 - [Avoid O(total) UI freezing with lazy Map cache for Array.from]
+**Learning:** In React/Canvas applications rendering large datasets, eager caching (e.g., `useMemo` over all items) for expensive per-item operations like string normalization or `Array.from` causes O(total) UI freezing. Doing `Array.from` without caching per frame creates redundant string-to-array conversions and severe GC pauses.
+**Action:** Use a lazy cache (e.g., `useRef(new Map())`) populated dynamically during the render tick to eliminate redundant allocations without the upfront penalty.

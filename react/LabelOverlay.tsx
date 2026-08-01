@@ -1,7 +1,11 @@
 import { useRef, useCallback } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
-import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
+import {
+  fitLabelInBox,
+  normalizeLabel,
+  type FittedLabel,
+} from "./overlays/labels/fitLabel";
 import { worldToScreenX, worldToScreenY, screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
@@ -51,6 +55,11 @@ const DEFAULT_LABEL_FONT_WEIGHT = 760;
 const STROKE_WIDTH_FLOOR_PX = 1.5;
 const STROKE_WIDTH_RATIO = 0.2;
 
+export interface LabelCacheEntry {
+  text: string;
+  chars: string[];
+}
+
 export function LabelOverlay({
   engineRef,
   theme,
@@ -62,6 +71,7 @@ export function LabelOverlay({
   focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textCacheRef = useRef<Map<string, LabelCacheEntry>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
@@ -82,6 +92,7 @@ export function LabelOverlay({
           labels,
           nodeTypes,
           theme,
+          textCache: textCacheRef.current,
         });
       }
     },
@@ -123,6 +134,7 @@ interface FrameContext {
   labels: Record<string, string>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
+  textCache: Map<string, LabelCacheEntry>;
 }
 
 function drawAllLabels(
@@ -191,9 +203,18 @@ function drawOneLabel(
     MAX_LABEL_FONT_PX * dpr,
   );
 
+  const rawLabel = labels[id] ?? "";
+  let cacheEntry = frame.textCache.get(rawLabel);
+  if (!cacheEntry) {
+    const text = normalizeLabel(rawLabel);
+    cacheEntry = { text, chars: Array.from(text) };
+    frame.textCache.set(rawLabel, cacheEntry);
+  }
+
   const fitted = fitLabelInBox(
     ctx,
-    labels[id] ?? "",
+    cacheEntry.text,
+    cacheEntry.chars,
     textBoxW,
     textBoxH,
     fontFamily,
