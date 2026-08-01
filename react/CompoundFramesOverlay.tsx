@@ -92,7 +92,8 @@ export function CompoundFramesOverlay({
         ctx.fill();
         ctx.stroke();
 
-        const label = sourceLabels[src] ?? src.slice(0, 8);
+        const label =
+          sourceLabels[src] ?? (src.length > 8 ? src.slice(0, 8) + "…" : src);
         ctx.font = "500 10px 'Manrope', sans-serif";
         ctx.fillStyle = theme.dimText;
         ctx.textAlign = "left";
