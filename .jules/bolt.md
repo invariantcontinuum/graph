@@ -283,3 +283,11 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-31 - [Use fixed arrays instead of Option-wrapped arrays for fully populated quadtree nodes]
 **Learning:** In Rust tree structures (e.g., Barnes-Hut quadtrees), if child node arrays are always fully populated upon allocation, wrapping elements in Options (`[Option<QuadNode>; 4]`) wastes memory layout with Option padding and incurs redundant unwrap checks in hot traversal loops.
 **Action:** Use fixed arrays of structs (`[QuadNode; 4]`) rather than `Option`-wrapped elements to tighten memory layout, remove padding, and eliminate redundant unwrap checks in hot paths.
+
+## 2024-10-31 - [Hoist string-to-array conversions in Canvas text measurement]
+**Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. O(N^2) array slicing during operations like `ellipsize` adds to this penalty.
+**Action:** Hoist array conversions and regular expressions outside of inner layout loops via `useMemo`. Pass the pre-computed arrays to the inner functions. Replace `text.slice(0, mid)` in `ellipsize` with iterative string concatenation (`let chunk = ""; for (...) chunk += text[i];`) to eliminate array allocations.
+
+## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
+**Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
+**Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
