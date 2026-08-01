@@ -283,3 +283,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-07-31 - [Use fixed arrays instead of Option-wrapped arrays for fully populated quadtree nodes]
 **Learning:** In Rust tree structures (e.g., Barnes-Hut quadtrees), if child node arrays are always fully populated upon allocation, wrapping elements in Options (`[Option<QuadNode>; 4]`) wastes memory layout with Option padding and incurs redundant unwrap checks in hot traversal loops.
 **Action:** Use fixed arrays of structs (`[QuadNode; 4]`) rather than `Option`-wrapped elements to tighten memory layout, remove padding, and eliminate redundant unwrap checks in hot paths.
+
+## 2026-08-16 - [Extract and deduplicate canvas onKeyDown handler to reduce Cognitive Complexity]
+**Learning:** In React components orchestrating complex pointer and keyboard interactions, keeping dense `onKeyDown` switch statements inside the component's JSX causes the component to fail SonarCloud cognitive complexity limits (S3776).
+**Action:** Extracted the inline `onKeyDown` logic into `usePointerController` (which delegates to `pointerUtils.ts`) to reduce duplication, improve readability, and satisfy SonarCloud requirements while maintaining keyboard accessibility.
