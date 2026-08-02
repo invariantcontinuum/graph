@@ -124,6 +124,22 @@ export function NodeDetailsPanel({
               cursor: "pointer",
               padding: "2px 8px",
               font: "inherit",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(128, 128, 128, 0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+            onFocus={(e) => {
+              if (e.target.matches(":focus-visible")) {
+                e.target.style.outline = "2px solid #3b82f6";
+                e.target.style.outlineOffset = "2px";
+              }
+            }}
+            onBlur={(e) => {
+              e.target.style.outline = "none";
             }}
           >
             ×
@@ -264,9 +280,29 @@ export function NodeDetailsPanel({
                   {onNeighborClick && neighbor ? (
                     <button
                       type="button"
-                      style={{ ...rowStyle, cursor: "pointer" }}
+                      style={{
+                        ...rowStyle,
+                        cursor: "pointer",
+                        transition: "background 0.2s",
+                      }}
                       onClick={() => onNeighborClick(neighbor)}
                       aria-label={`${fullText}, Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name}`}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(128, 128, 128, 0.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                      onFocus={(e) => {
+                        if (e.target.matches(":focus-visible")) {
+                          e.target.style.outline = "2px solid #3b82f6";
+                          e.target.style.outlineOffset = "-2px";
+                        }
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.outline = "none";
+                      }}
                     >
                       {inner}
                     </button>
