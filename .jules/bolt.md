@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2026-05-29 - Simplify Graph.tsx event delegation
+**Learning:** Duplicate DOM event listeners created during a partial refactor (such as moving `onKeyDown` to a centralized hook but leaving the original inline) can cause redundant callbacks, subtle bugs with inverted pan directions, and violate the Single Responsibility principle by keeping coordination logic in the main orchestration component.
+**Action:** Removed the duplicate inline `onKeyDown` from `Graph.tsx` and consolidated its full behavior (including focus clearing on Escape and correct panning math) into the `usePointerController` hook via `pointerUtils.ts`.

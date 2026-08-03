@@ -575,50 +575,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         outline: "none", // Prevent default browser outline
         ...style,
       }}
-      onKeyDown={(e) => {
-        if (!engineRef.current) return;
-        const panStep = 40;
-        let handled = true;
-        switch (e.key) {
-          case "Escape":
-            engineRef.current.set_focus(undefined);
-            callbacksRef.current.onBackgroundClick?.();
-            requestRender();
-            break;
-          case "+":
-          case "=":
-            engineRef.current.zoom_in();
-            requestRender();
-            break;
-          case "-":
-          case "_":
-            engineRef.current.zoom_out();
-            requestRender();
-            break;
-          case "ArrowUp":
-            engineRef.current.pan_by(0, -panStep);
-            break;
-          case "ArrowDown":
-            engineRef.current.pan_by(0, panStep);
-            break;
-          case "ArrowLeft":
-            engineRef.current.pan_by(-panStep, 0);
-            break;
-          case "ArrowRight":
-            engineRef.current.pan_by(panStep, 0);
-            break;
-          case "f":
-          case "F":
-            engineRef.current.fit(40);
-            requestRender();
-            break;
-          default:
-            handled = false;
-        }
-        if (handled) {
-          e.preventDefault();
-        }
-      }}
       onFocus={(e) => {
         // Add focus-visible style polyfill for accessibility
         if (e.target.matches(":focus-visible")) {
