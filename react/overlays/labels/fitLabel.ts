@@ -192,13 +192,11 @@ function ellipsize(
   let hi = text.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    let chunk = "";
-    for (let i = 0; i < mid; i++) chunk += text[i];
-    chunk += ell;
+    // Bolt: Use native string slicing for text truncation instead of character loop concatenation.
+    // This significantly reduces memory churn and GC pauses in the hot path.
+    const chunk = text.slice(0, mid) + ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  let res = "";
-  for (let i = 0; i < lo; i++) res += text[i];
-  return res + ell;
+  return text.slice(0, lo) + ell;
 }
