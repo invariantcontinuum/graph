@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2026-08-20 - [Memoize focusIds array conversion to prevent cascading re-renders]
+**Learning:** In `react/GraphScene.tsx`, converting `focusIds` (a Set) to an array directly in the render body (`Array.from(focusIds)`) allocates a new array on every render. This drops referential identity, causing cascading re-renders in the child `Graph` component and triggering redundant `postMessage` calls to the WASM worker for `set_spotlight`.
+**Action:** Memoize `Array.from()` conversions passed as props to child components (e.g., using `useMemo`) to preserve referential identity across renders and eliminate redundant allocations and worker synchronizations.
