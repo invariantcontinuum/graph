@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2024-05-24 - Native String Slicing in Canvas Render Loops
+**Learning:** In hot JavaScript render loops, manually building substrings via character-by-character iteration (`chunk += text[i]`) causes severe overhead and is significantly slower than native V8 string slicing (`text.slice(0, n)`), even when iterating over primitives.
+**Action:** Use native string slicing (`String.prototype.slice`) for substring operations and text truncation on string primitives to eliminate GC pauses and maximize FPS.
