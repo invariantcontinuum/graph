@@ -1,4 +1,9 @@
-import { useEffect, useMemo, type CSSProperties } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useCallback,
+  type CSSProperties,
+} from "react";
 import { buildGraphTheme } from "./theme/buildTheme";
 import type { ThemeMode } from "./GraphScene";
 import { connectionsFor, formatMetaValue, neighborName } from "./nodeDetails";
@@ -53,6 +58,17 @@ export function NodeDetailsPanel({
     () => (node ? connectionsFor(node.id, edges) : []),
     [node, edges],
   );
+
+  const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
+    if (e.target.matches(":focus-visible")) {
+      e.target.style.outline = "2px solid #3b82f6";
+      e.target.style.outlineOffset = "2px";
+    }
+  }, []);
+
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLElement>) => {
+    e.target.style.outline = "none";
+  }, []);
 
   // Escape closes the panel while it is open.
   useEffect(() => {
@@ -115,6 +131,8 @@ export function NodeDetailsPanel({
             title="Close node details (Escape)"
             aria-label="Close node details"
             aria-keyshortcuts="Escape"
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             style={{
               flex: "none",
               border: `1px solid ${border}`,
@@ -266,6 +284,8 @@ export function NodeDetailsPanel({
                       type="button"
                       style={{ ...rowStyle, cursor: "pointer" }}
                       onClick={() => onNeighborClick(neighbor)}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
                       aria-label={`${fullText}, Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name}`}
                     >
                       {inner}
