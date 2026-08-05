@@ -192,13 +192,9 @@ function ellipsize(
   let hi = text.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    let chunk = "";
-    for (let i = 0; i < mid; i++) chunk += text[i];
-    chunk += ell;
+    const chunk = text.slice(0, mid) + ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  let res = "";
-  for (let i = 0; i < lo; i++) res += text[i];
-  return res + ell;
+  return text.slice(0, lo) + ell;
 }
