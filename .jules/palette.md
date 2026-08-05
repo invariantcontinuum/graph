@@ -219,3 +219,7 @@ Browser smoke must cover:
 ## 2024-10-27 - Apply true single ellipsis character for text truncation
 **Learning:** Truncating text by simply slicing the string without any visual indication can be confusing, as users might mistake the truncated string for the full value. Adding an ellipsis makes it clear that the text has been shortened, and using the true single ellipsis character ('…') instead of three periods ('...') applies typographic visual polish.
 **Action:** Appended the true single ellipsis character ('…') to truncated source IDs in `react/CompoundFramesOverlay.tsx` to provide visual feedback of truncation with typographic polish.
+
+## 2024-11-12 - Polyfill focus-visible for inline-styled React buttons
+**Learning:** In purely inline-styled React components where external CSS is unavailable, interactive elements (like buttons) lack consistent and accessible `:focus-visible` styling across browsers, leaving keyboard users without clear focus indicators.
+**Action:** Abstracted `onFocus` and `onBlur` handlers via `useCallback` to polyfill `:focus-visible` styles on buttons to ensure keyboard navigation visibility without triggering SonarCloud code duplication failures.
