@@ -188,17 +188,18 @@ function ellipsize(
 ): string {
   if (ctx.measureText(text).width <= maxW) return text;
   const ell = "…";
+  const chars = Array.from(text);
   let lo = 0;
-  let hi = text.length;
+  let hi = chars.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
     let chunk = "";
-    for (let i = 0; i < mid; i++) chunk += text[i];
+    for (let i = 0; i < mid; i++) chunk += chars[i];
     chunk += ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
   let res = "";
-  for (let i = 0; i < lo; i++) res += text[i];
+  for (let i = 0; i < lo; i++) res += chars[i];
   return res + ell;
 }

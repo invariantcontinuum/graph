@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2025-02-08 - Safe String Truncation with Emojis
+**Learning:** Iterating over a string via index (`text[i]`) to build substrings splits surrogate pairs (emojis) because it operates on UTF-16 code units. However, replacing it with `chars.slice().join("")` causes severe O(N^2) array allocation churn that tanks performance.
+**Action:** When safe surrogate handling is required in a hot loop, hoist `Array.from(text)` outside the loop, and use iterative string concatenation (`chunk += chars[i]`) over the safe character array. This fixes unicode truncation without introducing the massive GC overhead of array slicing.
