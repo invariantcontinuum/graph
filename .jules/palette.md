@@ -219,3 +219,7 @@ Browser smoke must cover:
 ## 2024-10-27 - Apply true single ellipsis character for text truncation
 **Learning:** Truncating text by simply slicing the string without any visual indication can be confusing, as users might mistake the truncated string for the full value. Adding an ellipsis makes it clear that the text has been shortened, and using the true single ellipsis character ('…') instead of three periods ('...') applies typographic visual polish.
 **Action:** Appended the true single ellipsis character ('…') to truncated source IDs in `react/CompoundFramesOverlay.tsx` to provide visual feedback of truncation with typographic polish.
+
+## 2024-08-06 - [Keyboard Focus Styles in React Components]
+**Learning:** Purely inline-styled React components lack the pseudo-classes (`:focus-visible`, `:hover`) available in CSS, making it difficult to polyfill accessible keyboard navigation focus indicators without external stylesheets or complex JS event handling.
+**Action:** When no CSS stylesheet is provided, use inline `onFocus` and `onBlur` combined with local component state (or direct DOM manipulation on `e.currentTarget`) to provide visual focus indicators (`outline`) for keyboard users.
