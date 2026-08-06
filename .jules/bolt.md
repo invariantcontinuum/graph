@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2024-11-20 - [Memoize array conversion for props to prevent redundant side effects]
+**Learning:** Performing object or array conversions derived from props (e.g., `Array.from(set)`) inline inside the render body drops referential identity, causing cascading re-renders and potentially triggering expensive redundant side effects (such as WASM worker `postMessage` syncs) in child components that rely on referential equality in `useEffect` dependencies.
+**Action:** Memoize object or array conversions derived from props using `useMemo` before passing them to child components.
