@@ -284,6 +284,30 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In Rust tree structures (e.g., Barnes-Hut quadtrees), if child node arrays are always fully populated upon allocation, wrapping elements in Options (`[Option<QuadNode>; 4]`) wastes memory layout with Option padding and incurs redundant unwrap checks in hot traversal loops.
 **Action:** Use fixed arrays of structs (`[QuadNode; 4]`) rather than `Option`-wrapped elements to tighten memory layout, remove padding, and eliminate redundant unwrap checks in hot paths.
 
+## 2024-10-31 - [Hoist string-to-array conversions in Canvas text measurement]
+**Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. O(N^2) array slicing during operations like `ellipsize` adds to this penalty.
+**Action:** Hoist array conversions and regular expressions outside of inner layout loops via `useMemo`. Pass the pre-computed arrays to the inner functions. Replace `text.slice(0, mid)` in `ellipsize` with iterative string concatenation (`let chunk = ""; for (...) chunk += text[i];`) to eliminate array allocations.
+
+## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
+**Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
+**Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2024-05-24 - Native String Slicing in Canvas Render Loops
+**Learning:** In hot JavaScript render loops, manually building substrings via character-by-character iteration (`chunk += text[i]`) causes severe overhead and is significantly slower than native V8 string slicing (`text.slice(0, n)`), even when iterating over primitives.
+**Action:** Use native string slicing (`String.prototype.slice`) for substring operations and text truncation on string primitives to eliminate GC pauses and maximize FPS.
+
+## 2024-05-30 - Avoid redundant Map.set calls in hot loops
+**Learning:** In tight React Canvas render loops, calling `Map.prototype.set` repeatedly on every iteration (even for existing keys) adds measurable overhead. When updating object properties in a Map, we can rely on reference updates.
+**Action:** Instead of `const existing = map.get(k) ?? default; ... map.set(k, existing);`, use `let existing = map.get(k); if (!existing) { existing = default; map.set(k, existing); }` to eliminate redundant Map writes on every frame.
+
+## 2025-02-08 - Safe String Truncation with Emojis
+**Learning:** Iterating over a string via index (`text[i]`) to build substrings splits surrogate pairs (emojis) because it operates on UTF-16 code units. However, replacing it with `chars.slice().join("")` causes severe O(N^2) array allocation churn that tanks performance.
+**Action:** When safe surrogate handling is required in a hot loop, hoist `Array.from(text)` outside the loop, and use iterative string concatenation (`chunk += chars[i]`) over the safe character array. This fixes unicode truncation without introducing the massive GC overhead of array slicing.
+
+## 2024-11-20 - [Memoize array conversion for props to prevent redundant side effects]
+**Learning:** Performing object or array conversions derived from props (e.g., `Array.from(set)`) inline inside the render body drops referential identity, causing cascading re-renders and potentially triggering expensive redundant side effects (such as WASM worker `postMessage` syncs) in child components that rely on referential equality in `useEffect` dependencies.
+**Action:** Memoize object or array conversions derived from props using `useMemo` before passing them to child components.
+
 ## 2026-08-16 - [Extract and deduplicate canvas onKeyDown handler to reduce Cognitive Complexity]
 **Learning:** In React components orchestrating complex pointer and keyboard interactions, keeping dense `onKeyDown` switch statements inside the component's JSX causes the component to fail SonarCloud cognitive complexity limits (S3776).
 **Action:** Extracted the inline `onKeyDown` logic into `usePointerController` (which delegates to `pointerUtils.ts`) to reduce duplication, improve readability, and satisfy SonarCloud requirements while maintaining keyboard accessibility.

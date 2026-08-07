@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
 import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
@@ -62,6 +62,9 @@ export function LabelOverlay({
   focusIds,
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const labelCacheRef = useRef<
+    Map<string, { raw: string; text: string; chars: string[] }>
+  >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
@@ -80,6 +83,7 @@ export function LabelOverlay({
           dpr,
           nodeIds,
           labels,
+          labelCache: labelCacheRef.current,
           nodeTypes,
           theme,
         });
@@ -121,6 +125,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
+  labelCache: Map<string, { raw: string; text: string; chars: string[] }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -152,6 +157,7 @@ function drawOneLabel(
     dpr,
     nodeIds,
     labels,
+    labelCache,
     nodeTypes,
     theme,
   } = frame;
@@ -191,9 +197,18 @@ function drawOneLabel(
     MAX_LABEL_FONT_PX * dpr,
   );
 
+  const rawLabel = labels[id] ?? "";
+  let cached = labelCache.get(id);
+  if (!cached || cached.raw !== rawLabel) {
+    const text = rawLabel.replaceAll(/\s+/g, " ").trim();
+    cached = { raw: rawLabel, text, chars: Array.from(text) };
+    labelCache.set(id, cached);
+  }
+
   const fitted = fitLabelInBox(
     ctx,
-    labels[id] ?? "",
+    cached.text,
+    cached.chars,
     textBoxW,
     textBoxH,
     fontFamily,

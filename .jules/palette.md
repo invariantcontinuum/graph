@@ -215,3 +215,15 @@ Browser smoke must cover:
 ## 2024-10-27 - Expose shortcuts via tooltips and handle CSS ellipsis
 **Learning:** Icon-only buttons with keyboard shortcuts (like 'Close') hide both their function and shortcut from sighted users when lacking a `title` tooltip. Additionally, text truncated via CSS `ellipsis` becomes entirely inaccessible to sighted users without a hover tooltip.
 **Action:** Always provide `title` attributes on icon-only buttons (including the shortcut if applicable) and on any container where `textOverflow: 'ellipsis'` is applied.
+
+## 2024-10-27 - Apply true single ellipsis character for text truncation
+**Learning:** Truncating text by simply slicing the string without any visual indication can be confusing, as users might mistake the truncated string for the full value. Adding an ellipsis makes it clear that the text has been shortened, and using the true single ellipsis character ('…') instead of three periods ('...') applies typographic visual polish.
+**Action:** Appended the true single ellipsis character ('…') to truncated source IDs in `react/CompoundFramesOverlay.tsx` to provide visual feedback of truncation with typographic polish.
+
+## 2024-08-06 - [Keyboard Focus Styles in React Components]
+**Learning:** Purely inline-styled React components lack the pseudo-classes (`:focus-visible`, `:hover`) available in CSS, making it difficult to polyfill accessible keyboard navigation focus indicators without external stylesheets or complex JS event handling.
+**Action:** When no CSS stylesheet is provided, use inline `onFocus` and `onBlur` combined with local component state (or direct DOM manipulation on `e.currentTarget`) to provide visual focus indicators (`outline`) for keyboard users.
+
+## 2024-10-31 - Polyfill interaction states in inline-styled library components
+**Learning:** When building React UI components for a library that strictly uses inline styles (to avoid external CSS dependencies), interactive elements like `<button>` inherently lack the browser's default CSS `:hover` feedback. Furthermore, applying `outline: "none"` to reset borders or relying on defaults can strip away explicit keyboard focus rings. Relying entirely on inline styles means these crucial UX and accessibility interaction states are lost by default.
+**Action:** Explicitly polyfill `:hover` and `:focus-visible` states using React's event handlers (`onMouseEnter`, `onMouseLeave`, `onFocus`, `onBlur`) on all inline-styled interactive elements to preserve visual feedback for pointer and keyboard users.

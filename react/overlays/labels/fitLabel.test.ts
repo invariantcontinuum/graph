@@ -10,7 +10,7 @@ const ctx = {
 } as unknown as CanvasRenderingContext2D;
 
 function fit(
-  text: string,
+  rawText: string,
   maxWidth = 100,
   maxHeight = 40,
   fontFamily = "sans-serif",
@@ -19,9 +19,12 @@ function fit(
   minFontPx = 7,
   dpr = 1,
 ) {
+  const text = rawText.replaceAll(/\s+/g, " ").trim();
+  const chars = Array.from(text);
   return fitLabelInBox(
     ctx,
     text,
+    chars,
     maxWidth,
     maxHeight,
     fontFamily,
@@ -45,5 +48,16 @@ describe("fitLabelInBox", () => {
   test("very long unbroken text ellipsizes at min font", () => {
     const r = fit("a".repeat(200), 60, 14);
     expect(r?.lines[0].endsWith("…")).toBe(true);
+  });
+
+  test("ellipsization never splits surrogate pairs (emoji)", () => {
+    // Each emoji is one code point but two UTF-16 code units; truncating by
+    // code unit would leave a lone surrogate in the output.
+    const r = fit("🎉".repeat(100), 60, 14);
+    const line = r?.lines[0] ?? "";
+    expect(line.endsWith("…")).toBe(true);
+    const body = line.slice(0, -1);
+    expect([...body].every((ch) => ch === "🎉")).toBe(true);
+    expect(body.length % 2).toBe(0);
   });
 });
