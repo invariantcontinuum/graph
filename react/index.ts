@@ -17,14 +17,13 @@ export type { LabelOverlayProps } from "./LabelOverlay";
 export { EdgeLabelsOverlay } from "./EdgeLabelsOverlay";
 export type { EdgeLabelsOverlayProps } from "./EdgeLabelsOverlay";
 
+export { GraphToolbar } from "./GraphToolbar";
+export type { GraphToolbarProps } from "./GraphToolbar";
+
 // Inspect-side chrome — the details panel that pairs with `onNodeClick`.
 export { NodeDetailsPanel } from "./NodeDetailsPanel";
 export type { NodeDetailsPanelProps } from "./NodeDetailsPanel";
-export {
-  connectionsFor,
-  neighborName,
-  formatMetaValue,
-} from "./nodeDetails";
+export { connectionsFor, neighborName, formatMetaValue } from "./nodeDetails";
 export type { NodeConnection } from "./nodeDetails";
 
 // Theme system — frontends that need to read colors (e.g., for a legend or
