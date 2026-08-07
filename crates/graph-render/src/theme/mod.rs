@@ -161,6 +161,8 @@ pub struct InteractionTheme {
 pub struct HoverStyle {
     #[serde(default = "defaults::hover_scale")]
     pub scale: f32,
+    #[serde(default = "defaults::hover_glow")]
+    pub glow: f32,
     #[serde(rename = "highlightNeighbors", default)]
     pub highlight_neighbors: bool,
     #[serde(rename = "dimOthers", default = "defaults::dim")]
@@ -171,6 +173,7 @@ impl Default for HoverStyle {
     fn default() -> Self {
         Self {
             scale: defaults::hover_scale(),
+            glow: defaults::hover_glow(),
             highlight_neighbors: true,
             dim_others: defaults::dim(),
         }

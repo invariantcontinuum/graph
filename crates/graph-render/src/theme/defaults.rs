@@ -47,6 +47,9 @@ pub(super) fn palette() -> String {
 pub(super) fn hover_scale() -> f32 {
     1.3
 }
+pub(super) fn hover_glow() -> f32 {
+    0.35
+}
 pub(super) fn dim() -> f32 {
     0.15
 }

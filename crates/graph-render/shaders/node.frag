@@ -11,6 +11,10 @@ in float v_border_width; in float v_shape; in float v_radius; in float v_flags;
 // focus-on/focus-off crossfade without touching per-instance data.
 uniform float u_dim_opacity;
 uniform float u_dim_progress;
+// Strength of the soft outer glow for hovered/selected nodes, sourced from
+// `theme.interaction.hover.glow` (default 0.35) and pushed by the engine on
+// every draw — keeps the shader agnostic to theme changes.
+uniform float u_glow_strength;
 out vec4 frag_color;
 
 float sdf_circle(vec2 p) { return length(p) - 1.0; }
@@ -49,9 +53,21 @@ void main() {
     else                     d = sdf_circle(v_local);
     float aa = 2.0 / v_radius;
     float alpha = 1.0 - smoothstep(-aa, aa, d);
-    if (alpha < 0.01) discard;
     float border_mix = smoothstep(-v_border_width - aa, -v_border_width + aa, d);
     vec4 color = mix(v_color, v_border_color, border_mix);
+    bool hovered = mod(floor(v_flags / 2.0), 2.0) > 0.5;
+    bool selected = mod(floor(v_flags / 4.0), 2.0) > 0.5;
+    if ((hovered || selected) && d > 0.0) {
+        // Soft exponential falloff outside the shape; crisp bright ring right
+        // at the boundary for selected nodes.
+        float glow_alpha = u_glow_strength * exp(-3.2 * d);
+        if (selected) glow_alpha += 0.55 * (1.0 - smoothstep(0.0, 0.09, d));
+        vec4 glow_rgb = v_border_color;
+        color.rgb = mix(color.rgb, glow_rgb.rgb, clamp(glow_alpha * 1.6, 0.0, 1.0));
+        color.a = max(color.a, glow_alpha * glow_rgb.a);
+        alpha = max(alpha, clamp(glow_alpha, 0.0, 1.0));
+    }
+    if (alpha < 0.01) discard;
     bool dimmed = mod(floor(v_flags / 8.0), 2.0) > 0.5;
     if (dimmed) {
         // Blend from 1.0 (undimmed) down to `u_dim_opacity` as `u_dim_progress`

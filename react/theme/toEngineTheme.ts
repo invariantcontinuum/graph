@@ -69,6 +69,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
     },
     communities: { hull: false, hullOpacity: 0.15 },
     interaction: {
+      hover: { glow: 0.35 },
       select: { borderColor: t.selectionBorder, borderWidth: 2.2 },
       spotlight: { dimOpacity: t.dimOpacity, transitionMs: 400 },
     },

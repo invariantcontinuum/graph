@@ -25,12 +25,16 @@ void main() {
     bool selected = mod(floor(flags / 4.0), 2.0) > 0.5;
     float scale_mod = 1.0;
     if (pulse)   scale_mod *= 1.0 + 0.08 * sin(u_time * 3.0);
-    if (hovered) scale_mod *= 1.3;
+    if (hovered) scale_mod *= 1.12;
     if (selected) scale_mod *= 1.0 + 0.04 * sin(u_time * 6.0);
-    vec2 half_size = vec2(a_half_w, a_half_h) * scale_mod;
+    // Glow margin: only hovered/selected nodes get a padded quad; the shape
+    // itself keeps its true size (picking is CPU-side and unaffected).
+    bool glow = hovered || selected;
+    float pad = glow ? 0.55 : 0.0;
+    vec2 half_size = vec2(a_half_w, a_half_h) * scale_mod * (1.0 + pad);
     vec2 world = a_center + a_position * half_size;
     gl_Position = u_vp * vec4(world, 0.0, 1.0);
-    v_local        = a_position;
+    v_local        = a_position * (1.0 + pad);
     v_color        = a_color;
     v_border_color = a_border_color;
     float effective = max(half_size.x, half_size.y);

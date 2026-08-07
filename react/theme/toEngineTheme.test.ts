@@ -59,6 +59,11 @@ describe("graphThemeToEngineJson", () => {
     expect(json.interaction.spotlight.dimOpacity).toBeCloseTo(0.14);
   });
 
+  test("interaction.hover.glow defaults to 0.35", () => {
+    const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
+    expect(json.interaction.hover.glow).toBe(0.35);
+  });
+
   test("every byType node override has camelCase keys only", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("light")) as any;
     for (const [type, v] of Object.entries(json.nodes.byType)) {
