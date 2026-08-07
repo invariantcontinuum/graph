@@ -35,8 +35,7 @@ same graph controls.
 
 ## UX And Design Backlog
 
-- Standardize a package-owned toolbar recipe for layout, theme, fit, zoom, and
-  search without hardcoding app-specific styling.
+
 - Add first-run and empty-state examples to the showcase.
 - Improve selection state: show incoming/outgoing counts, connected edge types,
   and focus actions.
