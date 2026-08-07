@@ -291,3 +291,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-31 - [Lazy cache string normalisation and Array.from allocations]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` and string normalisation inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS. However, eagerly caching the whole `labels` dictionary with `useMemo` causes O(total) UI freezing when rendering a small viewport of a large graph.
 **Action:** Use a lazy cache (`labelCache = useRef(new Map())`) populated during the render tick for visible labels to eliminate redundant frame-by-frame allocations without incurring an O(total) upfront penalty.
+
+## 2024-05-30 - Avoid redundant Map.set calls in hot loops
+**Learning:** In tight React Canvas render loops, calling `Map.prototype.set` repeatedly on every iteration (even for existing keys) adds measurable overhead. When updating object properties in a Map, we can rely on reference updates.
+**Action:** Instead of `const existing = map.get(k) ?? default; ... map.set(k, existing);`, use `let existing = map.get(k); if (!existing) { existing = default; map.set(k, existing); }` to eliminate redundant Map writes on every frame.
