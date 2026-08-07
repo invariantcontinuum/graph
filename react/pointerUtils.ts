@@ -258,7 +258,9 @@ export function handleKeyDown(
 
   let handled = false;
   if (e.key === "Escape") {
+    engine?.set_focus(undefined);
     callbacks.onBackgroundClick?.();
+    requestRender();
     handled = true;
   } else if (e.key === "+" || e.key === "=") {
     engine?.zoom_in();
@@ -269,19 +271,19 @@ export function handleKeyDown(
     requestRender();
     handled = true;
   } else if (e.key === "ArrowUp") {
-    engine?.pan_by(0, 40);
-    requestRender();
-    handled = true;
-  } else if (e.key === "ArrowDown") {
     engine?.pan_by(0, -40);
     requestRender();
     handled = true;
+  } else if (e.key === "ArrowDown") {
+    engine?.pan_by(0, 40);
+    requestRender();
+    handled = true;
   } else if (e.key === "ArrowLeft") {
-    engine?.pan_by(40, 0);
+    engine?.pan_by(-40, 0);
     requestRender();
     handled = true;
   } else if (e.key === "ArrowRight") {
-    engine?.pan_by(-40, 0);
+    engine?.pan_by(40, 0);
     requestRender();
     handled = true;
   } else if (e.key === "f" || e.key === "F") {
