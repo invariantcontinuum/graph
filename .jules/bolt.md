@@ -307,3 +307,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-11-20 - [Memoize array conversion for props to prevent redundant side effects]
 **Learning:** Performing object or array conversions derived from props (e.g., `Array.from(set)`) inline inside the render body drops referential identity, causing cascading re-renders and potentially triggering expensive redundant side effects (such as WASM worker `postMessage` syncs) in child components that rely on referential equality in `useEffect` dependencies.
 **Action:** Memoize object or array conversions derived from props using `useMemo` before passing them to child components.
+
+## 2026-08-16 - [Extract and deduplicate canvas onKeyDown handler to reduce Cognitive Complexity]
+**Learning:** In React components orchestrating complex pointer and keyboard interactions, keeping dense `onKeyDown` switch statements inside the component's JSX causes the component to fail SonarCloud cognitive complexity limits (S3776).
+**Action:** Extracted the inline `onKeyDown` logic into `usePointerController` (which delegates to `pointerUtils.ts`) to reduce duplication, improve readability, and satisfy SonarCloud requirements while maintaining keyboard accessibility.
