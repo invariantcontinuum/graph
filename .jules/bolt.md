@@ -303,3 +303,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2025-02-08 - Safe String Truncation with Emojis
 **Learning:** Iterating over a string via index (`text[i]`) to build substrings splits surrogate pairs (emojis) because it operates on UTF-16 code units. However, replacing it with `chars.slice().join("")` causes severe O(N^2) array allocation churn that tanks performance.
 **Action:** When safe surrogate handling is required in a hot loop, hoist `Array.from(text)` outside the loop, and use iterative string concatenation (`chunk += chars[i]`) over the safe character array. This fixes unicode truncation without introducing the massive GC overhead of array slicing.
+
+## 2024-11-20 - [Memoize array conversion for props to prevent redundant side effects]
+**Learning:** Performing object or array conversions derived from props (e.g., `Array.from(set)`) inline inside the render body drops referential identity, causing cascading re-renders and potentially triggering expensive redundant side effects (such as WASM worker `postMessage` syncs) in child components that rely on referential equality in `useEffect` dependencies.
+**Action:** Memoize object or array conversions derived from props using `useMemo` before passing them to child components.
