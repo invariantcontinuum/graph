@@ -288,8 +288,8 @@ impl RenderEngine {
                 .map(|s| s.arc_start + segment_length(s))
                 .unwrap_or(1.0)
                 .max(1e-6);
-            // Task 6 consumes the target-end color for the arrow; capture the
-            // last segment's fully-painted color here.
+            // Capture the last segment's fully-painted color so the arrow
+            // instance below can reuse it.
             let mut last_segment_color = base_edge_color;
             for s in &segs {
                 let t = ((s.arc_start + segment_length(s) * 0.5) / total_arc).clamp(0.0, 1.0);
@@ -327,14 +327,18 @@ impl RenderEngine {
                 ]);
             }
 
-            // T11: one arrow per logical edge (placed at full edge endpoints, not per segment).
+            // Arrows align with the curve tangent at the target, not the
+            // straight chord: place the instance's "from" on the curve at
+            // t = 0.97 so arrow.vert's dir = to - from matches the tangent.
+            let ctrl = crate::bezier::quadratic_control_point(draw_src, draw_tgt, bend);
+            let near_tip = crate::bezier::quadratic_point(draw_src, ctrl, draw_tgt, 0.97);
             arrow_instances.extend_from_slice(&[
-                draw_src.0,
-                draw_src.1,
+                near_tip.0,
+                near_tip.1,
                 draw_tgt.0,
                 draw_tgt.1,
                 ARROW_WORLD_SIZE,
-                last_segment_color[0],
+                last_segment_color[0], // reuse the same focus-resolved color as the edge's final segment
                 last_segment_color[1],
                 last_segment_color[2],
                 last_segment_color[3],

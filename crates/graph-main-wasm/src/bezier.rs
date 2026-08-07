@@ -156,4 +156,16 @@ mod tests {
         assert!(c.0 > 49.0 && c.0 < 51.0);
         assert!((c.1.abs() - 10.0).abs() < 0.01);
     }
+
+    #[test]
+    fn near_end_point_follows_curve_not_chord() {
+        // With a strong bend, the point at t=0.97 must sit off the chord —
+        // this is what arrows align to.
+        let p0 = (0.0, 0.0);
+        let p1 = (100.0, 0.0);
+        let c = quadratic_control_point(p0, p1, 0.2);
+        let near = quadratic_point(p0, c, p1, 0.97);
+        assert!(near.1.abs() > 1.0, "y={}", near.1);
+        assert!(near.0 > 90.0 && near.0 < 100.0);
+    }
 }
