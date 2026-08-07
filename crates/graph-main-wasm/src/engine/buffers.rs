@@ -228,6 +228,7 @@ impl RenderEngine {
             .spotlight
             .dim_opacity
             .clamp(0.02, 1.0);
+        let select_border_color = parse_color_tuple(&self.theme.interaction.select.border_color);
         let coord_to_idx = crate::spotlight::build_coord_index(&self.positions);
         let mut sibling_counts: std::collections::HashMap<(usize, usize), usize> =
             std::collections::HashMap::new();
@@ -257,15 +258,18 @@ impl RenderEngine {
                 .unwrap_or(tgt_center);
 
             let style = self.resolve_edge_style(type_idx);
-            let painted = paint_edge_for_focus(
-                &style,
-                spotlight_idx,
-                &coord_to_idx,
-                src_center,
-                tgt_center,
-                &self.theme.interaction.select.border_color,
-                spotlight_dim_opacity,
-            );
+            let base_edge_color = parse_color_tuple(style.color_hex);
+            let (from_color, to_color) =
+                self.gradient_endpoint_colors(s_idx, t_idx, base_edge_color);
+            let focus = edge_focus_state(spotlight_idx, s_idx, t_idx);
+            // §6 visual rule: focus edges get width *= 2.2 and use the theme's
+            // selection color at near-full alpha — this is what makes the radial
+            // fan of highlights read clearly. Dimmed edges shrink and fade.
+            let width = match focus {
+                EdgeFocus::None => style.width,
+                EdgeFocus::Focused => style.width * FOCUS_EDGE_WIDTH_SCALE,
+                EdgeFocus::Dimmed => (style.width * DIM_EDGE_WIDTH_SCALE).max(0.5),
+            };
 
             let sibling_index = match (s_idx, t_idx) {
                 (Some(a), Some(b)) => {
@@ -279,17 +283,45 @@ impl RenderEngine {
             let bend = crate::bezier::sibling_bend(DEFAULT_BEND_RATIO, sibling_index);
 
             let segs = tessellate_quadratic(draw_src, draw_tgt, bend, DEFAULT_SEGMENTS);
+            let total_arc = segs
+                .last()
+                .map(|s| s.arc_start + segment_length(s))
+                .unwrap_or(1.0)
+                .max(1e-6);
+            // Task 6 consumes the target-end color for the arrow; capture the
+            // last segment's fully-painted color here.
+            let mut last_segment_color = base_edge_color;
             for s in &segs {
+                let t = ((s.arc_start + segment_length(s) * 0.5) / total_arc).clamp(0.0, 1.0);
+                let mut color = lerp_color(from_color, to_color, t);
+                color[3] = mid_curve_alpha(color[3], t);
+                match focus {
+                    EdgeFocus::None => {}
+                    EdgeFocus::Focused => {
+                        // Force high alpha so the selection tint isn't scaled
+                        // down by the per-type color's translucency.
+                        color = [
+                            select_border_color[0],
+                            select_border_color[1],
+                            select_border_color[2],
+                            select_border_color[3].max(FOCUS_EDGE_ALPHA),
+                        ];
+                    }
+                    EdgeFocus::Dimmed => {
+                        color[3] = (color[3] * spotlight_dim_opacity).clamp(0.0, 1.0);
+                    }
+                }
+                last_segment_color = color;
                 edge_buf.extend_from_slice(&[
                     s.from.0,
                     s.from.1,
                     s.to.0,
                     s.to.1,
-                    painted.width,
-                    painted.color[0],
-                    painted.color[1],
-                    painted.color[2],
-                    painted.color[3],
+                    width,
+                    color[0],
+                    color[1],
+                    color[2],
+                    color[3],
                     style.dash,
                     style.animate,
                 ]);
@@ -302,10 +334,10 @@ impl RenderEngine {
                 draw_tgt.0,
                 draw_tgt.1,
                 ARROW_WORLD_SIZE,
-                painted.color[0],
-                painted.color[1],
-                painted.color[2],
-                painted.color[3],
+                last_segment_color[0],
+                last_segment_color[1],
+                last_segment_color[2],
+                last_segment_color[3],
             ]);
         }
         let gpu_edge_count = logical_edge_count * DEFAULT_SEGMENTS;
@@ -348,6 +380,28 @@ impl RenderEngine {
             animate,
         }
     }
+
+    /// Endpoint accent colors for the per-segment gradient: each endpoint takes
+    /// its node's resolved `border_color` (the node's accent). Falls back to
+    /// the base edge color when the endpoint index, node id, or metadata is
+    /// missing.
+    fn gradient_endpoint_colors(
+        &self,
+        s_idx: Option<usize>,
+        t_idx: Option<usize>,
+        fallback: [f32; 4],
+    ) -> ([f32; 4], [f32; 4]) {
+        let endpoint_color = |idx: Option<usize>| {
+            idx.and_then(|i| self.node_ids.get(i))
+                .and_then(|id| self.node_metadata.get(id))
+                .map(|m| {
+                    self.resolved_node_style(&m.node_type, &m.status)
+                        .border_color
+                })
+                .unwrap_or(fallback)
+        };
+        (endpoint_color(s_idx), endpoint_color(t_idx))
+    }
 }
 
 fn clip_rect_endpoint(center: (f32, f32), toward: (f32, f32), half_dims: (f32, f32)) -> (f32, f32) {
@@ -381,53 +435,48 @@ struct EdgeStyle<'a> {
     animate: f32,
 }
 
-struct PaintedEdge {
-    color: [f32; 4],
-    width: f32,
+fn lerp_color(a: [f32; 4], b: [f32; 4], t: f32) -> [f32; 4] {
+    [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+        a[2] + (b[2] - a[2]) * t,
+        a[3] + (b[3] - a[3]) * t,
+    ]
 }
 
-fn paint_edge_for_focus(
-    style: &EdgeStyle<'_>,
+/// Direction-without-motion cue: alpha dips to 75% mid-curve and recovers at
+/// the endpoints.
+fn mid_curve_alpha(alpha: f32, t: f32) -> f32 {
+    alpha * (0.75 + 0.25 * (2.0 * t - 1.0).abs())
+}
+
+fn segment_length(s: &crate::bezier::Segment) -> f32 {
+    let dx = s.to.0 - s.from.0;
+    let dy = s.to.1 - s.from.1;
+    (dx * dx + dy * dy).sqrt()
+}
+
+/// Focus state of one edge under the spotlight selection. This carries the
+/// exact rules the old `paint_edge_for_focus` applied in one shot; the
+/// gradient is now computed per segment and these transforms layer on top.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EdgeFocus {
+    None,
+    Focused,
+    Dimmed,
+}
+
+fn edge_focus_state(
     spotlight_idx: Option<usize>,
-    coord_to_idx: &std::collections::HashMap<(u32, u32), usize>,
-    src: (f32, f32),
-    tgt: (f32, f32),
-    theme_select_border: &str,
-    spotlight_dim_opacity: f32,
-) -> PaintedEdge {
-    let Some(focus_idx) = spotlight_idx else {
-        return PaintedEdge {
-            color: parse_color_tuple(style.color_hex),
-            width: style.width,
-        };
-    };
-
-    let s_idx = coord_to_idx
-        .get(&(src.0.to_bits(), src.1.to_bits()))
-        .copied();
-    let t_idx = coord_to_idx
-        .get(&(tgt.0.to_bits(), tgt.1.to_bits()))
-        .copied();
-    let is_focus_edge = s_idx == Some(focus_idx) || t_idx == Some(focus_idx);
-
-    if is_focus_edge {
-        // §6 visual rule: focus edges get width *= 2.2 and use the theme's
-        // selection color at near-full alpha — this is what makes the radial
-        // fan of highlights read clearly.
-        let (r, g, b, a) = parse_css_color(theme_select_border);
-        PaintedEdge {
-            // Force high alpha so the selection tint isn't scaled down by the
-            // per-type color's translucency.
-            color: [r, g, b, a.max(FOCUS_EDGE_ALPHA)],
-            width: style.width * FOCUS_EDGE_WIDTH_SCALE,
+    s_idx: Option<usize>,
+    t_idx: Option<usize>,
+) -> EdgeFocus {
+    match spotlight_idx {
+        None => EdgeFocus::None,
+        Some(focus_idx) if s_idx == Some(focus_idx) || t_idx == Some(focus_idx) => {
+            EdgeFocus::Focused
         }
-    } else {
-        let mut color = parse_color_tuple(style.color_hex);
-        color[3] = (color[3] * spotlight_dim_opacity).clamp(0.0, 1.0);
-        PaintedEdge {
-            color,
-            width: (style.width * DIM_EDGE_WIDTH_SCALE).max(0.5),
-        }
+        Some(_) => EdgeFocus::Dimmed,
     }
 }
 
@@ -517,6 +566,27 @@ fn fallback_type_name(type_idx: usize) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::clip_rect_endpoint;
+    use super::{lerp_color, mid_curve_alpha};
+
+    #[test]
+    fn lerp_endpoints() {
+        let a = [1.0, 0.0, 0.0, 1.0];
+        let b = [0.0, 0.0, 1.0, 0.5];
+        assert_eq!(lerp_color(a, b, 0.0), a);
+        assert_eq!(lerp_color(a, b, 1.0), b);
+        let m = lerp_color(a, b, 0.5);
+        assert!((m[0] - 0.5).abs() < 1e-6 && (m[2] - 0.5).abs() < 1e-6);
+        assert!((m[3] - 0.75).abs() < 1e-6);
+    }
+
+    #[test]
+    fn mid_curve_alpha_dips_and_recovers() {
+        let edge = mid_curve_alpha(1.0, 0.0);
+        let mid = mid_curve_alpha(1.0, 0.5);
+        let end = mid_curve_alpha(1.0, 1.0);
+        assert!(mid < edge && mid >= 0.7);
+        assert!((edge - end).abs() < 1e-6);
+    }
 
     #[test]
     fn clips_edge_endpoint_to_card_boundary() {
