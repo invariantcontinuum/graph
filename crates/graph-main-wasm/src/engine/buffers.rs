@@ -261,14 +261,23 @@ impl RenderEngine {
             let base_edge_color = parse_color_tuple(style.color_hex);
             let (from_color, to_color) =
                 self.gradient_endpoint_colors(s_idx, t_idx, base_edge_color);
-            let focus = edge_focus_state(spotlight_idx, s_idx, t_idx);
+            let focus = edge_focus_state(
+                spotlight_idx,
+                self.hovered_idx,
+                &coord_to_idx,
+                src_center,
+                tgt_center,
+            );
             // §6 visual rule: focus edges get width *= 2.2 and use the theme's
             // selection color at near-full alpha — this is what makes the radial
             // fan of highlights read clearly. Dimmed edges shrink and fade.
+            // Hovered edges thicken modestly; hover-dimmed edges keep width.
             let width = match focus {
                 EdgeFocus::None => style.width,
                 EdgeFocus::Focused => style.width * FOCUS_EDGE_WIDTH_SCALE,
                 EdgeFocus::Dimmed => (style.width * DIM_EDGE_WIDTH_SCALE).max(0.5),
+                EdgeFocus::Hovered => style.width * 1.6,
+                EdgeFocus::HoverDimmed => style.width,
             };
 
             let sibling_index = match (s_idx, t_idx) {
@@ -309,6 +318,15 @@ impl RenderEngine {
                     }
                     EdgeFocus::Dimmed => {
                         color[3] = (color[3] * spotlight_dim_opacity).clamp(0.0, 1.0);
+                    }
+                    EdgeFocus::Hovered => {
+                        color[3] = (color[3] + 0.25).min(1.0);
+                    }
+                    EdgeFocus::HoverDimmed => {
+                        // Fixed 0.5 factor: theme `hover.dim_others` defaults
+                        // to 0, which would erase the edges entirely, so it is
+                        // deliberately not used here.
+                        color[3] *= 0.5;
                     }
                 }
                 last_segment_color = color;
@@ -460,27 +478,37 @@ fn segment_length(s: &crate::bezier::Segment) -> f32 {
     (dx * dx + dy * dy).sqrt()
 }
 
-/// Focus state of one edge under the spotlight selection. This carries the
-/// exact rules the old `paint_edge_for_focus` applied in one shot; the
-/// gradient is now computed per segment and these transforms layer on top.
+/// Focus state of one edge under the spotlight selection or hover. This
+/// carries the exact rules the old `paint_edge_for_focus` applied in one shot;
+/// the gradient is now computed per segment and these transforms layer on top.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum EdgeFocus {
     None,
     Focused,
     Dimmed,
+    Hovered,
+    HoverDimmed,
 }
 
+/// Spotlight wins over hover: when a node is selected, hover does not change
+/// any edge's focus state.
 fn edge_focus_state(
     spotlight_idx: Option<usize>,
-    s_idx: Option<usize>,
-    t_idx: Option<usize>,
+    hovered_idx: Option<usize>,
+    coord_to_idx: &std::collections::HashMap<(u32, u32), usize>,
+    src: (f32, f32),
+    tgt: (f32, f32),
 ) -> EdgeFocus {
-    match spotlight_idx {
-        None => EdgeFocus::None,
-        Some(focus_idx) if s_idx == Some(focus_idx) || t_idx == Some(focus_idx) => {
-            EdgeFocus::Focused
-        }
-        Some(_) => EdgeFocus::Dimmed,
+    let incident = |idx: usize| {
+        coord_to_idx.get(&(src.0.to_bits(), src.1.to_bits())) == Some(&idx)
+            || coord_to_idx.get(&(tgt.0.to_bits(), tgt.1.to_bits())) == Some(&idx)
+    };
+    match (spotlight_idx, hovered_idx) {
+        (Some(focus_idx), _) if incident(focus_idx) => EdgeFocus::Focused,
+        (Some(_), _) => EdgeFocus::Dimmed,
+        (None, Some(hover_idx)) if incident(hover_idx) => EdgeFocus::Hovered,
+        (None, Some(_)) => EdgeFocus::HoverDimmed,
+        (None, None) => EdgeFocus::None,
     }
 }
 
@@ -570,7 +598,23 @@ fn fallback_type_name(type_idx: usize) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::clip_rect_endpoint;
-    use super::{lerp_color, mid_curve_alpha};
+    use super::{EdgeFocus, edge_focus_state, lerp_color, mid_curve_alpha};
+
+    #[test]
+    fn hover_brightens_incident_edges_and_dims_others() {
+        // edge_focus_state with a hovered node: incident edges are Hovered,
+        // others get HoverDimmed.
+        let mut coord_to_idx = std::collections::HashMap::new();
+        coord_to_idx.insert((0.0f32.to_bits(), 0.0f32.to_bits()), 0usize);
+        coord_to_idx.insert((100.0f32.to_bits(), 0.0f32.to_bits()), 1usize);
+        coord_to_idx.insert((200.0f32.to_bits(), 0.0f32.to_bits()), 2usize);
+        let st = edge_focus_state(None, Some(0), &coord_to_idx, (0.0, 0.0), (100.0, 0.0));
+        assert!(matches!(st, EdgeFocus::Hovered));
+        let st2 = edge_focus_state(None, Some(0), &coord_to_idx, (100.0, 0.0), (200.0, 0.0));
+        assert!(matches!(st2, EdgeFocus::HoverDimmed));
+        let st3 = edge_focus_state(None, None, &coord_to_idx, (0.0, 0.0), (100.0, 0.0));
+        assert!(matches!(st3, EdgeFocus::None));
+    }
 
     #[test]
     fn lerp_endpoints() {
