@@ -34,6 +34,9 @@ export interface GraphTheme {
   dimOpacity: number;
   labelHalo: string;
   dimText: string;
+  /** Show the uppercase type tag line inside the label chip (zoom-gated at
+   *  paint time). */
+  showTypeTag: boolean;
   nodeTypes: Record<string, NodeTypeStyle>;
   edgeTypes: Record<string, EdgeTypeStyle>;
   defaultNodeStyle: NodeTypeStyle;
@@ -53,6 +56,7 @@ export interface GraphThemeOverrides {
   dimOpacity?: number;
   labelHalo?: string;
   dimText?: string;
+  showTypeTag?: boolean;
   nodeTypes?: Record<string, NodeTypeStyleOverride>;
   edgeTypes?: Record<string, EdgeTypeStyleOverride>;
   defaultNodeStyle?: NodeTypeStyleOverride;

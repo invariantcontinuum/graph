@@ -68,6 +68,7 @@ export function mergeGraphTheme(
     dimOpacity: overrides.dimOpacity ?? base.dimOpacity,
     labelHalo: overrides.labelHalo ?? base.labelHalo,
     dimText: overrides.dimText ?? base.dimText,
+    showTypeTag: overrides.showTypeTag ?? base.showTypeTag,
     defaultNodeStyle,
     defaultEdgeStyle,
     nodeTypes,

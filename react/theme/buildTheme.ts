@@ -111,6 +111,7 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     dimOpacity: 0.14,
     labelHalo: p.labelHalo,
     dimText: p.dimText,
+    showTypeTag: true,
     nodeTypes,
     edgeTypes,
     defaultNodeStyle,
