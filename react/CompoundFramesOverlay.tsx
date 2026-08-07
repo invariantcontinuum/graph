@@ -50,17 +50,20 @@ export function CompoundFramesOverlay({
         const wx = positions[off];
         const wy = positions[off + 1];
         const style = typeStyleFor(nodeTypes[id]);
-        const existing = boxes.get(src) ?? {
-          minX: +Infinity,
-          minY: +Infinity,
-          maxX: -Infinity,
-          maxY: -Infinity,
-        };
+        let existing = boxes.get(src);
+        if (!existing) {
+          existing = {
+            minX: +Infinity,
+            minY: +Infinity,
+            maxX: -Infinity,
+            maxY: -Infinity,
+          };
+          boxes.set(src, existing);
+        }
         existing.minX = Math.min(existing.minX, wx - style.halfWidth);
         existing.minY = Math.min(existing.minY, wy - style.halfHeight);
         existing.maxX = Math.max(existing.maxX, wx + style.halfWidth);
         existing.maxY = Math.max(existing.maxY, wy + style.halfHeight);
-        boxes.set(src, existing);
       }
 
       ctx.strokeStyle = theme.hullStroke;

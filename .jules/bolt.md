@@ -295,3 +295,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-05-24 - Native String Slicing in Canvas Render Loops
 **Learning:** In hot JavaScript render loops, manually building substrings via character-by-character iteration (`chunk += text[i]`) causes severe overhead and is significantly slower than native V8 string slicing (`text.slice(0, n)`), even when iterating over primitives.
 **Action:** Use native string slicing (`String.prototype.slice`) for substring operations and text truncation on string primitives to eliminate GC pauses and maximize FPS.
+
+## 2024-05-30 - Avoid redundant Map.set calls in hot loops
+**Learning:** In tight React Canvas render loops, calling `Map.prototype.set` repeatedly on every iteration (even for existing keys) adds measurable overhead. When updating object properties in a Map, we can rely on reference updates.
+**Action:** Instead of `const existing = map.get(k) ?? default; ... map.set(k, existing);`, use `let existing = map.get(k); if (!existing) { existing = default; map.set(k, existing); }` to eliminate redundant Map writes on every frame.
