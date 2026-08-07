@@ -73,6 +73,12 @@ describe("graphThemeToEngineJson", () => {
     }
   });
 
+  test("edgeCurvature flows to edges.default.bendRatio", () => {
+    const t = buildGraphTheme("dark");
+    const json = graphThemeToEngineJson(t) as { edges: { default: { bendRatio: number } } };
+    expect(json.edges.default.bendRatio).toBeCloseTo(0.10);
+  });
+
   test("returns referentially stable json for identical theme instances", () => {
     const theme = buildGraphTheme("dark");
     const json1 = graphThemeToEngineJson(theme);

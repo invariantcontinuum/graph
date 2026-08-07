@@ -92,11 +92,16 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     glyph: DEFAULT_STYLE.glyph,
   };
 
+  // Base edge curvature — single source for GraphTheme.edgeCurvature and the
+  // engine's edges.default.bendRatio.
+  const edgeCurvature = 0.10;
+
   const defaultEdgeStyle: EdgeTypeStyle = {
     color: p.edgeDefault,
     width: 1.6,
     style: "solid",
     arrow: "triangle",
+    bendRatio: edgeCurvature,
   };
 
   const result = {
@@ -112,6 +117,7 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     labelHalo: p.labelHalo,
     dimText: p.dimText,
     showTypeTag: true,
+    edgeCurvature,
     nodeTypes,
     edgeTypes,
     defaultNodeStyle,

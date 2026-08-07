@@ -232,6 +232,13 @@ impl RenderEngine {
         let coord_to_idx = crate::spotlight::build_coord_index(&self.positions);
         let mut sibling_counts: std::collections::HashMap<(usize, usize), usize> =
             std::collections::HashMap::new();
+        // Per-theme base curvature; per-edge sibling offsets build on it.
+        let base_bend = self
+            .theme
+            .edges
+            .default
+            .bend_ratio
+            .unwrap_or(DEFAULT_BEND_RATIO);
         let edge_stride = 6;
         for i in 0..logical_edge_count {
             let base = i * edge_stride;
@@ -289,7 +296,7 @@ impl RenderEngine {
                 }
                 _ => 0,
             };
-            let bend = crate::bezier::sibling_bend(DEFAULT_BEND_RATIO, sibling_index);
+            let bend = crate::bezier::sibling_bend(base_bend, sibling_index);
 
             let segs = tessellate_quadratic(draw_src, draw_tgt, bend, DEFAULT_SEGMENTS);
             let total_arc = segs

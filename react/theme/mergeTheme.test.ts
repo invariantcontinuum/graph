@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { buildGraphTheme } from "./buildTheme";
+import { buildGraphTheme, tintFill } from "./buildTheme";
 import { mergeGraphTheme } from "./mergeTheme";
+import { NODE_TYPES } from "./palette";
 
 describe("mergeGraphTheme", () => {
   test("adds custom node and edge type styles without mutating base theme", () => {
@@ -38,5 +39,20 @@ describe("mergeGraphTheme", () => {
     });
 
     expect(theme1).toBe(theme2);
+  });
+
+  test("nodeFillTint recomputes per-type fills from border colors", () => {
+    const base = buildGraphTheme("dark");
+    const merged = mergeGraphTheme(base, { nodeFillTint: 0.4 });
+    for (const type of NODE_TYPES) {
+      expect(merged.nodeTypes[type].color).toBe(
+        tintFill(base.nodeTypes[type].borderColor, 0.4),
+      );
+    }
+  });
+
+  test("edgeCurvature override wins", () => {
+    const merged = mergeGraphTheme(buildGraphTheme("dark"), { edgeCurvature: 0.25 });
+    expect(merged.edgeCurvature).toBe(0.25);
   });
 });

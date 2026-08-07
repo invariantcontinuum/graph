@@ -4,6 +4,7 @@ import type {
   GraphThemeOverrides,
   NodeTypeStyle,
 } from "./types";
+import { tintFill } from "./buildTheme";
 
 const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
@@ -69,11 +70,27 @@ export function mergeGraphTheme(
     labelHalo: overrides.labelHalo ?? base.labelHalo,
     dimText: overrides.dimText ?? base.dimText,
     showTypeTag: overrides.showTypeTag ?? base.showTypeTag,
+    edgeCurvature: overrides.edgeCurvature ?? base.edgeCurvature,
     defaultNodeStyle,
     defaultEdgeStyle,
     nodeTypes,
     edgeTypes,
   };
+
+  // nodeFillTint recomputes every fill from the type's border color at the
+  // requested alpha. tintFill only parses #rrggbb hex — skip anything else
+  // (e.g. rgba() strings) so we never emit a garbage color.
+  if (overrides.nodeFillTint !== undefined) {
+    const tint = overrides.nodeFillTint;
+    const retint = (style: NodeTypeStyle): NodeTypeStyle =>
+      style.borderColor.startsWith("#")
+        ? { ...style, color: tintFill(style.borderColor, tint) }
+        : style;
+    for (const key of Object.keys(merged.nodeTypes)) {
+      merged.nodeTypes[key] = retint(merged.nodeTypes[key]);
+    }
+    merged.defaultNodeStyle = retint(merged.defaultNodeStyle);
+  }
 
   innerMap.set(overrideStr, merged);
   return merged;

@@ -116,6 +116,8 @@ pub struct EdgeStyle {
     pub width: f32,
     #[serde(default = "defaults::arrow")]
     pub arrow: String,
+    #[serde(rename = "bendRatio", default)]
+    pub bend_ratio: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -289,6 +291,13 @@ mod tests {
             theme.edges.by_type["enforces"].style.as_deref(),
             Some("dotted")
         );
+    }
+
+    #[test]
+    fn edge_default_bend_ratio_parses() {
+        let json = r##"{"background":"#000","nodes":{"default":{"shape":"circle","size":12,"color":"#888"}},"edges":{"default":{"color":"#333","width":1,"bendRatio":0.12}}}"##;
+        let theme: ThemeConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(theme.edges.default.bend_ratio, Some(0.12));
     }
 
     #[test]
