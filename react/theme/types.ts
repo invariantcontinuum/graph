@@ -12,6 +12,9 @@ export interface NodeTypeStyle {
   labelFont: string;
   labelSize: number;
   labelWeight: number;
+  /** Per-type unicode glyph shown in the label chip. Overlay-only; never sent
+   *  to the engine. */
+  glyph?: string;
 }
 
 export interface EdgeTypeStyle {
