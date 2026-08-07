@@ -3,15 +3,53 @@
 //! existing edge renderer accepts them unchanged and (future) dash shader
 //! will read the arc length to keep patterns continuous across segments.
 
-// Edge tessellation. Eight segments was set when bezier curves were deliberately
-// arced to visually separate parallel edges, but it caused an 8× alpha-overdraw
-// wherever edges cross — at fit zoom with ~3k edges across a dense graph that
-// produces a saturated white smear. Four segments with a gentler bend keeps
-// the soft-curve aesthetic while cutting the overdraw in half; combined with
-// the lowered edge alpha in the theme this brings us back to parity with the
-// legacy Cytoscape look where edges read as faint lines, not a glow.
-pub const DEFAULT_SEGMENTS: usize = 4;
-pub const DEFAULT_BEND_RATIO: f32 = 0.04;
+// Edge tessellation. Six segments with a stronger bend: parallel edges now fan
+// out into distinct curves via per-sibling bend ratios (see sibling_bend), so
+// each edge needs enough segments to keep its curve smooth and enough bend to
+// separate from the chord. Mid-curve alpha is lowered in the theme, which
+// bounds the alpha-overdraw the extra segments add where edges cross.
+pub const DEFAULT_SEGMENTS: usize = 6;
+pub const DEFAULT_BEND_RATIO: f32 = 0.10;
+
+/// Bend ratio for the `sibling_index`-th edge among parallel edges sharing
+/// the same ordered endpoint pair. Index 0 keeps the base bend; subsequent
+/// siblings alternate sides with growing magnitude so parallel edges fan out
+/// instead of stacking.
+pub fn sibling_bend(base: f32, sibling_index: usize) -> f32 {
+    if sibling_index == 0 {
+        return base;
+    }
+    let magnitude = base * (1.0 + (sibling_index as f32 + 1.0) / 2.0);
+    if sibling_index % 2 == 1 {
+        -magnitude
+    } else {
+        magnitude
+    }
+}
+
+/// Control point of the quadratic bezier: chord midpoint offset perpendicular
+/// by `chord_length * bend_ratio`.
+pub fn quadratic_control_point(p0: (f32, f32), p1: (f32, f32), bend_ratio: f32) -> (f32, f32) {
+    let dx = p1.0 - p0.0;
+    let dy = p1.1 - p0.1;
+    let chord_len = (dx * dx + dy * dy).sqrt().max(1e-5);
+    let nx = -dy / chord_len;
+    let ny = dx / chord_len;
+    let off = chord_len * bend_ratio;
+    (
+        (p0.0 + p1.0) * 0.5 + nx * off,
+        (p0.1 + p1.1) * 0.5 + ny * off,
+    )
+}
+
+/// Point on the quadratic bezier at parameter `t ∈ [0,1]`.
+pub fn quadratic_point(p0: (f32, f32), c: (f32, f32), p1: (f32, f32), t: f32) -> (f32, f32) {
+    let u = 1.0 - t;
+    (
+        p0.0 * u * u + c.0 * 2.0 * u * t + p1.0 * t * t,
+        p0.1 * u * u + c.1 * 2.0 * u * t + p1.1 * t * t,
+    )
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Segment {
@@ -30,33 +68,24 @@ pub fn tessellate_quadratic(
     segments: usize,
 ) -> Vec<Segment> {
     let n = segments.clamp(2, 16);
-    let dx = p1.0 - p0.0;
-    let dy = p1.1 - p0.1;
-    let chord_len = (dx * dx + dy * dy).sqrt().max(1e-5);
-    let nx = -dy / chord_len;
-    let ny = dx / chord_len;
-    let off = chord_len * bend_ratio;
-    let cx = (p0.0 + p1.0) * 0.5 + nx * off;
-    let cy = (p0.1 + p1.1) * 0.5 + ny * off;
+    let c = quadratic_control_point(p0, p1, bend_ratio);
 
     let mut out = Vec::with_capacity(n);
     let mut prev = p0;
     let mut arc = 0.0f32;
     for i in 1..=n {
         let t = i as f32 / n as f32;
-        let one_minus = 1.0 - t;
-        let bx = p0.0 * one_minus * one_minus + cx * 2.0 * one_minus * t + p1.0 * t * t;
-        let by = p0.1 * one_minus * one_minus + cy * 2.0 * one_minus * t + p1.1 * t * t;
+        let b = quadratic_point(p0, c, p1, t);
         let seg = Segment {
             from: prev,
-            to: (bx, by),
+            to: b,
             arc_start: arc,
         };
-        let sx = bx - prev.0;
-        let sy = by - prev.1;
+        let sx = b.0 - prev.0;
+        let sy = b.1 - prev.1;
         arc += (sx * sx + sy * sy).sqrt();
         out.push(seg);
-        prev = (bx, by);
+        prev = b;
     }
     out
 }
@@ -96,5 +125,35 @@ mod tests {
             assert!(s.from.1.abs() < EPS);
             assert!(s.to.1.abs() < EPS);
         }
+    }
+
+    #[test]
+    fn parallel_edges_fan_out_symmetrically() {
+        // Three edges between the same endpoints with sibling indices 0,1,2
+        // must produce three distinct curves, symmetric around the chord.
+        let p0 = (0.0, 0.0);
+        let p1 = (100.0, 0.0);
+        let bends: Vec<f32> = (0..3).map(|i| sibling_bend(0.10, i)).collect();
+        let mids: Vec<(f32, f32)> = bends
+            .iter()
+            .map(|&b| quadratic_point(p0, quadratic_control_point(p0, p1, b), p1, 0.5))
+            .collect();
+        // distinct
+        assert!((mids[0].1 - mids[1].1).abs() > 1.0);
+        assert!((mids[1].1 - mids[2].1).abs() > 1.0);
+        // symmetric: first sibling bends one way, second the other
+        assert!(mids[0].1.signum() != mids[1].1.signum());
+    }
+
+    #[test]
+    fn single_edge_keeps_base_bend() {
+        assert!((sibling_bend(0.10, 0) - 0.10).abs() < 1e-6);
+    }
+
+    #[test]
+    fn control_point_is_perpendicular_to_chord() {
+        let c = quadratic_control_point((0.0, 0.0), (100.0, 0.0), 0.1);
+        assert!(c.0 > 49.0 && c.0 < 51.0);
+        assert!((c.1.abs() - 10.0).abs() < 0.01);
     }
 }

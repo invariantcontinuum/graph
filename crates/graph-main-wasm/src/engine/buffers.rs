@@ -229,6 +229,8 @@ impl RenderEngine {
             .dim_opacity
             .clamp(0.02, 1.0);
         let coord_to_idx = crate::spotlight::build_coord_index(&self.positions);
+        let mut sibling_counts: std::collections::HashMap<(usize, usize), usize> =
+            std::collections::HashMap::new();
         let edge_stride = 6;
         for i in 0..logical_edge_count {
             let base = i * edge_stride;
@@ -265,8 +267,18 @@ impl RenderEngine {
                 spotlight_dim_opacity,
             );
 
-            let segs =
-                tessellate_quadratic(draw_src, draw_tgt, DEFAULT_BEND_RATIO, DEFAULT_SEGMENTS);
+            let sibling_index = match (s_idx, t_idx) {
+                (Some(a), Some(b)) => {
+                    let n = sibling_counts.entry((a, b)).or_insert(0);
+                    let idx = *n;
+                    *n += 1;
+                    idx
+                }
+                _ => 0,
+            };
+            let bend = crate::bezier::sibling_bend(DEFAULT_BEND_RATIO, sibling_index);
+
+            let segs = tessellate_quadratic(draw_src, draw_tgt, bend, DEFAULT_SEGMENTS);
             for s in &segs {
                 edge_buf.extend_from_slice(&[
                     s.from.0,
