@@ -188,17 +188,17 @@ function ellipsize(
 ): string {
   if (ctx.measureText(text).width <= maxW) return text;
   const ell = "…";
+  const chars = Array.from(text);
   let lo = 0;
-  let hi = text.length;
+  let hi = chars.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    // ⚡ Bolt: Use native string slicing (`String.prototype.slice`) instead of manual iterative concatenation
-    // to build the truncation chunk. In V8, native slicing of string primitives is highly optimized
-    // and avoids the severe GC churn of O(N) iterative concatenations per measurement.
-    // Impact: ~50x faster execution (from ~690ms to ~14ms per 1M ops).
-    const chunk = text.slice(0, mid) + ell;
+    // Native array slicing over the hoisted code-point array: avoids the O(N^2)
+    // GC churn of per-character string concatenation, and never splits surrogate
+    // pairs (emoji) the way UTF-16 code-unit indexing (`text[i]` / `text.slice`) does.
+    const chunk = chars.slice(0, mid).join("") + ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  return text.slice(0, lo) + ell;
+  return chars.slice(0, lo).join("") + ell;
 }

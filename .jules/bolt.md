@@ -299,3 +299,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-05-30 - Avoid redundant Map.set calls in hot loops
 **Learning:** In tight React Canvas render loops, calling `Map.prototype.set` repeatedly on every iteration (even for existing keys) adds measurable overhead. When updating object properties in a Map, we can rely on reference updates.
 **Action:** Instead of `const existing = map.get(k) ?? default; ... map.set(k, existing);`, use `let existing = map.get(k); if (!existing) { existing = default; map.set(k, existing); }` to eliminate redundant Map writes on every frame.
+
+## 2025-02-08 - Safe String Truncation with Emojis
+**Learning:** Iterating over a string via index (`text[i]`) to build substrings splits surrogate pairs (emojis) because it operates on UTF-16 code units. However, replacing it with `chars.slice().join("")` causes severe O(N^2) array allocation churn that tanks performance.
+**Action:** When safe surrogate handling is required in a hot loop, hoist `Array.from(text)` outside the loop, and use iterative string concatenation (`chunk += chars[i]`) over the safe character array. This fixes unicode truncation without introducing the massive GC overhead of array slicing.
