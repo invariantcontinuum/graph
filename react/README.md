@@ -139,6 +139,45 @@ if (found && found.length > 0) {
 }
 ```
 
+## Built-in Toolbar
+
+`GraphToolbar` is a standardized control panel you can render inside the `chrome` slot of `GraphScene`. It provides search, zoom, fit, layout switching, and theme toggling without forcing you to build these common controls from scratch.
+
+```tsx
+import { useRef, useState } from "react";
+import {
+  GraphScene,
+  GraphToolbar,
+  type GraphHandle,
+  type LayoutType,
+} from "@invariantcontinuum/graph/react";
+
+export function App() {
+  const graphRef = useRef<GraphHandle>(null);
+  const [layout, setLayout] = useState<LayoutType>("force");
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("dark");
+
+  return (
+    <GraphScene
+      ref={graphRef}
+      themeMode={themeMode}
+      snapshot={snapshot}
+      chrome={
+        <GraphToolbar
+          graphRef={graphRef}
+          layout={layout}
+          onLayoutChange={setLayout}
+          themeMode={themeMode}
+          onThemeToggle={() =>
+            setThemeMode((m) => (m === "dark" ? "light" : "dark"))
+          }
+        />
+      }
+    />
+  );
+}
+```
+
 ## Scene layering and click payloads
 
 `GraphScene` stacks rendering layers deliberately: `GridOverlay` is the background, compound source frames are the next background layer, the WebGL engine renders edges and nodes above them, labels sit above the engine, and the chrome slot is topmost.
@@ -164,6 +203,7 @@ along the edge.
 See `index.ts` — the public surface is:
 
 - Components: `Graph`, `GraphScene`, `GridOverlay`, `CompoundFramesOverlay`,
+  `GraphToolbar`,
   `LabelOverlay`, `EdgeLabelsOverlay`.
 - Theme helpers: `buildGraphTheme`, `mergeGraphTheme`,
   `graphThemeToEngineJson`, `typeStyleFor`, `TYPE_STYLES`, `DEFAULT_STYLE`.

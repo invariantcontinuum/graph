@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useCallback, type CSSProperties } from "react";
 import { buildGraphTheme } from "./theme/buildTheme";
 import type { ThemeMode } from "./GraphScene";
 import { connectionsFor, formatMetaValue, neighborName } from "./nodeDetails";
@@ -63,6 +63,33 @@ export function NodeDetailsPanel({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [node, onClose]);
+
+  const handleFocus = useCallback(
+    (e: React.FocusEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.outline = `2px solid ${theme.gridLineColor}`;
+      e.currentTarget.style.outlineOffset = "2px";
+    },
+    [theme.gridLineColor],
+  );
+
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.outline = "";
+    e.currentTarget.style.outlineOffset = "";
+  }, []);
+
+  const handleMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.background = "rgba(128, 128, 128, 0.1)";
+    },
+    [],
+  );
+
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.background = "transparent";
+    },
+    [],
+  );
 
   if (!node) return null;
 
@@ -283,26 +310,15 @@ export function NodeDetailsPanel({
                       style={{
                         ...rowStyle,
                         cursor: "pointer",
+                        outline: "none",
                         transition: "background 0.2s",
                       }}
                       onClick={() => onNeighborClick(neighbor)}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
                       aria-label={`${fullText}, Inspect ${direction === "outgoing" ? "outgoing" : "incoming"} connection to ${neighbor.name}`}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(128, 128, 128, 0.1)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                      }}
-                      onFocus={(e) => {
-                        if (e.target.matches(":focus-visible")) {
-                          e.target.style.outline = "2px solid #3b82f6";
-                          e.target.style.outlineOffset = "-2px";
-                        }
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.outline = "none";
-                      }}
                     >
                       {inner}
                     </button>
