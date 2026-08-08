@@ -227,3 +227,8 @@ Browser smoke must cover:
 ## 2024-10-31 - Polyfill interaction states in inline-styled library components
 **Learning:** When building React UI components for a library that strictly uses inline styles (to avoid external CSS dependencies), interactive elements like `<button>` inherently lack the browser's default CSS `:hover` feedback. Furthermore, applying `outline: "none"` to reset borders or relying on defaults can strip away explicit keyboard focus rings. Relying entirely on inline styles means these crucial UX and accessibility interaction states are lost by default.
 **Action:** Explicitly polyfill `:hover` and `:focus-visible` states using React's event handlers (`onMouseEnter`, `onMouseLeave`, `onFocus`, `onBlur`) on all inline-styled interactive elements to preserve visual feedback for pointer and keyboard users.
+
+
+## 2024-11-20 - Polyfill interaction states for inline-styled toolbar components
+**Learning:** Purely inline-styled React components (like the `GraphToolbar`) lack CSS pseudo-classes (`:hover`, `:focus-visible`). Relying solely on `cursor: "pointer"` provides insufficient feedback for pointer users and leaves keyboard users without focus indicators, harming accessibility. Furthermore, duplicating inline event handlers across multiple buttons in a toolbar can trigger CI code duplication warnings.
+**Action:** Abstracted `onFocus`, `onBlur`, `onMouseEnter`, and `onMouseLeave` event handlers into `useCallback` functions and applied them to all interactive elements (`button`, `input`, `select`) in the toolbar to polyfill interaction states cleanly.
