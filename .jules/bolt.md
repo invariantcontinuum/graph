@@ -311,3 +311,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2026-08-16 - [Extract and deduplicate canvas onKeyDown handler to reduce Cognitive Complexity]
 **Learning:** In React components orchestrating complex pointer and keyboard interactions, keeping dense `onKeyDown` switch statements inside the component's JSX causes the component to fail SonarCloud cognitive complexity limits (S3776).
 **Action:** Extracted the inline `onKeyDown` logic into `usePointerController` (which delegates to `pointerUtils.ts`) to reduce duplication, improve readability, and satisfy SonarCloud requirements while maintaining keyboard accessibility.
+
+## 2024-11-20 - [Bypass O(N) array slicing in ellipsize string builder]
+**Learning:** In the `ellipsize` text measurement binary search, using `chars.slice(0, mid).join("")` creates unnecessary short-lived allocations causing excessive Garbage Collection churn. Since we already hoisted the `Array.from(text)` conversion, we can simply iterate the array and concatenate the characters to build the string, which avoids array allocation and is twice as fast.
+**Action:** Replace `chars.slice(...).join("")` inside the text measurement string builders with iterative string concatenation to eliminate array allocations.
