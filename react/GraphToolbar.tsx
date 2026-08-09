@@ -91,6 +91,12 @@ export function GraphToolbar({
         <button
           type="submit"
           aria-label="Submit search"
+          title={
+            !searchQuery.trim()
+              ? "Type a query to search"
+              : "Submit search (Enter)"
+          }
+          disabled={!searchQuery.trim()}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onMouseEnter={handleMouseEnter}
@@ -101,8 +107,9 @@ export function GraphToolbar({
             border: `1px solid ${themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
             background: themeMode === "dark" ? "#334155" : "#e2e8f0",
             color: "inherit",
-            cursor: "pointer",
-            transition: "filter 0.2s",
+            cursor: !searchQuery.trim() ? "not-allowed" : "pointer",
+            opacity: !searchQuery.trim() ? 0.5 : 1,
+            transition: "filter 0.2s, opacity 0.2s",
           }}
         >
           🔍
