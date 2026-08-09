@@ -69,7 +69,10 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string }>
+    Map<
+      string,
+      { raw: string; glyph: string | null; text: string; chars: string[] }
+    >
   >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
@@ -131,7 +134,10 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string }>;
+  labelCache: Map<
+    string,
+    { raw: string; glyph: string | null; text: string; chars: string[] }
+  >;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -195,28 +201,35 @@ function drawOneLabel(
     MAX_LABEL_FONT_PX * dpr,
   );
 
+  const showTag =
+    (theme.showTypeTag ?? true) &&
+    nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
+  const rawGlyph = typeStyle.glyph ?? null;
+  const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
+
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  if (!cached || cached.raw !== rawLabel) {
-    const text = rawLabel.replaceAll(/\s+/g, " ").trim();
-    cached = { raw: rawLabel, text };
+  if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph) {
+    const name = rawLabel.replaceAll(/\s+/g, " ").trim();
+    const text = glyph ? `${glyph} ${name}` : name;
+    const chars = Array.from(text);
+    cached = { raw: rawLabel, glyph, text, chars };
     labelCache.set(id, cached);
   }
 
-  const showTag =
-    (theme.showTypeTag ?? true) && nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
-  const rawGlyph = typeStyle.glyph ?? null;
-  const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
   const layout = layoutLabelChip(ctx, {
-    name: cached.text,
-    glyph,
+    text: cached.text,
+    chars: cached.chars,
     typeTag: type ? type.toUpperCase() : null,
     maxWidthPx: Math.max(
       nodeBoxW * CHIP_MIN_WIDTH_RATIO,
       CHIP_MIN_WIDTH_PX * dpr,
     ),
     fontPx: basePx,
-    tagFontPx: Math.max(CHIP_TAG_MIN_FONT_PX * dpr, basePx * CHIP_TAG_FONT_RATIO),
+    tagFontPx: Math.max(
+      CHIP_TAG_MIN_FONT_PX * dpr,
+      basePx * CHIP_TAG_FONT_RATIO,
+    ),
     showTag,
   });
   if (!layout) return;

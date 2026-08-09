@@ -38,6 +38,7 @@ export function fitLabelInBox(
   return fallbackSingleLine(
     ctx,
     text,
+    chars,
     maxWidth,
     maxHeight,
     fontFamily,
@@ -69,6 +70,7 @@ function tryFitAtSize(
 function fallbackSingleLine(
   ctx: CanvasRenderingContext2D,
   text: string,
+  chars: string[],
   maxWidth: number,
   maxHeight: number,
   fontFamily: string,
@@ -83,7 +85,7 @@ function fallbackSingleLine(
   );
   if (lineHeight > maxHeight) return null;
   return {
-    lines: [ellipsize(ctx, text, maxWidth)],
+    lines: [ellipsize(ctx, text, chars, maxWidth)],
     fontPx: minFontPx,
     lineHeight,
   };
@@ -144,7 +146,12 @@ function appendEllipsizedRemainder(
   if (!remaining) return lines;
   const lastLine = lines.at(-1) ?? "";
   const combined = `${lastLine} ${remaining}`;
-  lines[lines.length - 1] = ellipsize(ctx, combined, maxWidth);
+  lines[lines.length - 1] = ellipsize(
+    ctx,
+    combined,
+    Array.from(combined),
+    maxWidth,
+  );
   return lines;
 }
 
@@ -184,11 +191,11 @@ function isBreakChar(ch: string): boolean {
 function ellipsize(
   ctx: CanvasRenderingContext2D,
   text: string,
+  chars: string[],
   maxW: number,
 ): string {
   if (ctx.measureText(text).width <= maxW) return text;
   const ell = "…";
-  const chars = Array.from(text);
   let lo = 0;
   let hi = chars.length;
   while (lo < hi) {

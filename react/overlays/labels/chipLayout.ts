@@ -5,20 +5,20 @@
 import { fitLabelInBox } from "./fitLabel";
 
 export interface ChipInput {
-  name: string;            // normalized (whitespace-collapsed) node name
-  glyph: string | null;    // validated type glyph, or null to omit
-  typeTag: string | null;  // uppercase type label, or null to omit
-  maxWidthPx: number;      // chip text budget (device px)
-  fontPx: number;          // name font size (device px)
-  tagFontPx: number;       // tag font size (device px)
-  showTag: boolean;        // zoom gate result
+  text: string; // full text including glyph
+  chars: string[]; // precomputed Array.from(text)
+  typeTag: string | null; // uppercase type label, or null to omit
+  maxWidthPx: number; // chip text budget (device px)
+  fontPx: number; // name font size (device px)
+  tagFontPx: number; // tag font size (device px)
+  showTag: boolean; // zoom gate result
 }
 
 export interface ChipLayout {
-  lines: string[];   // fitted name lines (glyph included in first line)
+  lines: string[]; // fitted name lines (glyph included in first line)
   tag: string | null;
-  widthPx: number;   // chip box width incl. padding
-  heightPx: number;  // chip box height incl. padding
+  widthPx: number; // chip box width incl. padding
+  heightPx: number; // chip box height incl. padding
   fontPx: number;
   tagFontPx: number;
   lineHeight: number;
@@ -57,8 +57,8 @@ export function layoutLabelChip(
   ctx: CanvasRenderingContext2D,
   input: ChipInput,
 ): ChipLayout | null {
-  const text = input.glyph ? `${input.glyph} ${input.name}` : input.name;
-  const chars = Array.from(text);
+  const text = input.text;
+  const chars = input.chars;
   const lineHeight = Math.ceil(input.fontPx * 1.16);
   // Name fits on up to 2 lines inside the width budget.
   const fitted = fitLabelInBox(
@@ -98,9 +98,7 @@ export function layoutLabelChip(
     tag,
     widthPx: Math.ceil(Math.max(maxLineW, tagW)) + CHIP_PAD_X * 2,
     heightPx:
-      fitted.lines.length * fitted.lineHeight +
-      tagLineHeight +
-      CHIP_PAD_Y * 2,
+      fitted.lines.length * fitted.lineHeight + tagLineHeight + CHIP_PAD_Y * 2,
     fontPx: fitted.fontPx,
     tagFontPx: input.tagFontPx,
     lineHeight: fitted.lineHeight,
