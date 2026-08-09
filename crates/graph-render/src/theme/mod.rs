@@ -116,6 +116,8 @@ pub struct EdgeStyle {
     pub width: f32,
     #[serde(default = "defaults::arrow")]
     pub arrow: String,
+    #[serde(rename = "bendRatio", default)]
+    pub bend_ratio: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -161,6 +163,8 @@ pub struct InteractionTheme {
 pub struct HoverStyle {
     #[serde(default = "defaults::hover_scale")]
     pub scale: f32,
+    #[serde(default = "defaults::hover_glow")]
+    pub glow: f32,
     #[serde(rename = "highlightNeighbors", default)]
     pub highlight_neighbors: bool,
     #[serde(rename = "dimOthers", default = "defaults::dim")]
@@ -171,6 +175,7 @@ impl Default for HoverStyle {
     fn default() -> Self {
         Self {
             scale: defaults::hover_scale(),
+            glow: defaults::hover_glow(),
             highlight_neighbors: true,
             dim_others: defaults::dim(),
         }
@@ -286,6 +291,13 @@ mod tests {
             theme.edges.by_type["enforces"].style.as_deref(),
             Some("dotted")
         );
+    }
+
+    #[test]
+    fn edge_default_bend_ratio_parses() {
+        let json = r##"{"background":"#000","nodes":{"default":{"shape":"circle","size":12,"color":"#888"}},"edges":{"default":{"color":"#333","width":1,"bendRatio":0.12}}}"##;
+        let theme: ThemeConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(theme.edges.default.bend_ratio, Some(0.12));
     }
 
     #[test]

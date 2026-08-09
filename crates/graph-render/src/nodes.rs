@@ -25,6 +25,7 @@ pub struct NodeRenderer {
     u_time: WebGlUniformLocation,
     u_dim_opacity: WebGlUniformLocation,
     u_dim_progress: WebGlUniformLocation,
+    u_glow_strength: Option<WebGlUniformLocation>,
     instance_count: usize,
 }
 
@@ -117,6 +118,8 @@ impl NodeRenderer {
         let u_dim_progress = gl
             .get_uniform_location(&program, "u_dim_progress")
             .ok_or("Missing u_dim_progress uniform")?;
+        // Optional: a stale shader without glow support must not break the engine.
+        let u_glow_strength = gl.get_uniform_location(&program, "u_glow_strength");
 
         Ok(Self {
             program,
@@ -126,6 +129,7 @@ impl NodeRenderer {
             u_time,
             u_dim_opacity,
             u_dim_progress,
+            u_glow_strength,
             instance_count: 0,
         })
     }
@@ -147,6 +151,9 @@ impl NodeRenderer {
     /// application in [0.0, 1.0] for smooth focus transitions — the engine
     /// drives it via a 250 ms ease so spotlight handoff between nodes fades
     /// instead of hard-cutting.
+    ///
+    /// `glow_strength` is the theme-sourced intensity of the soft outer glow
+    /// drawn around hovered/selected nodes (`theme.interaction.hover.glow`).
     pub fn draw(
         &self,
         gl: &GL,
@@ -154,6 +161,7 @@ impl NodeRenderer {
         time: f32,
         dim_opacity: f32,
         dim_progress: f32,
+        glow_strength: f32,
     ) {
         if self.instance_count == 0 {
             return;
@@ -163,6 +171,9 @@ impl NodeRenderer {
         gl.uniform1f(Some(&self.u_time), time);
         gl.uniform1f(Some(&self.u_dim_opacity), dim_opacity);
         gl.uniform1f(Some(&self.u_dim_progress), dim_progress);
+        if let Some(loc) = &self.u_glow_strength {
+            gl.uniform1f(Some(loc), glow_strength);
+        }
         gl.bind_vertex_array(Some(&self.vao));
         gl.draw_arrays_instanced(GL::TRIANGLES, 0, 6, self.instance_count as i32);
         gl.bind_vertex_array(None);

@@ -2,28 +2,33 @@ import { describe, test, expect } from "vitest";
 import { TYPE_STYLES, DEFAULT_STYLE } from "./typeStyles";
 import { NODE_TYPES } from "./palette";
 
-describe("typeStyles", () => {
-  test("every NodeType has a shape entry", () => {
+describe("TYPE_STYLES shape coding", () => {
+  test("every node type has a glyph", () => {
     for (const t of NODE_TYPES) {
-      expect(TYPE_STYLES[t], `missing TypeShape for ${t}`).toBeDefined();
+      expect(TYPE_STYLES[t].glyph.length, `${t} glyph`).toBeGreaterThan(0);
     }
   });
 
-  test("all half-widths/heights are positive", () => {
-    for (const t of NODE_TYPES) {
-      expect(TYPE_STYLES[t].halfWidth).toBeGreaterThan(0);
-      expect(TYPE_STYLES[t].halfHeight).toBeGreaterThan(0);
-    }
-    expect(DEFAULT_STYLE.halfWidth).toBeGreaterThan(0);
-    expect(DEFAULT_STYLE.halfHeight).toBeGreaterThan(0);
+  test("shape encodes type: no longer uniform roundrectangle", () => {
+    const shapes = new Set(NODE_TYPES.map((t) => TYPE_STYLES[t].shape));
+    expect(shapes.size).toBeGreaterThanOrEqual(7);
+    expect(TYPE_STYLES.database.shape).toBe("barrel");
+    expect(TYPE_STYLES.incident.shape).toBe("triangle");
+    expect(TYPE_STYLES.cache.shape).toBe("hexagon");
+    expect(TYPE_STYLES.service.shape).toBe("roundrectangle");
   });
 
-  test("default node vocabulary uses consistent card geometry", () => {
+  test("non-card shapes have balanced extents (not wide boxes)", () => {
     for (const t of NODE_TYPES) {
-      expect(TYPE_STYLES[t].shape, `${t} should render as a card by default`).toBe("roundrectangle");
-      expect(TYPE_STYLES[t].cornerRadius).toBeGreaterThanOrEqual(10);
-      expect(TYPE_STYLES[t].borderWidth).toBeLessThanOrEqual(1.45);
+      const s = TYPE_STYLES[t];
+      if (s.shape === "circle" || s.shape === "square" || s.shape === "diamond") {
+        expect(s.halfWidth).toBe(s.halfHeight);
+      }
     }
+  });
+
+  test("DEFAULT_STYLE keeps roundrectangle + glyph", () => {
     expect(DEFAULT_STYLE.shape).toBe("roundrectangle");
+    expect(DEFAULT_STYLE.glyph.length).toBeGreaterThan(0);
   });
 });

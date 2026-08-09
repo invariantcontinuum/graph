@@ -1,7 +1,13 @@
 import { useRef, useCallback, useMemo } from "react";
 import type { GraphHandle } from "./Graph";
 import type { GraphTheme, NodeTypeStyle } from "./theme/types";
-import { fitLabelInBox, type FittedLabel } from "./overlays/labels/fitLabel";
+import {
+  layoutLabelChip,
+  glyphSupported,
+  CHIP_PAD_Y,
+  CHIP_GAP,
+  type ChipLayout,
+} from "./overlays/labels/chipLayout";
 import { worldToScreenX, worldToScreenY, screenZoom } from "./overlays/vpMath";
 import { useOverlayRenderLoop } from "./overlays/useOverlayRenderLoop";
 import { useEngineFrameState } from "./overlays/useEngineFrameState";
@@ -38,11 +44,11 @@ interface FrameState {
 const LABEL_CULL_MARGIN_PX = 200;
 const MIN_NODE_WIDTH_PX = 10;
 const MIN_NODE_HEIGHT_PX = 5;
-const MIN_BOX_WIDTH_PX = 6;
-const MIN_BOX_HEIGHT_PX = 4;
-const PAD_MAX_X_PX = 3;
-const PAD_MAX_Y_PX = 2;
-const PAD_AXIS_RATIO = 0.1;
+const CHIP_MIN_WIDTH_RATIO = 1.6;
+const CHIP_MIN_WIDTH_PX = 90;
+const CHIP_TAG_MIN_NODE_HEIGHT_PX = 40;
+const CHIP_TAG_FONT_RATIO = 0.62;
+const CHIP_TAG_MIN_FONT_PX = 6;
 const MIN_LABEL_FONT_PX = 6;
 const MAX_LABEL_FONT_PX = 22;
 const DEFAULT_LABEL_FONT_PX = 12;
@@ -63,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; chars: string[] }>
+    Map<string, { raw: string; text: string }>
   >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
@@ -125,7 +131,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; chars: string[] }>;
+  labelCache: Map<string, { raw: string; text: string }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -180,14 +186,6 @@ function drawOneLabel(
   if (nodeBoxW < MIN_NODE_WIDTH_PX * dpr || nodeBoxH < MIN_NODE_HEIGHT_PX * dpr)
     return;
 
-  const padX = Math.min(PAD_MAX_X_PX * dpr, nodeBoxW * PAD_AXIS_RATIO);
-  const padY = Math.min(PAD_MAX_Y_PX * dpr, nodeBoxH * PAD_AXIS_RATIO);
-  const textBoxW = nodeBoxW - 2 * padX;
-  const textBoxH = nodeBoxH - 2 * padY;
-
-  if (textBoxW < MIN_BOX_WIDTH_PX * dpr || textBoxH < MIN_BOX_HEIGHT_PX * dpr)
-    return;
-
   const requestedFontSize =
     (typeStyle.labelSize ?? DEFAULT_LABEL_FONT_PX) * zoom * dpr;
   const fontFamily = typeStyle.labelFont ?? DEFAULT_LABEL_FONT_FAMILY;
@@ -201,31 +199,36 @@ function drawOneLabel(
   let cached = labelCache.get(id);
   if (!cached || cached.raw !== rawLabel) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
-    cached = { raw: rawLabel, text, chars: Array.from(text) };
+    cached = { raw: rawLabel, text };
     labelCache.set(id, cached);
   }
 
-  const fitted = fitLabelInBox(
-    ctx,
-    cached.text,
-    cached.chars,
-    textBoxW,
-    textBoxH,
-    fontFamily,
-    fontWeight,
-    basePx,
-    MIN_LABEL_FONT_PX * dpr,
-    dpr,
-  );
-  if (!fitted) return;
+  const showTag =
+    (theme.showTypeTag ?? true) && nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
+  const rawGlyph = typeStyle.glyph ?? null;
+  const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
+  const layout = layoutLabelChip(ctx, {
+    name: cached.text,
+    glyph,
+    typeTag: type ? type.toUpperCase() : null,
+    maxWidthPx: Math.max(
+      nodeBoxW * CHIP_MIN_WIDTH_RATIO,
+      CHIP_MIN_WIDTH_PX * dpr,
+    ),
+    fontPx: basePx,
+    tagFontPx: Math.max(CHIP_TAG_MIN_FONT_PX * dpr, basePx * CHIP_TAG_FONT_RATIO),
+    showTag,
+  });
+  if (!layout) return;
 
-  paintLabel(
+  const chipTop = sy + nodeBoxH / 2 + CHIP_GAP * dpr;
+  if (isChipOffscreen(sx - layout.widthPx / 2, chipTop, layout, cvs)) return;
+
+  paintChip(
     ctx,
     sx,
-    sy,
-    nodeBoxW,
-    nodeBoxH,
-    fitted,
+    chipTop,
+    layout,
     typeStyle,
     theme,
     fontFamily,
@@ -243,40 +246,72 @@ function isOffscreen(sx: number, sy: number, cvs: HTMLCanvasElement): boolean {
   );
 }
 
-function paintLabel(
+function isChipOffscreen(
+  x: number,
+  y: number,
+  layout: ChipLayout,
+  cvs: HTMLCanvasElement,
+): boolean {
+  return (
+    x + layout.widthPx < -LABEL_CULL_MARGIN_PX ||
+    x > cvs.width + LABEL_CULL_MARGIN_PX ||
+    y + layout.heightPx < -LABEL_CULL_MARGIN_PX ||
+    y > cvs.height + LABEL_CULL_MARGIN_PX
+  );
+}
+
+function paintChip(
   ctx: CanvasRenderingContext2D,
   sx: number,
-  sy: number,
-  nodeBoxW: number,
-  nodeBoxH: number,
-  fitted: FittedLabel,
+  topPy: number,
+  layout: ChipLayout,
   typeStyle: NodeTypeStyle,
   theme: GraphTheme,
   fontFamily: string,
   fontWeight: number,
   dpr: number,
 ): void {
+  const x = sx - layout.widthPx / 2;
+  const y = topPy;
+  const r = Math.min(7 * dpr, layout.heightPx / 2);
   ctx.save();
   ctx.beginPath();
-  ctx.rect(sx - nodeBoxW * 0.5, sy - nodeBoxH * 0.5, nodeBoxW, nodeBoxH);
+  ctx.roundRect(x, y, layout.widthPx, layout.heightPx, r);
+  ctx.fillStyle = typeStyle.color ?? "rgba(15, 23, 42, 0.9)";
+  ctx.fill();
+  ctx.strokeStyle = typeStyle.borderColor ?? "rgba(148, 163, 184, 0.55)";
+  ctx.lineWidth = Math.max(1, 0.75 * dpr);
+  ctx.globalAlpha = 0.55;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
   ctx.clip();
 
-  ctx.font = `${fontWeight} ${fitted.fontPx}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
+
+  let cy = y + CHIP_PAD_Y + layout.lineHeight / 2;
+  ctx.font = `${fontWeight} ${layout.fontPx}px ${fontFamily}`;
   ctx.lineWidth = Math.max(
     STROKE_WIDTH_FLOOR_PX * dpr,
-    fitted.fontPx * STROKE_WIDTH_RATIO,
+    layout.fontPx * STROKE_WIDTH_RATIO,
   );
   ctx.strokeStyle = theme.labelHalo ?? theme.canvasBg;
   ctx.fillStyle = typeStyle.labelColor ?? theme.defaultNodeStyle.labelColor;
+  for (const line of layout.lines) {
+    ctx.strokeText(line, sx, cy);
+    ctx.fillText(line, sx, cy);
+    cy += layout.lineHeight;
+  }
 
-  const startY = sy - ((fitted.lines.length - 1) * fitted.lineHeight) / 2;
-  for (let li = 0; li < fitted.lines.length; li++) {
-    const y = startY + li * fitted.lineHeight;
-    ctx.strokeText(fitted.lines[li], sx, y);
-    ctx.fillText(fitted.lines[li], sx, y);
+  if (layout.tag) {
+    ctx.font = `600 ${layout.tagFontPx}px ${fontFamily}`;
+    ctx.fillStyle = theme.dimText;
+    ctx.fillText(
+      layout.tag,
+      sx,
+      y + layout.heightPx - CHIP_PAD_Y - layout.tagLineHeight / 2,
+    );
   }
   ctx.restore();
 }

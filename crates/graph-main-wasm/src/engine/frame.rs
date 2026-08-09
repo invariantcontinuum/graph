@@ -88,8 +88,14 @@ impl RenderEngine {
             .spotlight
             .dim_opacity
             .clamp(0.02, 1.0);
-        self.node_renderer
-            .draw(&self.ctx.gl, &vp, time, dim_opacity, self.dim_progress);
+        self.node_renderer.draw(
+            &self.ctx.gl,
+            &vp,
+            time,
+            dim_opacity,
+            self.dim_progress,
+            self.theme.interaction.hover.glow,
+        );
         self.text_renderer.draw(&self.ctx.gl, &vp);
 
         self.needs_render = false;

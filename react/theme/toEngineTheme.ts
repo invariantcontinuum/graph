@@ -29,7 +29,7 @@ function toNodeBody(s: NodeTypeStyle) {
 // Rust treats missing `arrow` on overrides as "inherit from default," and
 // missing `style` on the default as "solid."
 function toDefaultEdge(s: EdgeTypeStyle) {
-  return { color: s.color, width: s.width, arrow: s.arrow };
+  return { color: s.color, width: s.width, arrow: s.arrow, bendRatio: s.bendRatio };
 }
 function toEdgeOverride(s: EdgeTypeStyle) {
   return { color: s.color, width: s.width, style: s.style };
@@ -69,6 +69,7 @@ export function graphThemeToEngineJson(t: GraphTheme): unknown {
     },
     communities: { hull: false, hullOpacity: 0.15 },
     interaction: {
+      hover: { glow: 0.35 },
       select: { borderColor: t.selectionBorder, borderWidth: 2.2 },
       spotlight: { dimOpacity: t.dimOpacity, transitionMs: 400 },
     },

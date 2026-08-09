@@ -4,6 +4,7 @@ import type {
   GraphThemeOverrides,
   NodeTypeStyle,
 } from "./types";
+import { tintFill } from "./buildTheme";
 
 const mergeCache = new WeakMap<GraphTheme, Map<string, GraphTheme>>();
 
@@ -40,6 +41,12 @@ export function mergeGraphTheme(
     ...base.defaultEdgeStyle,
     ...defined(overrides.defaultEdgeStyle ?? {}),
   };
+  // edgeCurvature is the public knob; bendRatio on the default edge style is
+  // what the engine actually reads — keep them in sync or the override is a
+  // dead field. An explicit defaultEdgeStyle.bendRatio override still wins.
+  if (overrides.edgeCurvature !== undefined && overrides.defaultEdgeStyle?.bendRatio === undefined) {
+    defaultEdgeStyle.bendRatio = overrides.edgeCurvature;
+  }
 
   const nodeTypes: Record<string, NodeTypeStyle> = { ...base.nodeTypes };
   for (const [typeKey, override] of Object.entries(overrides.nodeTypes ?? {})) {
@@ -68,11 +75,29 @@ export function mergeGraphTheme(
     dimOpacity: overrides.dimOpacity ?? base.dimOpacity,
     labelHalo: overrides.labelHalo ?? base.labelHalo,
     dimText: overrides.dimText ?? base.dimText,
+    showTypeTag: overrides.showTypeTag ?? base.showTypeTag,
+    edgeCurvature: overrides.edgeCurvature ?? base.edgeCurvature,
     defaultNodeStyle,
     defaultEdgeStyle,
     nodeTypes,
     edgeTypes,
   };
+
+  // nodeFillTint recomputes every fill from the type's border color at the
+  // requested alpha. tintFill only parses #rrggbb hex — skip anything else
+  // (short hex, rgba() strings, etc.) so we never emit a garbage color.
+  if (overrides.nodeFillTint !== undefined) {
+    const tint = overrides.nodeFillTint;
+    const HEX6 = /^#[0-9a-fA-F]{6}$/;
+    const retint = (style: NodeTypeStyle): NodeTypeStyle =>
+      HEX6.test(style.borderColor)
+        ? { ...style, color: tintFill(style.borderColor, tint) }
+        : style;
+    for (const key of Object.keys(merged.nodeTypes)) {
+      merged.nodeTypes[key] = retint(merged.nodeTypes[key]);
+    }
+    merged.defaultNodeStyle = retint(merged.defaultNodeStyle);
+  }
 
   innerMap.set(overrideStr, merged);
   return merged;

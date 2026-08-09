@@ -1,21 +1,24 @@
 import { describe, test, expect } from "vitest";
-import { buildGraphTheme } from "./buildTheme";
+import { buildGraphTheme, tintFill } from "./buildTheme";
 import { LIGHT, DARK, NODE_TYPES } from "./palette";
 import { TYPE_STYLES } from "./typeStyles";
 
 describe("buildGraphTheme", () => {
-  test("dark: every node type uses the uniform glass fill", () => {
+  test("dark: every node type fill is a tint of its border color", () => {
     const t = buildGraphTheme("dark");
     for (const type of NODE_TYPES) {
-      expect(t.nodeTypes[type].color, `${type} fill must equal nodeGlassFill`)
-        .toBe(DARK.nodeGlassFill);
+      expect(t.nodeTypes[type].color, `${type} fill`).toBe(
+        tintFill(DARK.typeBorders[type], 0.2),
+      );
     }
   });
 
-  test("light: every node type uses the uniform glass fill", () => {
+  test("light: every node type fill is a tint of its border color", () => {
     const t = buildGraphTheme("light");
     for (const type of NODE_TYPES) {
-      expect(t.nodeTypes[type].color).toBe(LIGHT.nodeGlassFill);
+      expect(t.nodeTypes[type].color).toBe(
+        tintFill(LIGHT.typeBorders[type], 0.12),
+      );
     }
   });
 

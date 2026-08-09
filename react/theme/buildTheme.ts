@@ -1,10 +1,20 @@
 // Compose a `GraphTheme` from `palette x typeStyles`.
-// Glass-pane rule is enforced here — every node type reads its fill from
-// `palette.nodeGlassFill`, so a reviewer can see the uniform rule at a glance.
+// Tinted-fill rule is enforced here — every node type's fill derives from its
+// border color, so a reviewer can see the uniform rule at a glance.
 
 import type { GraphTheme, NodeTypeStyle, EdgeTypeStyle } from "./types";
 import { LIGHT, DARK, NODE_TYPES, EDGE_TYPES, type EdgeType } from "./palette";
 import { TYPE_STYLES, DEFAULT_STYLE } from "./typeStyles";
+
+// Tinted-fill rule: every node type's fill is its border color at a low
+// alpha over the canvas — nodes read as colored, not as black glass.
+// `hex` must be a #rrggbb palette entry.
+export function tintFill(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 const LABEL_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const LABEL_WEIGHT = 760;
@@ -46,13 +56,14 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
       halfWidth: shape.halfWidth,
       halfHeight: shape.halfHeight,
       cornerRadius: shape.cornerRadius,
-      color: p.nodeGlassFill,
+      color: tintFill(p.typeBorders[type], mode === "dark" ? 0.2 : 0.12),
       borderColor: p.typeBorders[type],
       borderWidth: shape.borderWidth,
       labelColor: p.labelColor,
       labelFont: LABEL_FONT,
       labelSize: shape.labelSize,
       labelWeight: LABEL_WEIGHT,
+      glyph: shape.glyph,
     };
   }
 
@@ -71,20 +82,26 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     halfWidth: DEFAULT_STYLE.halfWidth,
     halfHeight: DEFAULT_STYLE.halfHeight,
     cornerRadius: DEFAULT_STYLE.cornerRadius,
-    color: p.nodeGlassFill,
+    color: tintFill(p.nodeDefaultBorder.startsWith("#") ? p.nodeDefaultBorder : "#94a3b8", mode === "dark" ? 0.18 : 0.1),
     borderColor: p.nodeDefaultBorder,
     borderWidth: DEFAULT_STYLE.borderWidth,
     labelColor: p.labelColor,
     labelFont: LABEL_FONT,
     labelSize: DEFAULT_STYLE.labelSize,
     labelWeight: LABEL_WEIGHT,
+    glyph: DEFAULT_STYLE.glyph,
   };
+
+  // Base edge curvature — single source for GraphTheme.edgeCurvature and the
+  // engine's edges.default.bendRatio.
+  const edgeCurvature = 0.10;
 
   const defaultEdgeStyle: EdgeTypeStyle = {
     color: p.edgeDefault,
     width: 1.6,
     style: "solid",
     arrow: "triangle",
+    bendRatio: edgeCurvature,
   };
 
   const result = {
@@ -99,6 +116,8 @@ export function buildGraphTheme(mode: "light" | "dark"): GraphTheme {
     dimOpacity: 0.14,
     labelHalo: p.labelHalo,
     dimText: p.dimText,
+    showTypeTag: true,
+    edgeCurvature,
     nodeTypes,
     edgeTypes,
     defaultNodeStyle,

@@ -59,6 +59,11 @@ describe("graphThemeToEngineJson", () => {
     expect(json.interaction.spotlight.dimOpacity).toBeCloseTo(0.14);
   });
 
+  test("interaction.hover.glow defaults to 0.35", () => {
+    const json = graphThemeToEngineJson(buildGraphTheme("dark")) as any;
+    expect(json.interaction.hover.glow).toBe(0.35);
+  });
+
   test("every byType node override has camelCase keys only", () => {
     const json = graphThemeToEngineJson(buildGraphTheme("light")) as any;
     for (const [type, v] of Object.entries(json.nodes.byType)) {
@@ -66,6 +71,12 @@ describe("graphThemeToEngineJson", () => {
         expect(k, `${type}.${k} must be camelCase`).toMatch(/^[a-z][a-zA-Z0-9]*$/);
       }
     }
+  });
+
+  test("edgeCurvature flows to edges.default.bendRatio", () => {
+    const t = buildGraphTheme("dark");
+    const json = graphThemeToEngineJson(t) as { edges: { default: { bendRatio: number } } };
+    expect(json.edges.default.bendRatio).toBeCloseTo(0.10);
   });
 
   test("returns referentially stable json for identical theme instances", () => {

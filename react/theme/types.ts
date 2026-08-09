@@ -12,6 +12,9 @@ export interface NodeTypeStyle {
   labelFont: string;
   labelSize: number;
   labelWeight: number;
+  /** Per-type unicode glyph shown in the label chip. Overlay-only; never sent
+   *  to the engine. */
+  glyph?: string;
 }
 
 export interface EdgeTypeStyle {
@@ -19,6 +22,9 @@ export interface EdgeTypeStyle {
   width: number;
   style: "solid" | "dashed" | "short-dashed" | "dotted";
   arrow: "triangle" | "none";
+  /** Base quadratic bend ratio for curved edges; emitted as `bendRatio` on
+   *  the engine's `edges.default`. */
+  bendRatio?: number;
 }
 
 export interface GraphTheme {
@@ -31,6 +37,12 @@ export interface GraphTheme {
   dimOpacity: number;
   labelHalo: string;
   dimText: string;
+  /** Show the uppercase type tag line inside the label chip (zoom-gated at
+   *  paint time). */
+  showTypeTag: boolean;
+  /** Base curvature for edges (bend ratio); flows to the engine as
+   *  `edges.default.bendRatio`. */
+  edgeCurvature: number;
   nodeTypes: Record<string, NodeTypeStyle>;
   edgeTypes: Record<string, EdgeTypeStyle>;
   defaultNodeStyle: NodeTypeStyle;
@@ -50,6 +62,11 @@ export interface GraphThemeOverrides {
   dimOpacity?: number;
   labelHalo?: string;
   dimText?: string;
+  showTypeTag?: boolean;
+  edgeCurvature?: number;
+  /** When set, every node type's fill is recomputed as its border color at
+   *  this alpha (types with non-#rrggbb border colors are skipped). */
+  nodeFillTint?: number;
   nodeTypes?: Record<string, NodeTypeStyleOverride>;
   edgeTypes?: Record<string, EdgeTypeStyleOverride>;
   defaultNodeStyle?: NodeTypeStyleOverride;
