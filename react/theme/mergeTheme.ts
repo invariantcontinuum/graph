@@ -41,6 +41,12 @@ export function mergeGraphTheme(
     ...base.defaultEdgeStyle,
     ...defined(overrides.defaultEdgeStyle ?? {}),
   };
+  // edgeCurvature is the public knob; bendRatio on the default edge style is
+  // what the engine actually reads — keep them in sync or the override is a
+  // dead field. An explicit defaultEdgeStyle.bendRatio override still wins.
+  if (overrides.edgeCurvature !== undefined && overrides.defaultEdgeStyle?.bendRatio === undefined) {
+    defaultEdgeStyle.bendRatio = overrides.edgeCurvature;
+  }
 
   const nodeTypes: Record<string, NodeTypeStyle> = { ...base.nodeTypes };
   for (const [typeKey, override] of Object.entries(overrides.nodeTypes ?? {})) {
@@ -79,11 +85,12 @@ export function mergeGraphTheme(
 
   // nodeFillTint recomputes every fill from the type's border color at the
   // requested alpha. tintFill only parses #rrggbb hex — skip anything else
-  // (e.g. rgba() strings) so we never emit a garbage color.
+  // (short hex, rgba() strings, etc.) so we never emit a garbage color.
   if (overrides.nodeFillTint !== undefined) {
     const tint = overrides.nodeFillTint;
+    const HEX6 = /^#[0-9a-fA-F]{6}$/;
     const retint = (style: NodeTypeStyle): NodeTypeStyle =>
-      style.borderColor.startsWith("#")
+      HEX6.test(style.borderColor)
         ? { ...style, color: tintFill(style.borderColor, tint) }
         : style;
     for (const key of Object.keys(merged.nodeTypes)) {

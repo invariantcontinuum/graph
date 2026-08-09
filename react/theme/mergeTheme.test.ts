@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { buildGraphTheme, tintFill } from "./buildTheme";
 import { mergeGraphTheme } from "./mergeTheme";
+import { graphThemeToEngineJson } from "./toEngineTheme";
 import { NODE_TYPES } from "./palette";
 
 describe("mergeGraphTheme", () => {
@@ -51,8 +52,12 @@ describe("mergeGraphTheme", () => {
     }
   });
 
-  test("edgeCurvature override wins", () => {
+  test("edgeCurvature override wins and reaches the engine JSON", () => {
     const merged = mergeGraphTheme(buildGraphTheme("dark"), { edgeCurvature: 0.25 });
     expect(merged.edgeCurvature).toBe(0.25);
+    const json = graphThemeToEngineJson(merged) as {
+      edges: { default: { bendRatio: number } };
+    };
+    expect(json.edges.default.bendRatio).toBe(0.25);
   });
 });
