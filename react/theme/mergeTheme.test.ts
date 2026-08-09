@@ -60,4 +60,15 @@ describe("mergeGraphTheme", () => {
     };
     expect(json.edges.default.bendRatio).toBe(0.25);
   });
+
+  test("explicit defaultEdgeStyle.bendRatio beats a synced edgeCurvature override", () => {
+    const merged = mergeGraphTheme(buildGraphTheme("dark"), {
+      edgeCurvature: 0.25,
+      defaultEdgeStyle: { bendRatio: 0.33 },
+    });
+    const json = graphThemeToEngineJson(merged) as {
+      edges: { default: { bendRatio: number } };
+    };
+    expect(json.edges.default.bendRatio).toBe(0.33);
+  });
 });

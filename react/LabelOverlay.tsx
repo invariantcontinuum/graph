@@ -69,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; chars: string[] }>
+    Map<string, { raw: string; text: string }>
   >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
@@ -131,7 +131,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; chars: string[] }>;
+  labelCache: Map<string, { raw: string; text: string }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -199,7 +199,7 @@ function drawOneLabel(
   let cached = labelCache.get(id);
   if (!cached || cached.raw !== rawLabel) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
-    cached = { raw: rawLabel, text, chars: Array.from(text) };
+    cached = { raw: rawLabel, text };
     labelCache.set(id, cached);
   }
 
