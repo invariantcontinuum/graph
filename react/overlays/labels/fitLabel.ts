@@ -193,12 +193,13 @@ function ellipsize(
   let hi = chars.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    // Native array slicing over the hoisted code-point array: avoids the O(N^2)
-    // GC churn of per-character string concatenation, and never splits surrogate
-    // pairs (emoji) the way UTF-16 code-unit indexing (`text[i]` / `text.slice`) does.
-    const chunk = chars.slice(0, mid).join("") + ell;
+    let chunk = "";
+    for (let i = 0; i < mid; i++) chunk += chars[i];
+    chunk += ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  return chars.slice(0, lo).join("") + ell;
+  let result = "";
+  for (let i = 0; i < lo; i++) result += chars[i];
+  return result + ell;
 }
