@@ -69,8 +69,18 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>
+    Map<
+      string,
+      {
+        raw: string;
+        text: string;
+        glyph: string | null;
+        fullText: string;
+        chars: string[];
+      }
+    >
   >(new Map());
+  const typeTagCacheRef = useRef<Map<string, string>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
@@ -90,6 +100,7 @@ export function LabelOverlay({
           nodeIds,
           labels,
           labelCache: labelCacheRef.current,
+          typeTagCache: typeTagCacheRef.current,
           nodeTypes,
           theme,
         });
@@ -131,7 +142,17 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>;
+  labelCache: Map<
+    string,
+    {
+      raw: string;
+      text: string;
+      glyph: string | null;
+      fullText: string;
+      chars: string[];
+    }
+  >;
+  typeTagCache: Map<string, string>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -196,7 +217,8 @@ function drawOneLabel(
   );
 
   const showTag =
-    (theme.showTypeTag ?? true) && nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
+    (theme.showTypeTag ?? true) &&
+    nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
   const rawGlyph = typeStyle.glyph ?? null;
   const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
 
@@ -210,16 +232,28 @@ function drawOneLabel(
     labelCache.set(id, cached);
   }
 
+  let upperType = null;
+  if (type) {
+    upperType = frame.typeTagCache.get(type) ?? null;
+    if (!upperType) {
+      upperType = type.toUpperCase();
+      frame.typeTagCache.set(type, upperType);
+    }
+  }
+
   const layout = layoutLabelChip(ctx, {
     text: cached.fullText,
     chars: cached.chars,
-    typeTag: type ? type.toUpperCase() : null,
+    typeTag: upperType,
     maxWidthPx: Math.max(
       nodeBoxW * CHIP_MIN_WIDTH_RATIO,
       CHIP_MIN_WIDTH_PX * dpr,
     ),
     fontPx: basePx,
-    tagFontPx: Math.max(CHIP_TAG_MIN_FONT_PX * dpr, basePx * CHIP_TAG_FONT_RATIO),
+    tagFontPx: Math.max(
+      CHIP_TAG_MIN_FONT_PX * dpr,
+      basePx * CHIP_TAG_FONT_RATIO,
+    ),
     showTag,
   });
   if (!layout) return;
