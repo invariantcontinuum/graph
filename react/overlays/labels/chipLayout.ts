@@ -5,8 +5,8 @@
 import { fitLabelInBox } from "./fitLabel";
 
 export interface ChipInput {
-  name: string;            // normalized (whitespace-collapsed) node name
-  glyph: string | null;    // validated type glyph, or null to omit
+  text: string;            // normalized, full text including glyph if present
+  chars: string[];         // precomputed Array.from(text)
   typeTag: string | null;  // uppercase type label, or null to omit
   maxWidthPx: number;      // chip text budget (device px)
   fontPx: number;          // name font size (device px)
@@ -57,14 +57,12 @@ export function layoutLabelChip(
   ctx: CanvasRenderingContext2D,
   input: ChipInput,
 ): ChipLayout | null {
-  const text = input.glyph ? `${input.glyph} ${input.name}` : input.name;
-  const chars = Array.from(text);
   const lineHeight = Math.ceil(input.fontPx * 1.16);
   // Name fits on up to 2 lines inside the width budget.
   const fitted = fitLabelInBox(
     ctx,
-    text,
-    chars,
+    input.text,
+    input.chars,
     input.maxWidthPx,
     lineHeight * 2 + 2,
     "sans-serif",
@@ -81,7 +79,9 @@ export function layoutLabelChip(
   // characters is noise, not a label.
   if (fitted.lines.some((line) => line.includes("…"))) {
     const kept = fitted.lines.join("").replaceAll("…", "").trim();
-    if (Array.from(kept).length < MIN_SURVIVING_CHARS) return null;
+    let keptCount = 0;
+    for (const _ of kept) keptCount++;
+    if (keptCount < MIN_SURVIVING_CHARS) return null;
   }
 
   const tag = input.showTag ? input.typeTag : null;

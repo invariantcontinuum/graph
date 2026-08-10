@@ -69,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string }>
+    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>
   >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
@@ -131,7 +131,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string }>;
+  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -195,21 +195,24 @@ function drawOneLabel(
     MAX_LABEL_FONT_PX * dpr,
   );
 
-  const rawLabel = labels[id] ?? "";
-  let cached = labelCache.get(id);
-  if (!cached || cached.raw !== rawLabel) {
-    const text = rawLabel.replaceAll(/\s+/g, " ").trim();
-    cached = { raw: rawLabel, text };
-    labelCache.set(id, cached);
-  }
-
   const showTag =
     (theme.showTypeTag ?? true) && nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
   const rawGlyph = typeStyle.glyph ?? null;
   const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
+
+  const rawLabel = labels[id] ?? "";
+  let cached = labelCache.get(id);
+  if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph) {
+    const text = rawLabel.replaceAll(/\s+/g, " ").trim();
+    const fullText = glyph ? `${glyph} ${text}` : text;
+    const chars = Array.from(fullText);
+    cached = { raw: rawLabel, text, glyph, fullText, chars };
+    labelCache.set(id, cached);
+  }
+
   const layout = layoutLabelChip(ctx, {
-    name: cached.text,
-    glyph,
+    text: cached.fullText,
+    chars: cached.chars,
     typeTag: type ? type.toUpperCase() : null,
     maxWidthPx: Math.max(
       nodeBoxW * CHIP_MIN_WIDTH_RATIO,
