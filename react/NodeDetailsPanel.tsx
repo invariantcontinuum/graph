@@ -274,6 +274,7 @@ export function NodeDetailsPanel({
               const inner = (
                 <>
                   <span
+                    title={label}
                     style={{
                       overflow: "hidden",
                       textOverflow: "ellipsis",
