@@ -74,7 +74,7 @@ export function GraphToolbar({
       <form onSubmit={handleSearch} style={{ display: "flex", gap: 4 }}>
         <input
           type="search"
-          placeholder="Search nodes..."
+          placeholder="Search nodes…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           aria-label="Search nodes"
