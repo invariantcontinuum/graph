@@ -319,3 +319,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-11-20 - [Hoist string-to-array conversions in Canvas text measurement]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
+
+## 2024-11-20 - [Memoize string conversions in lazy cache for Canvas render loop]
+**Learning:** Calling string allocation methods like `.toUpperCase()` directly inside hot, per-frame render loops (e.g., Canvas `requestAnimationFrame` iterating over visible nodes) creates massive amounts of short-lived objects leading to Garbage Collection churn.
+**Action:** When caching derived values for rendering items, extend existing per-item lazy caches (e.g., `labelCache`) to include the new properties rather than recreating them on every frame, eliminating redundant string allocations.
