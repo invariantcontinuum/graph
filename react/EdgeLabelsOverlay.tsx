@@ -88,6 +88,7 @@ export function EdgeLabelsOverlay({
       ref={canvasRef}
       className="graph-edge-labels-overlay"
       aria-hidden={true}
+      tabIndex={-1}
       style={{
         position: "absolute",
         inset: 0,

@@ -69,7 +69,16 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>
+    Map<
+      string,
+      {
+        raw: string;
+        text: string;
+        glyph: string | null;
+        fullText: string;
+        chars: string[];
+      }
+    >
   >(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
@@ -105,6 +114,7 @@ export function LabelOverlay({
       ref={canvasRef}
       className="graph-label-overlay"
       aria-hidden={true}
+      tabIndex={-1}
       // The WASM shader dims non-focus fills via u_dim_opacity, so labels stay
       // at uniform brightness. We surface the focus-set size as a data
       // attribute so app CSS / devtools can read it without an extra render
@@ -131,7 +141,16 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[] }>;
+  labelCache: Map<
+    string,
+    {
+      raw: string;
+      text: string;
+      glyph: string | null;
+      fullText: string;
+      chars: string[];
+    }
+  >;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -196,7 +215,8 @@ function drawOneLabel(
   );
 
   const showTag =
-    (theme.showTypeTag ?? true) && nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
+    (theme.showTypeTag ?? true) &&
+    nodeBoxH >= CHIP_TAG_MIN_NODE_HEIGHT_PX * dpr;
   const rawGlyph = typeStyle.glyph ?? null;
   const glyph = rawGlyph && glyphSupported(ctx, rawGlyph) ? rawGlyph : null;
 
@@ -219,7 +239,10 @@ function drawOneLabel(
       CHIP_MIN_WIDTH_PX * dpr,
     ),
     fontPx: basePx,
-    tagFontPx: Math.max(CHIP_TAG_MIN_FONT_PX * dpr, basePx * CHIP_TAG_FONT_RATIO),
+    tagFontPx: Math.max(
+      CHIP_TAG_MIN_FONT_PX * dpr,
+      basePx * CHIP_TAG_FONT_RATIO,
+    ),
     showTag,
   });
   if (!layout) return;
