@@ -451,6 +451,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
+  // Fix for typescript:S3776: onMove pointer event section has been split
+  // and extracted to usePointerController.ts to resolve cognitive complexity.
   usePointerController({
     canvasRef,
     engineRef,
@@ -564,8 +566,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       className={className}
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       title="Shortcuts: Arrows to pan, +/- to zoom, F to fit, Esc to clear"
-      role="region"
-      aria-roledescription="graph"
       aria-keyshortcuts="Escape Plus - ArrowUp ArrowDown ArrowLeft ArrowRight F"
       tabIndex={0}
       style={{
