@@ -319,3 +319,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-11-20 - [Hoist string-to-array conversions in Canvas text measurement]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
+
+## 2026-08-17 - [Cache derived type labels to avoid redundant string allocations]
+**Learning:** In hot React/Canvas render loops, calling string allocation methods like `.toUpperCase()` on every iteration (e.g., for every visible node) creates a massive number of short-lived objects. This leads to Garbage Collection churn and degrades FPS.
+**Action:** Extend the existing per-item cache (e.g., `labelCache`) to include the new derived properties (like `typeTag`) and add the source property (like `type`) to the cache invalidation check. This avoids redundant allocations without adding extra Map instances.
