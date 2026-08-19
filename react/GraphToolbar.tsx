@@ -19,15 +19,15 @@ export function GraphToolbar({
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
-    if (e.target.matches(":focus-visible")) {
-      e.target.style.outline = "2px solid #3b82f6";
-      e.target.style.outlineOffset = "2px";
+    if (e.currentTarget.matches(":focus-visible")) {
+      e.currentTarget.style.outline = "2px solid #3b82f6";
+      e.currentTarget.style.outlineOffset = "2px";
     }
   }, []);
 
   const handleBlur = useCallback((e: React.FocusEvent<HTMLElement>) => {
-    e.target.style.outline = "";
-    e.target.style.outlineOffset = "";
+    e.currentTarget.style.outline = "";
+    e.currentTarget.style.outlineOffset = "";
   }, []);
 
   const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLElement>) => {
