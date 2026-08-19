@@ -235,3 +235,7 @@ Browser smoke must cover:
 ## 2024-11-06 - Add disabled state and dynamic tooltip to icon-only search buttons
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
+
+## 2026-08-20 - Correctly remove inline styles and use currentTarget
+**Learning:** When imperatively manipulating styles for focus polyfills in React (like `onFocus` and `onBlur`), setting `outline = "none"` permanently overrides the browser's default focus ring even after the element loses focus. Also, using `e.target` instead of `e.currentTarget` can cause unexpected behavior if children of the interactive element receive focus, and leads to type unsafety.
+**Action:** When removing inline styles in event handlers (e.g. `onBlur`), always set the style property to `""` instead of `"none"` to restore default behavior. Always use `e.currentTarget` for safe reference to the element the handler is bound to.
