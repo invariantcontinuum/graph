@@ -235,3 +235,7 @@ Browser smoke must cover:
 ## 2024-11-06 - Add disabled state and dynamic tooltip to icon-only search buttons
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
+
+## 2024-05-14 - Add tabIndex={-1} to aria-hidden visual overlays
+**Learning:** Adding `aria-hidden={true}` to visual canvas elements satisfies screen readers, but explicitly adding `tabIndex={-1}` is also important for accessibility linters (e.g. SonarCloud `typescript:S6825`) and provides defense-in-depth to guarantee these visual-only layers are permanently removed from sequential keyboard focus.
+**Action:** Always pair `aria-hidden={true}` with `tabIndex={-1}` on visual overlay elements to guarantee exclusion from focus order.
