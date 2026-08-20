@@ -118,6 +118,7 @@ export function CompoundFramesOverlay({
       ref={canvasRef}
       className="graph-compound-frames-overlay"
       aria-hidden={true}
+      tabIndex={-1}
       style={{
         position: "absolute",
         inset: 0,
