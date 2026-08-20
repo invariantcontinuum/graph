@@ -58,3 +58,7 @@ Every feature or optimization should include:
 
 Avoid "demo-only" features. The showcase should prove package capability, not
 hide missing package behavior with local workarounds.
+
+## 2026-08-20 - [Snapshot plus position export]
+**Value:** Apps need persistence after layout or drag
+**Action:** Added `get_snapshot_positions` to the WASM engine which returns a map of node IDs to `[x, y]` positions. Exposed `getSnapshot` on `GraphHandle` in React which merges these positions into the active snapshot nodes' `meta` fields, allowing host apps to persist and reload the exact spatial layout.

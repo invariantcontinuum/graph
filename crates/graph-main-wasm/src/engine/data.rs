@@ -133,6 +133,18 @@ impl RenderEngine {
         serde_wasm_bindgen::to_value(&summary).unwrap_or(JsValue::NULL)
     }
 
+    pub fn get_snapshot_positions(&self) -> JsValue {
+        let mut map: HashMap<String, (f32, f32)> = HashMap::new();
+        for (i, id) in self.node_ids.iter().enumerate() {
+            let x = self.positions.get(i * 2);
+            let y = self.positions.get(i * 2 + 1);
+            if let (Some(&x), Some(&y)) = (x, y) {
+                map.insert(id.clone(), (x, y));
+            }
+        }
+        serde_wasm_bindgen::to_value(&map).unwrap_or(JsValue::NULL)
+    }
+
     pub fn set_theme(&mut self, theme_js: &JsValue) -> Result<(), JsValue> {
         let theme: ThemeConfig = serde_wasm_bindgen::from_value(theme_js.clone())
             .map_err(|e| JsValue::from_str(&format!("{e}")))?;
