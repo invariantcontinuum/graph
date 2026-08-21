@@ -144,8 +144,10 @@ impl QuadNode {
 
     fn accumulate_mass(&mut self, x: f32, y: f32) {
         let total = self.mass + 1.0;
-        self.cx = (self.cx * self.mass + x) / total;
-        self.cy = (self.cy * self.mass + y) / total;
+        // ⚡ Bolt: Use inverse multiplication to avoid double floating-point division
+        let inv_total = 1.0 / total;
+        self.cx = (self.cx * self.mass + x) * inv_total;
+        self.cy = (self.cy * self.mass + y) * inv_total;
         self.mass = total;
     }
 
