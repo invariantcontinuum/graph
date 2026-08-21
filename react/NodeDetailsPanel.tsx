@@ -166,7 +166,8 @@ export function NodeDetailsPanel({
               }
             }}
             onBlur={(e) => {
-              e.target.style.outline = "none";
+              e.target.style.outline = "";
+              e.target.style.outlineOffset = "";
             }}
           >
             ×
