@@ -76,11 +76,8 @@ export function usePointerController({
         return;
       }
 
-      state.active.set(e.pointerId, {
-        id: e.pointerId,
-        x: local.x,
-        y: local.y,
-      });
+      existing.x = local.x;
+      existing.y = local.y;
 
       if (state.active.size === 1) {
         handleSinglePointerMove(
