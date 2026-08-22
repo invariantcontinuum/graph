@@ -155,4 +155,18 @@ impl RenderEngine {
         self.buffers_dirty = true;
         self.needs_render = true;
     }
+
+    pub fn get_snapshot_positions(&self) -> JsValue {
+        let mut pos_map: HashMap<&str, (f32, f32)> = HashMap::new();
+        let mut i = 0;
+        // The worker position buffer packs 4 f32s per node (x, y, radius/mass, etc)
+        // verified by `aabb_of` in `crates/graph-main-wasm/src/engine/camera.rs` line ~295.
+        while i < self.node_ids.len() && i * 4 + 1 < self.positions.len() {
+            let x = self.positions[i * 4];
+            let y = self.positions[i * 4 + 1];
+            pos_map.insert(&self.node_ids[i], (x, y));
+            i += 1;
+        }
+        serde_wasm_bindgen::to_value(&pos_map).unwrap_or(JsValue::NULL)
+    }
 }

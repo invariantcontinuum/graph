@@ -6,6 +6,8 @@ export interface NodeData {
   status: string;
   community?: number;
   meta: Record<string, unknown>;
+  x?: number;
+  y?: number;
 }
 
 export interface EdgeData {
