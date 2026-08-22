@@ -56,6 +56,7 @@ pub struct Segment {
     pub from: (f32, f32),
     pub to: (f32, f32),
     pub arc_start: f32,
+    pub arc_length: f32,
 }
 
 /// Tessellate a quadratic bezier from `p0` to `p1`, control point offset
@@ -76,14 +77,16 @@ pub fn tessellate_quadratic(
     for i in 1..=n {
         let t = i as f32 / n as f32;
         let b = quadratic_point(p0, c, p1, t);
+        let sx = b.0 - prev.0;
+        let sy = b.1 - prev.1;
+        let len = (sx * sx + sy * sy).sqrt();
         let seg = Segment {
             from: prev,
             to: b,
             arc_start: arc,
+            arc_length: len,
         };
-        let sx = b.0 - prev.0;
-        let sy = b.1 - prev.1;
-        arc += (sx * sx + sy * sy).sqrt();
+        arc += len;
         out.push(seg);
         prev = b;
     }
