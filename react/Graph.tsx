@@ -564,8 +564,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       className={className}
       aria-label={ariaLabel ?? "Interactive graph visualization"}
       title="Shortcuts: Arrows to pan, +/- to zoom, F to fit, Esc to clear"
-      role="region"
-      aria-roledescription="graph"
       aria-keyshortcuts="Escape Plus - ArrowUp ArrowDown ArrowLeft ArrowRight F"
       tabIndex={0}
       style={{
@@ -578,13 +576,14 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }}
       onFocus={(e) => {
         // Add focus-visible style polyfill for accessibility
-        if (e.target.matches(":focus-visible")) {
-          e.target.style.outline = "2px solid #3b82f6";
-          e.target.style.outlineOffset = "-2px";
+        if (e.currentTarget.matches(":focus-visible")) {
+          e.currentTarget.style.outline = "2px solid #3b82f6";
+          e.currentTarget.style.outlineOffset = "-2px";
         }
       }}
       onBlur={(e) => {
-        e.target.style.outline = "none";
+        e.currentTarget.style.outline = "";
+        e.currentTarget.style.outlineOffset = "";
       }}
     />
   );
