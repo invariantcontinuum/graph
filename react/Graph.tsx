@@ -60,6 +60,7 @@ export interface GraphHandle {
    *  Used by canvas clicks (Cytoscape `cy.center(node)` parity). */
   panToNode: (id: string) => void;
   focusFit: (id: string | null, padding?: number) => void;
+  getSnapshot: () => GraphSnapshot | null;
   subscribeFrame: (
     cb: (m: { positions: Float32Array; vpMatrix: Float32Array }) => void,
   ) => () => void;
@@ -112,6 +113,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
   });
   const nodeDataByIdRef = useRef<Map<string, NodeData>>(new Map());
   const draggingNodeRef = useRef<string | null>(null);
+  const edgesRef = useRef<GraphSnapshot["edges"]>([]);
 
   const pendingFitRef = useRef(false);
   const [ready, setReady] = useState(false);
@@ -278,6 +280,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     const nodeDataById = new Map<string, NodeData>();
     for (const node of snap.nodes) nodeDataById.set(node.id, node);
     nodeDataByIdRef.current = nodeDataById;
+    edgesRef.current = snap.edges;
 
     if (snap.nodes.length === 0 && snap.edges.length === 0) {
       workerRef.current.postMessage({ type: "clear_snapshot" });
@@ -513,6 +516,25 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       focusFit: (id, padding = 80) => {
         engineRef.current?.focus_fit(id ?? undefined, padding);
         requestRender();
+      },
+      getSnapshot: () => {
+        if (!engineRef.current) return null;
+        const posMap = engineRef.current.get_snapshot_positions() as Record<string, [number, number]>;
+        const nodes = Array.from(nodeDataByIdRef.current.values()).map(node => {
+          const pos = posMap[node.id];
+          if (pos) {
+            return { ...node, x: pos[0], y: pos[1] };
+          }
+          return { ...node };
+        });
+        return {
+          nodes,
+          edges: edgesRef.current,
+          meta: {
+            node_count: nodes.length,
+            edge_count: edgesRef.current.length,
+          }
+        };
       },
       subscribeFrame: (cb) => {
         // Wrap the high-level callback in the low-level one the engine expects.
