@@ -319,3 +319,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-11-20 - [Hoist string-to-array conversions in Canvas text measurement]
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
+
+## 2026-08-22 - [Eliminate redundant Map.set in Pointer Controller onMove]
+**Learning:** In hot interaction handlers (like `onMove` for PointerEvents), continuously calling `state.active.set` for an existing pointer creates redundant Map writes and object allocations, leading to measurable overhead.
+**Action:** Replace `state.active.set(id, { id, x, y })` with in-place object mutation (`existing.x = x; existing.y = y;`) to eliminate the redundant Map write and allocation, since we already retrieved the object via `get`.
