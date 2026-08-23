@@ -235,3 +235,7 @@ Browser smoke must cover:
 ## 2024-11-06 - Add disabled state and dynamic tooltip to icon-only search buttons
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
+
+## 2024-08-24 - Canvas Accessibility Roles and Focus
+**Learning:** Assigning container-like roles (like `role="region"`) to interactive `<canvas>` elements triggers invalid ARIA combinations. Furthermore, purely visual overlay canvases with `aria-hidden={true}` need `tabIndex={-1}` to explicitly remove them from the focus order and satisfy accessibility linters.
+**Action:** Rely on `tabIndex={0}` and descriptive `aria-label` for interactive canvases without invalid structural roles, and always add `tabIndex={-1}` to `aria-hidden={true}` overlay canvases.
