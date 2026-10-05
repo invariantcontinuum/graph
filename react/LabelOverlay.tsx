@@ -69,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; typeTag: string | null }>
+    Map<string, { raw: string; type: string; typeTag: string | null; text: string; glyph: string | null; fullText: string; chars: string[] }>
   >(new Map());
   const typeTagCacheRef = useRef<Map<string, string>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
@@ -134,7 +134,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; typeTag: string | null }>;
+  labelCache: Map<string, { raw: string; type: string; typeTag: string | null; text: string; glyph: string | null; fullText: string; chars: string[] }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -211,7 +211,7 @@ function drawOneLabel(
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
     const typeTag = type ? type.toUpperCase() : null;
-    cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
+    cached = { raw: rawLabel, type, typeTag, text, glyph, fullText, chars };
     labelCache.set(id, cached);
   }
 
