@@ -202,6 +202,7 @@ export function GraphToolbar({
           value={layout}
           onChange={(e) => onLayoutChange(e.target.value as LayoutType)}
           aria-label="Select layout"
+          title="Select layout"
           onFocus={handleFocus}
           onBlur={handleBlur}
           onMouseEnter={handleMouseEnter}
