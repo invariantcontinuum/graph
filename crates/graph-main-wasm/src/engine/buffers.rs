@@ -301,14 +301,14 @@ impl RenderEngine {
             let segs = tessellate_quadratic(draw_src, draw_tgt, bend, DEFAULT_SEGMENTS);
             let total_arc = segs
                 .last()
-                .map(|s| s.arc_start + segment_length(s))
+                .map(|s| s.arc_start + s.arc_length)
                 .unwrap_or(1.0)
                 .max(1e-6);
             // Capture the last segment's fully-painted color so the arrow
             // instance below can reuse it.
             let mut last_segment_color = base_edge_color;
             for s in &segs {
-                let t = ((s.arc_start + segment_length(s) * 0.5) / total_arc).clamp(0.0, 1.0);
+                let t = ((s.arc_start + s.arc_length * 0.5) / total_arc).clamp(0.0, 1.0);
                 let mut color = lerp_color(from_color, to_color, t);
                 color[3] = mid_curve_alpha(color[3], t);
                 match focus {
@@ -477,12 +477,6 @@ fn lerp_color(a: [f32; 4], b: [f32; 4], t: f32) -> [f32; 4] {
 /// the endpoints.
 fn mid_curve_alpha(alpha: f32, t: f32) -> f32 {
     alpha * (0.75 + 0.25 * (2.0 * t - 1.0).abs())
-}
-
-fn segment_length(s: &crate::bezier::Segment) -> f32 {
-    let dx = s.to.0 - s.from.0;
-    let dy = s.to.1 - s.from.1;
-    (dx * dx + dy * dy).sqrt()
 }
 
 /// Focus state of one edge under the spotlight selection or hover. This
