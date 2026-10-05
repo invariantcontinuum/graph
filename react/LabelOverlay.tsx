@@ -69,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; upperType: string | null }>
+    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type?: string; typeTag?: string | null }>
   >(new Map());
   const typeTagCacheRef = useRef<Map<string, string>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
@@ -134,7 +134,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; upperType: string | null }>;
+  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type?: string; typeTag?: string | null }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -206,20 +206,26 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  // Cache the uppercase type string alongside text properties to prevent per-frame GC churn from .toUpperCase()
   if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
-    const upperType = type ? type.toUpperCase() : null;
-    cached = { raw: rawLabel, text, glyph, fullText, chars, type, upperType };
+    cached = {
+      raw: rawLabel,
+      text,
+      glyph,
+      fullText,
+      chars,
+      type,
+      typeTag: type ? type.toUpperCase() : null
+    };
     labelCache.set(id, cached);
   }
 
   const layout = layoutLabelChip(ctx, {
     text: cached.text,
     chars: cached.chars,
-    typeTag: cached.upperType,
+    typeTag: cached.typeTag ?? null,
     maxWidthPx: Math.max(
       nodeBoxW * CHIP_MIN_WIDTH_RATIO,
       CHIP_MIN_WIDTH_PX * dpr,
