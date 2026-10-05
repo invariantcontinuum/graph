@@ -160,13 +160,13 @@ export function NodeDetailsPanel({
               e.currentTarget.style.background = "transparent";
             }}
             onFocus={(e) => {
-              if (e.target.matches(":focus-visible")) {
-                e.target.style.outline = "2px solid #3b82f6";
-                e.target.style.outlineOffset = "2px";
+              if (e.currentTarget.matches(":focus-visible")) {
+                e.currentTarget.style.outline = "2px solid #3b82f6";
+                e.currentTarget.style.outlineOffset = "2px";
               }
             }}
             onBlur={(e) => {
-              e.target.style.outline = "none";
+              e.currentTarget.style.outline = "";
             }}
           >
             ×
