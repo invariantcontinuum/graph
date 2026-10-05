@@ -236,8 +236,15 @@ function drawOneLabel(
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
-    const typeTag = type ? type.toUpperCase() : null;
-    cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
+    cached = {
+      raw: rawLabel,
+      text,
+      glyph,
+      fullText,
+      chars,
+      type,
+      typeTag: type ? type.toUpperCase() : null,
+    };
     labelCache.set(id, cached);
   }
 
