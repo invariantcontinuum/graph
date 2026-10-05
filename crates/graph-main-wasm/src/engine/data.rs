@@ -5,6 +5,7 @@
 //! and `set_theme` also call `rebuild_hit_test_cache` and `recompute_pulse`
 //! so click/hover picking and the border pulse never race on a stale cache.
 
+use serde::Serialize;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
@@ -133,18 +134,6 @@ impl RenderEngine {
         serde_wasm_bindgen::to_value(&summary).unwrap_or(JsValue::NULL)
     }
 
-    pub fn get_snapshot_positions(&self) -> JsValue {
-        let mut map: HashMap<String, (f32, f32)> = HashMap::new();
-        for (i, id) in self.node_ids.iter().enumerate() {
-            let x = self.positions.get(i * 2);
-            let y = self.positions.get(i * 2 + 1);
-            if let (Some(&x), Some(&y)) = (x, y) {
-                map.insert(id.clone(), (x, y));
-            }
-        }
-        serde_wasm_bindgen::to_value(&map).unwrap_or(JsValue::NULL)
-    }
-
     pub fn set_theme(&mut self, theme_js: &JsValue) -> Result<(), JsValue> {
         let theme: ThemeConfig = serde_wasm_bindgen::from_value(theme_js.clone())
             .map_err(|e| JsValue::from_str(&format!("{e}")))?;
@@ -179,6 +168,8 @@ impl RenderEngine {
             pos_map.insert(&self.node_ids[i], (x, y));
             i += 1;
         }
-        serde_wasm_bindgen::to_value(&pos_map).unwrap_or(JsValue::NULL)
+        pos_map
+            .serialize(&serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true))
+            .unwrap_or(JsValue::NULL)
     }
 }

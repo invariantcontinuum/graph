@@ -71,7 +71,6 @@ export function LabelOverlay({
   const labelCacheRef = useRef<
     Map<string, { raw: string; text: string; glyph: string | null; type: string; typeTag: string | null; fullText: string; chars: string[] }>
   >(new Map());
-  const typeTagCacheRef = useRef<Map<string, string>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
 
   const renderFrame = useCallback(
@@ -91,7 +90,6 @@ export function LabelOverlay({
           nodeIds,
           labels,
           labelCache: labelCacheRef.current,
-          typeTagCache: typeTagCacheRef.current,
           nodeTypes,
           theme,
         });
@@ -213,22 +211,10 @@ function drawOneLabel(
     const typeTag = type ? type.toUpperCase() : null;
     cached = { raw: rawLabel, text, glyph, type, typeTag, fullText, chars };
     labelCache.set(id, cached);
-  } else if (cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
-    if (cached.raw !== rawLabel || cached.glyph !== glyph) {
-      cached.raw = rawLabel;
-      cached.text = rawLabel.replaceAll(/\s+/g, " ").trim();
-      cached.glyph = glyph;
-      cached.fullText = glyph ? `${glyph} ${cached.text}` : cached.text;
-      cached.chars = Array.from(cached.fullText);
-    }
-    if (cached.type !== type) {
-      cached.type = type;
-      cached.typeTag = type ? type.toUpperCase() : null;
-    }
   }
 
   const layout = layoutLabelChip(ctx, {
-    text: cached.text,
+    text: cached.fullText,
     chars: cached.chars,
     typeTag: cached.typeTag,
     maxWidthPx: Math.max(

@@ -61,4 +61,7 @@ hide missing package behavior with local workarounds.
 
 ## 2026-08-20 - [Snapshot plus position export]
 **Value:** Apps need persistence after layout or drag
-**Action:** Added `get_snapshot_positions` to the WASM engine which returns a map of node IDs to `[x, y]` positions. Exposed `getSnapshot` on `GraphHandle` in React which merges these positions into the active snapshot nodes' `meta` fields, allowing host apps to persist and reload the exact spatial layout.
+**Action:** Added `get_snapshot_positions` to the WASM engine which returns a map of node IDs to `[x, y]` positions. Exposed `getSnapshot` on `GraphHandle` in React which merges these positions into the active snapshot nodes' top-level `x` and `y` fields, allowing host apps to persist and reload the exact spatial layout.
+
+## 2026-10-05 - [PR integration validation]
+Reconciled the overlapping snapshot exports using the newer stride-four implementation and top-level coordinates. Position maps serialize as plain JavaScript objects for React lookup. Added a browser regression for serialization and stride, plus a React rendering regression for cached label glyphs and type changes.

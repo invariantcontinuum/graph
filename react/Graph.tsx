@@ -71,7 +71,6 @@ export interface GraphHandle {
       edgeTypeKeys: string[];
     }) => void,
   ) => () => void;
-  getSnapshot: () => GraphSnapshot | null;
 }
 
 export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
@@ -579,34 +578,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
         const idx = engineRef.current.subscribe_edges(wrapped);
         return () => engineRef.current?.unsubscribe_edges(idx);
       },
-      getSnapshot: () => {
-        if (!engineRef.current || !snapshot) return null;
-
-        const posMap = engineRef.current.get_snapshot_positions() as Record<string, [number, number]>;
-        if (!posMap) return snapshot;
-
-        const nextNodes = snapshot.nodes.map(n => {
-          const pos = posMap[n.id];
-          if (pos) {
-            return {
-              ...n,
-              meta: {
-                ...n.meta,
-                x: pos[0],
-                y: pos[1],
-              }
-            };
-          }
-          return n;
-        });
-
-        return {
-          ...snapshot,
-          nodes: nextNodes,
-        };
-      },
     }),
-    [applySnapshot, requestRender, snapshot],
+    [applySnapshot, requestRender],
   );
 
   return (

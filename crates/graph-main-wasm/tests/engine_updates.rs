@@ -5,6 +5,31 @@ use wasm_bindgen_test::*;
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
+fn snapshot_positions_are_object_properties_with_stride_four() {
+    let document = web_sys::window().unwrap().document().unwrap();
+    let canvas = document.create_element("canvas").unwrap();
+    let canvas: web_sys::HtmlCanvasElement = canvas.dyn_into().unwrap();
+    let mut engine = RenderEngine::create(canvas).expect("Failed to create engine");
+    engine.set_node_ids(vec!["a".into(), "b".into(), "pending".into()]);
+    engine.update_positions(&[10.0, 20.0, 68.0, 0.0, -30.0, 40.0, 68.0, 1.0], &[0, 0]);
+
+    let snapshot = engine.get_snapshot_positions();
+    assert!(!snapshot.is_instance_of::<js_sys::Map>());
+    for (id, expected) in [("a", [10.0, 20.0]), ("b", [-30.0, 40.0])] {
+        let value = js_sys::Reflect::get(&snapshot, &id.into()).unwrap();
+        let coordinates = js_sys::Array::from(&value);
+        assert_eq!(coordinates.length(), 2);
+        assert_eq!(coordinates.get(0).as_f64(), Some(expected[0]));
+        assert_eq!(coordinates.get(1).as_f64(), Some(expected[1]));
+    }
+    assert!(
+        js_sys::Reflect::get(&snapshot, &"pending".into())
+            .unwrap()
+            .is_undefined()
+    );
+}
+
+#[wasm_bindgen_test]
 fn test_update_edges() {
     // Create a mock canvas
     let document = web_sys::window().unwrap().document().unwrap();
