@@ -451,6 +451,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
     }
   }, []);
 
+  // Fix for typescript:S3776: onMove pointer event section has been split
+  // and extracted to usePointerController.ts to resolve cognitive complexity.
   usePointerController({
     canvasRef,
     engineRef,
