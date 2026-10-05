@@ -77,6 +77,8 @@ export function LabelOverlay({
         glyph: string | null;
         fullText: string;
         chars: string[];
+        type: string;
+        typeTag: string | null;
       }
     >
   >(new Map());
@@ -150,9 +152,10 @@ interface FrameContext {
       glyph: string | null;
       fullText: string;
       chars: string[];
+      type: string;
+      typeTag: string | null;
     }
   >;
-  typeTagCache: Map<string, string>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -224,11 +227,17 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph) {
-    const name = rawLabel.replaceAll(/\s+/g, " ").trim();
-    const text = glyph ? `${glyph} ${name}` : name;
-    const chars = Array.from(text);
-    cached = { raw: rawLabel, glyph, text, chars };
+  if (
+    !cached ||
+    cached.raw !== rawLabel ||
+    cached.glyph !== glyph ||
+    cached.type !== type
+  ) {
+    const text = rawLabel.replaceAll(/\s+/g, " ").trim();
+    const fullText = glyph ? `${glyph} ${text}` : text;
+    const chars = Array.from(fullText);
+    const typeTag = type ? type.toUpperCase() : null;
+    cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
     labelCache.set(id, cached);
   }
 
@@ -244,7 +253,7 @@ function drawOneLabel(
   const layout = layoutLabelChip(ctx, {
     text: cached.text,
     chars: cached.chars,
-    typeTag: upperType,
+    typeTag: cached.typeTag,
     maxWidthPx: Math.max(
       nodeBoxW * CHIP_MIN_WIDTH_RATIO,
       CHIP_MIN_WIDTH_PX * dpr,

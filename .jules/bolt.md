@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## 2024-11-20 - [Lazy cache toUpperCase in Canvas render loop]
-**Learning:** In the hot Canvas render path (`LabelOverlay`), calling `type.toUpperCase()` directly inside the per-node render loop creates a new string on every frame, leading to excessive string allocations and Garbage Collection (GC) pauses when rendering hundreds of nodes.
-**Action:** Cache the uppercase conversions using a lazy `Map` (e.g., `typeTagCacheRef.current`) during the render tick to eliminate the per-frame string allocations.
+## 2024-08-10 - [Cache toUpperCase in render loops]
+**Learning:** Calling `.toUpperCase()` inside a hot render loop (like Canvas `requestAnimationFrame`) allocates new string objects on every frame, causing Garbage Collection (GC) churn and dropping FPS.
+**Action:** Eagerly compute and cache the `.toUpperCase()` result alongside other lazy-cached properties (like `Array.from()`) so that string allocation happens only once per label when its data changes, rather than continuously on every frame.
