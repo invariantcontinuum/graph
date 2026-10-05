@@ -73,11 +73,11 @@ export function LabelOverlay({
       string,
       {
         raw: string;
+        type: string;
         text: string;
         glyph: string | null;
         fullText: string;
         chars: string[];
-        type: string;
         typeTag: string | null;
       }
     >
@@ -149,11 +149,11 @@ interface FrameContext {
     string,
     {
       raw: string;
+      type: string;
       text: string;
       glyph: string | null;
       fullText: string;
       chars: string[];
-      type: string;
       typeTag: string | null;
     }
   >;
@@ -237,10 +237,8 @@ function drawOneLabel(
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
-    // Memoize the .toUpperCase() conversion in the lazy cache to prevent
-    // per-frame string allocations in the hot render loop.
     const typeTag = type ? type.toUpperCase() : null;
-    cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
+    cached = { raw: rawLabel, type, text, glyph, fullText, chars, typeTag };
     labelCache.set(id, cached);
   }
 
