@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## $(date +%Y-%m-%d) - [Memoize string allocation in render loop]
-**Learning:** Calling `.toUpperCase()` in a per-frame render loop (like Canvas `requestAnimationFrame`) causes excessive string allocations and Garbage Collection churn.
-**Action:** Extend the existing per-item cache (`labelCache`) to store these derived string operations, ensuring to include the dependencies (like `type`) in the cache invalidation check to prevent stale data.
+## 2026-05-29 - [Snapshot plus position export]
+**Learning:** Added `getSnapshot()` to `GraphHandle` interface and Rust engine to retrieve node layout positions, allowing state persistence. Extended `NodeData` to support `x` and `y` layout values natively, which eliminates the need to maintain parallel position mappings externally.
+**Action:** Updated `react/types.ts` `NodeData` interface to include `x?: number` and `y?: number`. Added `get_snapshot_positions` mapped method to `crates/graph-main-wasm/src/engine/data.rs` to expose WASM buffer coordinates cleanly. Updated `react/Graph.tsx` imperative handle to construct and merge node properties, outputting `{ nodes, edges, meta }` on demand.

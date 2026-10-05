@@ -1,0 +1,10 @@
+I need to add the `getSnapshot()` method to `GraphHandle` in `react/Graph.tsx` as requested in the feature roadmap.
+This method should return the current graph snapshot along with the latest layout positions for the nodes, allowing host applications to save or export the persistent state.
+I will write a Rust method `get_snapshot` on `RenderEngine` in `crates/graph-main-wasm/src/engine/data.rs` to gather current positions and return a JSON containing `{ id, x, y }` for each node.
+Then, `Graph.tsx` will expose `getSnapshot(): GraphSnapshot & { layout: ... }` using this data.
+
+1.  **Add `get_positions` to `RenderEngine`:** Modify `crates/graph-main-wasm/src/engine/data.rs` to expose `get_positions(&self) -> JsValue` which returns an array of objects `{ id: string, x: number, y: number }`.
+2.  **Update `GraphHandle` type:** Add `getSnapshot: () => GraphSnapshot & { positions: Record<string, { x: number; y: number }> };` to `react/Graph.tsx` and `react/types.ts`.
+3.  **Implement `getSnapshot`:** In `react/Graph.tsx`, add `getSnapshot` to `useImperativeHandle` which calls `engineRef.current.get_positions()` and merges it with `nodeDataByIdRef.current` and current edges.
+4.  **Test the implementation.**
+5.  **Complete pre-commit steps.**

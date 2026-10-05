@@ -129,6 +129,8 @@ const graphRef = useRef<GraphHandle | null>(null);
 <GraphScene ref={graphRef} themeMode="dark" snapshot={snapshot} />;
 
 // Later:
+const state = graphRef.current?.getSnapshot();
+
 graphRef.current?.panToNode("n1");
 graphRef.current?.focusFit("n1", 32);
 
