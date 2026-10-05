@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { fitLabelInBox } from "./fitLabel";
 
 // jsdom does not provide a real Canvas2D context; mock the surface used by
@@ -43,6 +43,16 @@ describe("fitLabelInBox", () => {
   test("single short word fits unwrapped", () => {
     const r = fit("hello", 200);
     expect(r?.lines).toEqual(["hello"]);
+  });
+
+  test("measures a fitting single-line label once", () => {
+    const measureText = vi.fn((text: string) => ({ width: text.length * 6 }));
+    const context = { font: "", measureText } as unknown as CanvasRenderingContext2D;
+    const text = "Service API";
+    const result = fitLabelInBox(context, text, Array.from(text), 200, 40,
+      "sans-serif", 400, 14, 7, 1);
+    expect(result?.lines).toEqual([text]);
+    expect(measureText).toHaveBeenCalledExactlyOnceWith(text);
   });
 
   test("very long unbroken text ellipsizes at min font", () => {

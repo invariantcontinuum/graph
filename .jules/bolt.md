@@ -330,3 +330,6 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 ## 2026-10-05 - [Add fast path for single-line canvas text measurement]
 **Learning:** When laying out text via CanvasRenderingContext2D and wrapping lines, running character-by-character iteration loops (`wrapIntoLines`) for every label is expensive. Most labels comfortably fit on a single line.
 **Action:** Add an explicit fast path to check if the entire string fits on a single line (`if (ctx.measureText(text).width <= maxWidth)`) before running character-by-character iteration loops. This prevents expensive O(N) measurements for the vast majority of short labels.
+
+## 2026-10-06 - Integrate label fast paths
+Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
