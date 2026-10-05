@@ -634,6 +634,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       }}
       onBlur={(e) => {
         e.currentTarget.style.outline = "";
+        e.currentTarget.style.outlineOffset = "";
       }}
     />
   );
