@@ -206,7 +206,7 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  if (!cached) {
+  if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
