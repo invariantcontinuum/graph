@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## 2026-08-17 - [Cache derived type labels to avoid redundant string allocations]
-**Learning:** In hot React/Canvas render loops, calling string allocation methods like `.toUpperCase()` on every iteration (e.g., for every visible node) creates a massive number of short-lived objects. This leads to Garbage Collection churn and degrades FPS.
-**Action:** Extend the existing per-item cache (e.g., `labelCache`) to include the new derived properties (like `typeTag`) and add the source property (like `type`) to the cache invalidation check. This avoids redundant allocations without adding extra Map instances.
+## 2026-08-17 - [Cache derived string properties to avoid GC churn]
+**Learning:** Performing string modifications like `.toUpperCase()` inside a hot per-frame render loop (e.g., Canvas `requestAnimationFrame`) causes unnecessary short-lived string allocations, leading to Garbage Collection churn.
+**Action:** Hoist the string conversion into the dynamic lazy cache alongside the string itself and ensure the caching invalidation logic (`cached.type !== type`) takes the new dependency into account.
