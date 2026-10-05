@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## 2026-08-22 - [Eliminate redundant Map.set in Pointer Controller onMove]
-**Learning:** In hot interaction handlers (like `onMove` for PointerEvents), continuously calling `state.active.set` for an existing pointer creates redundant Map writes and object allocations, leading to measurable overhead.
-**Action:** Replace `state.active.set(id, { id, x, y })` with in-place object mutation (`existing.x = x; existing.y = y;`) to eliminate the redundant Map write and allocation, since we already retrieved the object via `get`.
+## 2024-11-21 - [Memoize string allocations in canvas render loops]
+**Learning:** Calling string allocation methods like `.toUpperCase()` directly inside hot, per-frame render loops (e.g., Canvas `requestAnimationFrame` iterating over visible nodes) creates massive amounts of short-lived objects leading to Garbage Collection churn.
+**Action:** Memoize these conversions using a lazy cache (`useRef(new Map())`) evaluated dynamically during the render tick, and extend existing per-item caches (e.g., `labelCache`) instead of creating new parallel caches to minimize memory overhead.
