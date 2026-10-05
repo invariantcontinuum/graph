@@ -236,6 +236,6 @@ Browser smoke must cover:
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
 
-## 2026-08-16 - Avoid invalid ARIA combinations on canvas
-**Learning:** For interactive `<canvas>` elements, assigning container-like roles such as `role="region"` or dependent `aria-roledescription`s triggers invalid ARIA combinations (e.g., SonarCloud `typescript:S6819`, `typescript:S6843`).
-**Action:** Rely on `tabIndex={0}` and a descriptive `aria-label` for keyboard accessibility without triggering invalid ARIA combinations.
+## 2024-11-20 - Avoid container-like ARIA roles on interactive canvases
+**Learning:** For interactive `<canvas>` elements, assigning container-like roles such as `role="region"` or dependent `aria-roledescription`s results in invalid ARIA combinations. It also can interfere with standard keyboard navigation and assistive technologies when `tabIndex={0}` is used.
+**Action:** Rely on `tabIndex={0}` and a descriptive `aria-label` for keyboard accessibility on interactive canvas elements without adding roles that trigger invalid ARIA combinations (e.g., SonarCloud `typescript:S6819`, `typescript:S6843`).
