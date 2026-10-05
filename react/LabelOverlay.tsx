@@ -206,13 +206,25 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
+  if (!cached) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
     const typeTag = type ? type.toUpperCase() : null;
     cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
     labelCache.set(id, cached);
+  } else if (cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
+    if (cached.raw !== rawLabel || cached.glyph !== glyph) {
+      cached.raw = rawLabel;
+      cached.text = rawLabel.replaceAll(/\s+/g, " ").trim();
+      cached.glyph = glyph;
+      cached.fullText = glyph ? `${glyph} ${cached.text}` : cached.text;
+      cached.chars = Array.from(cached.fullText);
+    }
+    if (cached.type !== type) {
+      cached.type = type;
+      cached.typeTag = type ? type.toUpperCase() : null;
+    }
   }
 
   const layout = layoutLabelChip(ctx, {
