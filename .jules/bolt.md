@@ -326,3 +326,7 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 
 ## 2026-10-05 - Release quality gate
 Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and explicit version, disabled npm install lifecycle scripts, and invoked the locked local TypeScript compiler. Worker messages now reject explicit foreign origins while preserving dedicated-worker and same-origin messages; regression tests cover rejection before configuration and initialization.
+
+## 2026-10-05 - [Add fast path for single-line canvas text measurement]
+**Learning:** When laying out text via CanvasRenderingContext2D and wrapping lines, running character-by-character iteration loops (`wrapIntoLines`) for every label is expensive. Most labels comfortably fit on a single line.
+**Action:** Add an explicit fast path to check if the entire string fits on a single line (`if (ctx.measureText(text).width <= maxWidth)`) before running character-by-character iteration loops. This prevents expensive O(N) measurements for the vast majority of short labels.
