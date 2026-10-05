@@ -80,12 +80,15 @@ export function GraphToolbar({
           aria-label="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           style={{
             padding: "4px 8px",
             borderRadius: 4,
             border: `1px solid ${themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
             background: themeMode === "dark" ? "#0f172a" : "#f1f5f9",
             color: "inherit",
+            transition: "filter 0.2s",
           }}
         />
         <button
