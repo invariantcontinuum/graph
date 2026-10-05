@@ -236,6 +236,6 @@ Browser smoke must cover:
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
 
-## 2024-08-11 - Polyfill hover state on inline-styled inputs
-**Learning:** While buttons and select dropdowns often receive polyfilled hover states in purely inline-styled React components, text inputs can easily be overlooked. Missing hover states on inputs creates an inconsistent interaction model where some form elements respond to pointers and others do not.
-**Action:** Ensure all interactive form elements, including `<input>` fields, are polyfilled with `:hover` states (e.g., using `onMouseEnter` and `onMouseLeave`) to maintain consistent visual feedback.
+## 2026-08-12 - [Add tabIndex={-1} to aria-hidden overlay canvases]
+**Learning:** Elements marked with `aria-hidden={true}` (such as visual overlay canvases) must explicitly set `tabIndex={-1}` to satisfy accessibility linters (e.g., SonarCloud `typescript:S6825`) and ensure they are removed from the focus order.
+**Action:** Always include `tabIndex={-1}` on overlay `<canvas>` elements when adding `aria-hidden={true}`.
