@@ -316,6 +316,10 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In the `ellipsize` text measurement binary search, using `chars.slice(0, mid).join("")` creates unnecessary short-lived allocations causing excessive Garbage Collection churn. Since we already hoisted the `Array.from(text)` conversion, we can simply iterate the array and concatenate the characters to build the string, which avoids array allocation and is twice as fast.
 **Action:** Replace `chars.slice(...).join("")` inside the text measurement string builders with iterative string concatenation to eliminate array allocations.
 
-## 2024-11-20 - [Hoist Array.from to eliminate Canvas text measurement allocations]
-**Learning:** In the Canvas text measurement loop `fitLabelInBox` and text ellipsizing `ellipsize` (running per frame for every label), calling `Array.from(text)` causes thousands of redundant array allocations per frame. Furthermore, constructing strings using substrings like `slice` creates excessive Garbage Collection churn.
-**Action:** Hoist array conversions outside of inner layout loops and pass the pre-computed array down to helper functions.
+## 2024-11-20 - [Hoist string-to-array conversions in Canvas text measurement]
+**Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
+**Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
+
+## 2024-11-20 - [Lazy cache toUpperCase in Canvas render loop]
+**Learning:** In the hot Canvas render path (`LabelOverlay`), calling `type.toUpperCase()` directly inside the per-node render loop creates a new string on every frame, leading to excessive string allocations and Garbage Collection (GC) pauses when rendering hundreds of nodes.
+**Action:** Cache the uppercase conversions using a lazy `Map` (e.g., `typeTagCacheRef.current`) during the render tick to eliminate the per-frame string allocations.
