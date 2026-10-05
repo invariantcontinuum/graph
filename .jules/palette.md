@@ -235,3 +235,7 @@ Browser smoke must cover:
 ## 2024-11-06 - Add disabled state and dynamic tooltip to icon-only search buttons
 **Learning:** Icon-only submit buttons that rely on user input often fail silently without providing any feedback if clicked while the input is empty. Without a disabled state, users are not explicitly told that the button requires input to function. Furthermore, adding a dynamic `title` tooltip not only exposes the keyboard shortcut (e.g., Enter) when active but also provides an explanation when disabled (e.g., "Type a query to search").
 **Action:** Added a `disabled` attribute and a dynamic `title` tooltip to the icon-only search submit button in `react/GraphToolbar.tsx` to provide visual and programmatic feedback when the input is empty.
+
+## 2024-11-07 - Add tooltips to elements with text overflow ellipsis
+**Learning:** Text truncated via CSS `textOverflow: 'ellipsis'` becomes entirely inaccessible to sighted users without a hover tooltip. Additionally, using the true single ellipsis character ('…') instead of three periods ('...') applies typographic visual polish.
+**Action:** Always provide `title` attributes on any container where `textOverflow: 'ellipsis'` is applied. Use the true single ellipsis character ('…') instead of three periods ('...') for text truncation within UI elements.
