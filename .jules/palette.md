@@ -239,3 +239,7 @@ Browser smoke must cover:
 ## 2024-08-24 - Canvas Accessibility Roles and Focus
 **Learning:** Assigning container-like roles (like `role="region"`) to interactive `<canvas>` elements triggers invalid ARIA combinations. Furthermore, purely visual overlay canvases with `aria-hidden={true}` need `tabIndex={-1}` to explicitly remove them from the focus order and satisfy accessibility linters.
 **Action:** Rely on `tabIndex={0}` and descriptive `aria-label` for interactive canvases without invalid structural roles, and always add `tabIndex={-1}` to `aria-hidden={true}` overlay canvases.
+
+## 2024-11-13 - Add hover tooltips to non-obvious inputs
+**Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
+**Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
