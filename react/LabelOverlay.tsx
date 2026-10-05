@@ -69,7 +69,7 @@ export function LabelOverlay({
 }: LabelOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelCacheRef = useRef<
-    Map<string, { raw: string; type: string; text: string; glyph: string | null; fullText: string; chars: string[]; typeTag: string | null }>
+    Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; typeTag: string | null }>
   >(new Map());
   const typeTagCacheRef = useRef<Map<string, string>>(new Map());
   const { frameRef, dirtyRef } = useEngineFrameState(engineRef, ready);
@@ -134,7 +134,7 @@ interface FrameContext {
   dpr: number;
   nodeIds: string[];
   labels: Record<string, string>;
-  labelCache: Map<string, { raw: string; type: string; text: string; glyph: string | null; fullText: string; chars: string[]; typeTag: string | null }>;
+  labelCache: Map<string, { raw: string; text: string; glyph: string | null; fullText: string; chars: string[]; type: string; typeTag: string | null }>;
   nodeTypes: Record<string, string>;
   theme: GraphTheme;
 }
@@ -206,16 +206,23 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  // ⚡ Bolt: Include `type` in the cache invalidation condition and cache `typeTag`
-  // to avoid calling `.toUpperCase()` in the hot `requestAnimationFrame` loop,
-  // which creates short-lived string objects and causes GC churn.
   if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
     const chars = Array.from(fullText);
     const typeTag = type ? type.toUpperCase() : null;
-    cached = { raw: rawLabel, type, text, glyph, fullText, chars, typeTag };
-    labelCache.set(id, cached);
+    if (cached) {
+      cached.raw = rawLabel;
+      cached.text = text;
+      cached.glyph = glyph;
+      cached.fullText = fullText;
+      cached.chars = chars;
+      cached.type = type;
+      cached.typeTag = typeTag;
+    } else {
+      cached = { raw: rawLabel, text, glyph, fullText, chars, type, typeTag };
+      labelCache.set(id, cached);
+    }
   }
 
   let upperType = null;
