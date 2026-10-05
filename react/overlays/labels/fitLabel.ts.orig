@@ -24,7 +24,6 @@ export function fitLabelInBox(
   for (let fontPx = baseFontPx; fontPx >= minFontPx - 0.01; fontPx -= step) {
     const fitted = tryFitAtSize(
       ctx,
-      text,
       chars,
       fontPx,
       maxWidth,
