@@ -8,6 +8,10 @@ let tickScheduled = false;
 let wasmBasePath = "/graph";
 
 globalThis.onmessage = async (e: MessageEvent) => {
+  // Dedicated-worker messages have an empty origin. Reject any explicit
+  // foreign origin before it can configure WASM URLs or mutate the graph.
+  if (e.origin !== "" && e.origin !== globalThis.location.origin) return;
+
   if (e.data?.type === "configure") {
     if (typeof e.data.wasmBasePath === "string") {
       wasmBasePath = e.data.wasmBasePath.replace(/\/+$/, "");

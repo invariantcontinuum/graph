@@ -323,3 +323,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 ## 2024-10-18 - Cache node type uppercase conversion in LabelOverlay
 **Learning:** In React Canvas applications, calling string allocation methods like `.toUpperCase()` directly inside hot, per-frame render loops (e.g. iterating over visible nodes in `drawAllLabels`) creates massive amounts of short-lived objects leading to Garbage Collection churn.
 **Action:** Extend existing per-item caches (like `labelCache`) to include derived properties (like `typeTag`) to eliminate redundant allocations without upfront penalty.
+
+## 2026-10-05 - Release quality gate
+Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and explicit version, disabled npm install lifecycle scripts, and invoked the locked local TypeScript compiler. Worker messages now reject explicit foreign origins while preserving dedicated-worker and same-origin messages; regression tests cover rejection before configuration and initialization.
