@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## 2024-05-18 - [Memoize string methods in hot render loops]
-**Learning:** Calling string allocation methods like `.toUpperCase()` directly inside hot, per-frame render loops (e.g., Canvas `requestAnimationFrame` iterating over visible nodes) creates massive amounts of short-lived objects leading to Garbage Collection churn.
-**Action:** Memoize these conversions using a lazy cache (e.g., extending the existing per-item cache) evaluated dynamically during the render tick.
+## $(date +%Y-%m-%d) - [Memoize string allocation in render loop]
+**Learning:** Calling `.toUpperCase()` in a per-frame render loop (like Canvas `requestAnimationFrame`) causes excessive string allocations and Garbage Collection churn.
+**Action:** Extend the existing per-item cache (`labelCache`) to store these derived string operations, ensuring to include the dependencies (like `type`) in the cache invalidation check to prevent stale data.

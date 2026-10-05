@@ -206,9 +206,6 @@ function drawOneLabel(
 
   const rawLabel = labels[id] ?? "";
   let cached = labelCache.get(id);
-  // ⚡ Bolt: Caching `type.toUpperCase()` here eliminates O(visible_nodes) string
-  // allocations per frame in the hot render loop, stabilizing memory usage and
-  // significantly reducing GC pauses during panning and zooming.
   if (!cached || cached.raw !== rawLabel || cached.glyph !== glyph || cached.type !== type) {
     const text = rawLabel.replaceAll(/\s+/g, " ").trim();
     const fullText = glyph ? `${glyph} ${text}` : text;
