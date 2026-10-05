@@ -74,26 +74,6 @@ export function handleSinglePointerMove(
   }
 }
 
-export function handlePinchMove(
-  activePointers: Map<number, PointerState>,
-  engine: any,
-  lastPinchDist: number,
-  lastCentroid: { x: number; y: number } | null,
-) {
-  const d = pinchDist(activePointers);
-  const c = centroid(activePointers);
-  const deltaZoom = d / Math.max(lastPinchDist, 1e-3);
-  // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
-  // Invert via -log so a growing distance zooms in.
-  engine?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
-  if (lastCentroid) {
-    engine?.handle_pan_start(lastCentroid.x, lastCentroid.y);
-    engine?.handle_pan_move(c.x, c.y);
-    engine?.handle_pan_end();
-  }
-  return { d, c };
-}
-
 export interface PointerControllerState {
   active: Map<number, PointerState>;
   singleMode: "drag" | "pan" | null;
@@ -101,6 +81,25 @@ export interface PointerControllerState {
   lastPinchDist: number;
   lastCentroid: { x: number; y: number } | null;
   downPos: { x: number; y: number } | null;
+}
+
+export function handlePinchMove(
+  state: PointerControllerState,
+  engine: any,
+) {
+  const d = pinchDist(state.active);
+  const c = centroid(state.active);
+  const deltaZoom = d / Math.max(state.lastPinchDist, 1e-3);
+  // handle_zoom(delta, x, y) — delta > 0 → zoom out, < 0 → zoom in.
+  // Invert via -log so a growing distance zooms in.
+  engine?.handle_zoom(-Math.log(deltaZoom), c.x, c.y);
+  if (state.lastCentroid) {
+    engine?.handle_pan_start(state.lastCentroid.x, state.lastCentroid.y);
+    engine?.handle_pan_move(c.x, c.y);
+    engine?.handle_pan_end();
+  }
+  state.lastPinchDist = d;
+  state.lastCentroid = c;
 }
 
 export function handlePointerDown(

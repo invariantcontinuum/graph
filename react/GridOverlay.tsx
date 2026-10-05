@@ -59,6 +59,7 @@ export function GridOverlay({ engineRef, theme, ready }: GridOverlayProps) {
       ref={canvasRef}
       className="graph-grid-overlay"
       aria-hidden={true}
+      tabIndex={-1}
       style={{
         position: "absolute",
         inset: 0,

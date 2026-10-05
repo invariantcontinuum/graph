@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   toLocalPointer,
   handleHoverOnly,
@@ -34,32 +34,37 @@ export function usePointerController({
   flushWorkerMessages,
   requestRender,
 }: UsePointerControllerProps) {
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const stateRef = useRef<PointerControllerState>({
+    active: new Map(),
+    singleMode: null,
+    suppressNextClick: false,
+    lastPinchDist: 0,
+    lastCentroid: null,
+    downPos: null,
+  });
 
-    const state: PointerControllerState = {
-      active: new Map(),
-      singleMode: null,
-      suppressNextClick: false,
-      lastPinchDist: 0,
-      lastCentroid: null,
-      downPos: null,
-    };
-
-    const onDown = (e: PointerEvent) => {
+  const onDown = useCallback(
+    (e: PointerEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       handlePointerDown(
         e,
-        state,
+        stateRef.current,
         canvas,
         engineRef.current,
         draggingNodeRef,
         flushWorkerMessages,
       );
       requestRender();
-    };
+    },
+    [canvasRef, engineRef, draggingNodeRef, flushWorkerMessages, requestRender],
+  );
 
-    const onMove = (e: PointerEvent) => {
+  const onMove = useCallback(
+    (e: PointerEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const state = stateRef.current;
       const local = toLocalPointer(e.clientX, e.clientY, canvas);
       const existing = state.active.get(e.pointerId);
 
@@ -93,22 +98,27 @@ export function usePointerController({
           flushWorkerMessages,
         );
       } else if (state.active.size === 2) {
-        const { d, c } = handlePinchMove(
-          state.active,
-          engineRef.current,
-          state.lastPinchDist,
-          state.lastCentroid,
-        );
-        state.lastPinchDist = d;
-        state.lastCentroid = c;
+        handlePinchMove(state, engineRef.current);
       }
       requestRender();
-    };
+    },
+    [
+      canvasRef,
+      engineRef,
+      callbacksRef,
+      nodeFromId,
+      flushWorkerMessages,
+      requestRender,
+    ],
+  );
 
-    const onUp = (e: PointerEvent) => {
+  const onUp = useCallback(
+    (e: PointerEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       handlePointerUp(
         e,
-        state,
+        stateRef.current,
         canvas,
         engineRef.current,
         callbacksRef.current,
@@ -117,12 +127,25 @@ export function usePointerController({
         flushWorkerMessages,
       );
       requestRender();
-    };
+    },
+    [
+      canvasRef,
+      engineRef,
+      callbacksRef,
+      nodeFromId,
+      draggingNodeRef,
+      flushWorkerMessages,
+      requestRender,
+    ],
+  );
 
-    const onClick = (e: MouseEvent) => {
+  const onClick = useCallback(
+    (e: MouseEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       handleClick(
         e,
-        state,
+        stateRef.current,
         canvas,
         engineRef.current,
         callbacksRef.current,
@@ -130,11 +153,20 @@ export function usePointerController({
         draggingNodeRef,
       );
       requestRender();
-    };
+    },
+    [canvasRef, engineRef, callbacksRef, nodeFromId, draggingNodeRef, requestRender],
+  );
 
-    const onKeyDown = (e: KeyboardEvent) => {
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
       handleKeyDown(e, engineRef.current, callbacksRef.current, requestRender);
-    };
+    },
+    [engineRef, callbacksRef, requestRender],
+  );
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     canvas.style.touchAction = "none";
     canvas.addEventListener("pointerdown", onDown);
@@ -151,13 +183,5 @@ export function usePointerController({
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("keydown", onKeyDown);
     };
-  }, [
-    canvasRef,
-    engineRef,
-    callbacksRef,
-    nodeFromId,
-    draggingNodeRef,
-    flushWorkerMessages,
-    requestRender,
-  ]);
+  }, [canvasRef, onDown, onMove, onUp, onClick, onKeyDown]);
 }
