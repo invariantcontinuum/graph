@@ -320,6 +320,6 @@ failure and confirm the GitHub WASM Browser Tests run passes.
 **Learning:** In hot frontend render paths (like Canvas text measurement loops), performing `Array.from(text)` inside the loop creates redundant allocations, causing severe memory churn and Garbage Collection (GC) pauses that drop FPS.
 **Action:** Hoist array conversions outside of inner layout loops via caching. Pass the pre-computed arrays to the inner functions to eliminate array allocations.
 
-## 2026-08-22 - [Cache segment arc lengths to avoid redundant sqrt calls in hot render path]
-**Learning:** In the edge tessellation and rendering logic (`tessellate_quadratic` and `buffers.rs`), the segment length was being repeatedly recalculated using `.sqrt()` inside the hot frame update loop (twice per segment). This adds measurable overhead since `.sqrt()` is an expensive mathematical operation.
-**Action:** When computing geometric properties like Euclidean distance that are used multiple times per frame, cache them during initial generation (e.g., adding `arc_length` to the `Segment` struct) to completely eliminate redundant `.sqrt()` calls in the hot render path.
+## 2026-08-22 - [Eliminate redundant Map.set in Pointer Controller onMove]
+**Learning:** In hot interaction handlers (like `onMove` for PointerEvents), continuously calling `state.active.set` for an existing pointer creates redundant Map writes and object allocations, leading to measurable overhead.
+**Action:** Replace `state.active.set(id, { id, x, y })` with in-place object mutation (`existing.x = x; existing.y = y;`) to eliminate the redundant Map write and allocation, since we already retrieved the object via `get`.
