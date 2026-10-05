@@ -146,7 +146,12 @@ function appendEllipsizedRemainder(
   if (!remaining) return lines;
   const lastLine = lines.at(-1) ?? "";
   const combined = `${lastLine} ${remaining}`;
-  lines[lines.length - 1] = ellipsize(ctx, combined, Array.from(combined), maxWidth);
+  lines[lines.length - 1] = ellipsize(
+    ctx,
+    combined,
+    Array.from(combined),
+    maxWidth,
+  );
   return lines;
 }
 

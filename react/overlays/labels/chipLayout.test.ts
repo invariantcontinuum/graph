@@ -11,7 +11,7 @@ describe("layoutLabelChip", () => {
   test("composes glyph + name on one line when it fits", () => {
     const text = "⚙ api-gateway";
     const c = layoutLabelChip(ctx, {
-      text, chars: Array.from(text), typeTag: "SERVICE",
+      text: "⚙ api-gateway", chars: Array.from("⚙ api-gateway"), typeTag: "SERVICE",
       maxWidthPx: 200, fontPx: 12, tagFontPx: 8, showTag: true,
     });
     expect(c).not.toBeNull();
@@ -23,7 +23,7 @@ describe("layoutLabelChip", () => {
   test("omits tag when showTag is false (zoom gate)", () => {
     const text = "⚙ api";
     const c = layoutLabelChip(ctx, {
-      text, chars: Array.from(text), typeTag: "SERVICE",
+      text: "⚙ api", chars: Array.from("⚙ api"), typeTag: "SERVICE",
       maxWidthPx: 200, fontPx: 12, tagFontPx: 8, showTag: false,
     });
     expect(c!.tag).toBeNull();
@@ -32,14 +32,14 @@ describe("layoutLabelChip", () => {
   test("null glyph renders name only", () => {
     const text = "api";
     const c = layoutLabelChip(ctx, {
-      text, chars: Array.from(text), typeTag: null,
+      text: "api", chars: Array.from("api"), typeTag: null,
       maxWidthPx: 200, fontPx: 12, tagFontPx: 8, showTag: true,
     });
     expect(c!.lines).toEqual(["api"]);
   });
 
   test("returns null when the name cannot fit even ellipsized", () => {
-    const text = "⚙ " + "x".repeat(500);
+    const text = `⚙ ${"x".repeat(500)}`;
     const c = layoutLabelChip(ctx, {
       text, chars: Array.from(text), typeTag: null,
       maxWidthPx: 12, fontPx: 12, tagFontPx: 8, showTag: false,
