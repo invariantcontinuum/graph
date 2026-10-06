@@ -41,10 +41,12 @@ const nodes: NodeData[] = [
 ];
 
 function searchMock(query: string, byId: Map<string, NodeData>) {
-  const lowerQuery = query.toLowerCase();
+  // Escape regex special characters to match `includes` substring semantics exactly
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escapedQuery, "i");
   const results: NodeData[] = [];
   for (const node of byId.values()) {
-    if (node.name && node.name.toLowerCase().includes(lowerQuery)) {
+    if (node.name && regex.test(node.name)) {
       results.push(node);
     }
   }
