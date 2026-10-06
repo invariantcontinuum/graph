@@ -78,6 +78,7 @@ export function GraphToolbar({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           aria-label="Search nodes"
+          title="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
           onMouseEnter={handleMouseEnter}

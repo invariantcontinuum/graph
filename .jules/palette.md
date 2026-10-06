@@ -243,3 +243,7 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2024-11-13 - Add hover tooltips to search inputs
+**Learning:** Text inputs that rely solely on `placeholder` text may lack accessible hover context for sighted users, especially if the placeholder is truncated on smaller screens. Providing a `title` attribute ensures the input's purpose is consistently accessible on hover.
+**Action:** Always provide a `title` attribute matching the `aria-label` or `placeholder` on search inputs to provide consistent hover feedback for sighted users.
