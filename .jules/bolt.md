@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2023-10-08 - Canvas Text Measurement
+**Learning:** In hot Canvas text layout loops (like string wrapping or truncation), substituting O(N) iterative `measureText()` loops with an O(log N) binary search pattern significantly cuts down the number of expensive measurement calls and mitigates performance bottlenecks without creating memory overhead.
+**Action:** Always prefer a binary search approach with array slicing when trying to fit text or find soft breaks rather than character-by-character iterations inside tight frontend render loops. Use `Array.slice(lo, hi).join("")` for substrings of chars to avoid manual iterative concatenation.
