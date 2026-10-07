@@ -108,8 +108,7 @@ function wrapIntoLines(
   while (cursor < chars.length && lines.length < maxLines) {
     const nextEnd = chooseLineEnd(ctx, chars, cursor, maxWidth);
     if (nextEnd <= cursor) break;
-    let line = "";
-    for (let i = cursor; i < nextEnd; i++) line += chars[i];
+    let line = chars.slice(cursor, nextEnd).join("");
     line = line.trim();
     cursor = skipLeadingSpaces(chars, nextEnd);
     if (line) lines.push(line);
@@ -145,8 +144,7 @@ function appendEllipsizedRemainder(
   maxWidth: number,
 ): string[] {
   if (cursor >= chars.length) return lines;
-  let remaining = "";
-  for (let i = cursor; i < chars.length; i++) remaining += chars[i];
+  let remaining = chars.slice(cursor).join("");
   remaining = remaining.trim();
   if (!remaining) return lines;
   const lastLine = lines.at(-1) ?? "";
@@ -166,14 +164,18 @@ function fitChars(
   start: number,
   maxWidth: number,
 ): number {
-  let best = start;
-  let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
-    if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+  let lo = start;
+  let hi = chars.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    let chunk = chars.slice(start, mid).join("");
+    if (ctx.measureText(chunk).width <= maxWidth) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
   }
-  return best;
+  return lo;
 }
 
 function findSoftBreak(
@@ -205,13 +207,11 @@ function ellipsize(
   let hi = chars.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    let chunk = "";
-    for (let i = 0; i < mid; i++) chunk += chars[i];
+    let chunk = chars.slice(0, mid).join("");
     chunk += ell;
     if (ctx.measureText(chunk).width <= maxW) lo = mid;
     else hi = mid - 1;
   }
-  let result = "";
-  for (let i = 0; i < lo; i++) result += chars[i];
+  let result = chars.slice(0, lo).join("");
   return result + ell;
 }
