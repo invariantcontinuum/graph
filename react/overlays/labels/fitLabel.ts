@@ -166,12 +166,20 @@ function fitChars(
   start: number,
   maxWidth: number,
 ): number {
+  let lo = start;
+  let hi = chars.length;
   let best = start;
-  let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
-    if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    let chunk = "";
+    for (let i = start; i < mid; i++) chunk += chars[i];
+    if (ctx.measureText(chunk).width <= maxWidth) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
   }
   return best;
 }
