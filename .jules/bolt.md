@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-09 - [Avoid overlay render loops when the scene is not visible]
+**Learning:** Running Canvas `requestAnimationFrame` loops continuously while a component is scrolled out of view causes unnecessary CPU usage and battery drain.
+**Action:** Wrap the overlay canvas in an `IntersectionObserver` to track its visibility. Pause the heavy `renderFrame` execution (like `ctx.clearRect` and iterating nodes) when the canvas is offscreen, but keep the `requestAnimationFrame` ticking to cleanly resume when it scrolls back into view.

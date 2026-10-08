@@ -28,7 +28,6 @@ same graph controls.
 - Reuse main-WASM edge and arrow buffer allocations across rebuilds.
 - Add benchmark coverage for grid and hierarchical layouts, not only force.
 - Batch worker messages for rapid drag and filter changes.
-- Avoid overlay render loops when the scene is not visible.
 - Keep theme conversion memoized and prove stable object identities in tests.
 - Measure browser paint costs after adding any overlay or chrome feature.
 
