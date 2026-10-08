@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2024-10-08 - Binary Search for Canvas Text Layout Measurement
+**Learning:** In Canvas text layout algorithms, using O(N) linear iteration to add characters one by one and calling `ctx.measureText` is a significant performance bottleneck.
+**Action:** Replace linear measurement loops with an O(log N) binary search when finding the maximum number of characters that fit in a given width. Use native `chars.slice().join("")` inside the binary search for efficient string allocation instead of manual character-by-character concatenation.
