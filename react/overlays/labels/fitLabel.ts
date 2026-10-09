@@ -166,14 +166,21 @@ function fitChars(
   start: number,
   maxWidth: number,
 ): number {
-  let best = start;
-  let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
-    if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+  let lo = start;
+  let hi = chars.length;
+
+  // ⚡ Bolt: Replace O(N) linear measurement with O(log N) binary search
+  // drastically reducing expensive ctx.measureText calls in hot loops.
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    const chunk = chars.slice(start, mid).join("");
+    if (ctx.measureText(chunk).width <= maxWidth) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
   }
-  return best;
+  return lo;
 }
 
 function findSoftBreak(

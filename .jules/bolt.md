@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2024-11-20 - [Binary search in hot Canvas text wrapping]
+**Learning:** In hot Canvas text layout paths, finding the maximum string that fits a given width using an O(N) linear loop of character-by-character `measureText` calls is slow. O(log N) binary search combined with optimized native array slicing is much more efficient.
+**Action:** Use an O(log N) binary search approach with native array `.slice().join("")` to reduce expensive canvas measurements without introducing GC churn.
