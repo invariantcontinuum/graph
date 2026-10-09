@@ -243,3 +243,7 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2024-11-20 - Use native HTML5 constraint validation for empty search results
+**Learning:** For search inputs or forms that fail silently when yielding no results, failing to provide feedback leaves users confused. Using native HTML5 Constraint Validation API (`setCustomValidity` and `reportValidity`) provides accessible, inline feedback (e.g., 'No nodes found') without adding custom UI dependencies or extra DOM nodes. It's crucial to clear the validity state (e.g., `e.target.setCustomValidity('')`) on subsequent input changes (`onChange`) to unblock the form.
+**Action:** Implemented `setCustomValidity` and `reportValidity` on the search input in `react/GraphToolbar.tsx` to provide native tooltip feedback when search yields no results, and clear it onChange.
