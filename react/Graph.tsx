@@ -499,7 +499,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
         // Escape regex special characters from the query
-        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
         // ⚡ Bolt: Pre-compile case-insensitive Regex to avoid O(N) string allocations inside loop
         const regex = new RegExp(escapedQuery, "i");
         const results: NodeData[] = [];
