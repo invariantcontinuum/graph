@@ -498,10 +498,13 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       },
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
-        const lowerQuery = query.toLowerCase();
+        // Escape regex special characters from the query
+        const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+        // ⚡ Bolt: Pre-compile case-insensitive Regex to avoid O(N) string allocations inside loop
+        const regex = new RegExp(escapedQuery, "i");
         const results: NodeData[] = [];
         for (const node of nodeDataByIdRef.current.values()) {
-          if (node.name && node.name.toLowerCase().includes(lowerQuery)) {
+          if (node.name && regex.test(node.name)) {
             results.push(node);
           }
         }
