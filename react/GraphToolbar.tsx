@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { GraphHandle, LayoutType } from "./index";
 
 export interface GraphToolbarProps {
@@ -17,6 +17,7 @@ export function GraphToolbar({
   onThemeToggle,
 }: GraphToolbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
     if (e.currentTarget.matches(":focus-visible")) {
@@ -44,7 +45,11 @@ export function GraphToolbar({
       if (!graphRef.current || !searchQuery.trim()) return;
       const found = graphRef.current.search(searchQuery.trim());
       if (found.length > 0) {
+        searchInputRef.current?.setCustomValidity("");
         graphRef.current.focusFit(found[0].id, 40);
+      } else {
+        searchInputRef.current?.setCustomValidity("No nodes found");
+        searchInputRef.current?.reportValidity();
       }
     },
     [graphRef, searchQuery],
@@ -73,10 +78,14 @@ export function GraphToolbar({
     >
       <form onSubmit={handleSearch} style={{ display: "flex", gap: 4 }}>
         <input
+          ref={searchInputRef}
           type="search"
           placeholder="Search nodes…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            e.currentTarget.setCustomValidity("");
+            setSearchQuery(e.currentTarget.value);
+          }}
           aria-label="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
