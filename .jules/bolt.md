@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2024-10-18 - [Binary search in Canvas text measurement]
+**Learning:** In hot Canvas rendering loops (e.g., text wrapping layout), measuring string widths character-by-character (O(N) `ctx.measureText` calls) is a major performance bottleneck because each call crosses the JS-to-C++ boundary.
+**Action:** Replaced linear iterative measurements with an O(log N) binary search when finding the maximum number of fitting characters. This drastically reduces expensive measurement calls and improves layout performance.
