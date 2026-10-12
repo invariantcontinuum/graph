@@ -4,10 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-graph-core = { path = "../graph-core" }
-graph-layout = { path = "../graph-layout" }
 serde.workspace = true
-serde_json.workspace = true
 web-sys = { workspace = true, features = [
     "WebGl2RenderingContext",
     "WebGlProgram",
@@ -22,4 +19,7 @@ web-sys = { workspace = true, features = [
 ] }
 wasm-bindgen.workspace = true
 js-sys.workspace = true
-log.workspace = true
+[lints]
+workspace = true
+[dev-dependencies]
+serde_json.workspace = true

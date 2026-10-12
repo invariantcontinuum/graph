@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-07 - [Preallocate Edge Vectors in Force Layout]
+**Learning:** When building the indexed edge list in `index_edges` via iterator `.collect()`, the iterator from `filter_map` does not know its exact size in advance, leading to multiple vector reallocations during graph layout initialization.
+**Action:** Replaced `.filter_map(...).collect()` with manual iteration pushing into a vector preallocated with `Vec::with_capacity(graph.edge_count())`. This eliminates reallocations for the edge index buffer during the layout setup phase.

@@ -224,14 +224,17 @@ fn index_edges(graph: &GraphStore, node_ids: &[String]) -> Vec<(usize, usize)> {
         .enumerate()
         .map(|(i, id)| (id.as_str(), i))
         .collect();
-    graph
-        .edges()
-        .filter_map(|e| {
-            let src = id_to_idx.get(e.source.as_str())?;
-            let tgt = id_to_idx.get(e.target.as_str())?;
-            Some((*src, *tgt))
-        })
-        .collect()
+
+    let mut edges = Vec::with_capacity(graph.edge_count());
+    for e in graph.edges() {
+        if let (Some(&src), Some(&tgt)) = (
+            id_to_idx.get(e.source.as_str()),
+            id_to_idx.get(e.target.as_str()),
+        ) {
+            edges.push((src, tgt));
+        }
+    }
+    edges
 }
 
 fn flatten_positions(positions: &[(f32, f32)], flat: &mut Vec<f32>) {
