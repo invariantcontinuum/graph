@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-05-29 - Optimize case-insensitive search loop
+**Learning:** When iterating over large collections for case-insensitive string matching, using `item.toLowerCase().includes(query.toLowerCase())` creates an O(N) string allocation overhead per tick. Pre-compiling a case-insensitive Regular Expression outside the loop (e.g., `const regex = new RegExp(escapedQuery, "i")`) significantly improves execution speed and reduces memory GC churn. Also, to prevent catastrophic backtracking and satisfy SonarCloud, use a linear-safe character class `/[\^$.*+?()[\]{}|]/g` when escaping special characters.
+**Action:** Replaced `.toLowerCase().includes()` inside `GraphHandle.search` with a pre-compiled `RegExp`.
