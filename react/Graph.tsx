@@ -500,7 +500,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       search: (query) => {
         // Optimize search: avoid O(N) string allocations from toLowerCase() per tick.
         // Pre-compile a case-insensitive regex for faster O(1) allocation overhead.
-        const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|\\\\]/g, "\\$&");
+        const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
         const regex = new RegExp(escapedQuery, "i");
         const results: NodeData[] = [];
         for (const node of nodeDataByIdRef.current.values()) {
