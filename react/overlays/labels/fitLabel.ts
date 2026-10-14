@@ -166,14 +166,23 @@ function fitChars(
   start: number,
   maxWidth: number,
 ): number {
-  let best = start;
-  let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
-    if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+  // Use O(log N) binary search instead of O(N) linear measurement to
+  // drastically reduce expensive ctx.measureText calls in the layout engine.
+  let lo = start;
+  let hi = chars.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    let chunk = "";
+    // Note: Do not replace with chars.slice().join("") as that causes
+    // O(N^2) memory allocations resulting in GC churn in this hot loop.
+    for (let i = start; i < mid; i++) chunk += chars[i];
+    if (ctx.measureText(chunk).width <= maxWidth) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
   }
-  return best;
+  return lo;
 }
 
 function findSoftBreak(
