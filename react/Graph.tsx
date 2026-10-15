@@ -499,7 +499,7 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
         // Pre-compile a case-insensitive Regex to eliminate O(N) .toLowerCase() string allocations during the search loop.
-        const escapedQuery = query.replace(/[\^$.*+?()[\]{}|\\]/g, "\\$&");
+        const escapedQuery = query.replace(/[\\^$.*+?()[\\]{}|\\\\]/g, "\\$&");
         const regex = new RegExp(escapedQuery, "i");
         const results: NodeData[] = [];
         for (const node of nodeDataByIdRef.current.values()) {
