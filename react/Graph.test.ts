@@ -41,7 +41,7 @@ const nodes: NodeData[] = [
 ];
 
 function searchMock(query: string, byId: Map<string, NodeData>) {
-  const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|\\]/g, "\\$&");
+  const escapedQuery = query.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
   const regex = new RegExp(escapedQuery, "i");
   const results: NodeData[] = [];
   for (const node of byId.values()) {
