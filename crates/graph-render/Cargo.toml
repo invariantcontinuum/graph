@@ -23,3 +23,6 @@ web-sys = { workspace = true, features = [
 wasm-bindgen.workspace = true
 js-sys.workspace = true
 log.workspace = true
+
+[lints]
+workspace = true
