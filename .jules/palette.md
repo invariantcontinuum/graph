@@ -243,3 +243,9 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2026-10-17 - Native Validation Feedback for Empty Search Results
+**What:** Updated `GraphToolbar` to use HTML5 constraint validation to provide feedback when a search yields no results.
+**Why:** Previously, the search failed silently, leaving users confused. Using native API avoids adding extra DOM nodes.
+**Before/After:** Before, nothing happened. After, "No nodes found" is shown via a native tooltip.
+**Accessibility:** Uses native HTML validation feedback which is accessible out of the box, unblocking forms appropriately.
