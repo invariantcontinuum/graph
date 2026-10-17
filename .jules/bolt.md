@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-17 - Pre-compile Regex for Case-Insensitive String Matches
+**Learning:** Inside iteration loops for case-insensitive matches, calling `.toLowerCase()` on both the query and each item triggers O(N) string allocations, creating significant GC overhead in hot paths.
+**Action:** Escape the search query and pre-compile a single case-insensitive Regular Expression (`new RegExp(escaped, 'i')`) outside the loop, and use `regex.test(item)` inside the loop to avoid redundant string allocations.
