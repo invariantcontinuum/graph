@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-18 - [O(log N) binary search for text wrapping]
+**Learning:** When computing how many characters fit in a given width during text wrapping (like `fitChars`), using an O(N) linear measurement loop sequentially adding characters and calling `ctx.measureText` causes performance bottlenecks in hot render paths.
+**Action:** Replace the O(N) linear measurement loop with an O(log N) binary search. This drastically reduces the number of expensive layout measurement calls.
