@@ -45,6 +45,14 @@ export function GraphToolbar({
       const found = graphRef.current.search(searchQuery.trim());
       if (found.length > 0) {
         graphRef.current.focusFit(found[0].id, 40);
+      } else {
+        const input = (e.currentTarget as HTMLFormElement).querySelector(
+          'input[type="search"]'
+        ) as HTMLInputElement | null;
+        if (input) {
+          input.setCustomValidity("No nodes found");
+          input.reportValidity();
+        }
       }
     },
     [graphRef, searchQuery],
@@ -76,7 +84,10 @@ export function GraphToolbar({
           type="search"
           placeholder="Search nodes…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            e.target.setCustomValidity("");
+          }}
           aria-label="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
