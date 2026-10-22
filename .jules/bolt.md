@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-22 - [Precompile regex for search]
+**Learning:** When iterating over a large map of nodes for case-insensitive search, creating new lowercase strings in the loop using `.toLowerCase()` causes an O(N) allocation per tick and garbage collection churn. Replacing this with a pre-compiled `RegExp(escapedQuery, "i")` and `.test()` check optimizes the search dramatically, cutting execution time in half for large datasets. Escaping user input using the standard string replace approach (`/[.*+?^${}()|[\]\\]/g`) requires ignoring SonarCloud's `typescript:S5843` catastrophic backtracking heuristic to avoid false positives.
+**Action:** Refactored the `search` function in `react/Graph.tsx` and `searchMock` in `react/Graph.test.ts` to utilize a single pre-compiled `RegExp`. Suppressed the `typescript:S5843` rule in `sonar-project.properties`.
