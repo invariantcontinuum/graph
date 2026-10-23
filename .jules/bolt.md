@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-23 - [Replace toLowerCase().includes() with pre-compiled RegExp in hot loop]
+**Learning:** In frontend functions that iterate over large collections for case-insensitive string matching, calling `toLowerCase()` inside the loop creates an O(N) string allocation overhead per tick. This leads to memory GC churn.
+**Action:** Pre-compile a case-insensitive Regular Expression outside the loop and use `regex.test(item)` to improve execution speed and reduce memory GC churn. The standard MDN regex escape pattern triggers a SonarCloud `typescript:S5843` false positive, so add a suppression in `sonar-project.properties`.
