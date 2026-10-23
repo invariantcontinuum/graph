@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-23 - Stop Overlay Render Loops When Scene is Hidden
+**Learning:** Overlays (labels, frames, grids) use `requestAnimationFrame` loops driven by `useOverlayRenderLoop`. When the graph scene is not visible (e.g. scrolled out of view or on a hidden tab), these loops continue to request frames and execute, leading to unnecessary CPU and GPU usage.
+**Action:** Modified `useOverlayRenderLoop` to use an `IntersectionObserver`. It observes the canvas element, and we pause the `requestAnimationFrame` calls when `isIntersecting` is false, and resume them when true. This prevents overlays from rendering when the scene is offscreen, optimizing background performance.
