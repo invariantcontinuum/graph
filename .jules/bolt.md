@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-24 - [O(log N) Canvas Text Measurement]
+**Learning:** In hot render paths, iteratively measuring canvas text character-by-character is an O(N) operation that creates severe performance bottlenecks.
+**Action:** Replace linear measurement loops with an O(log N) binary search for text fitting, minimizing expensive `ctx.measureText` calls.
