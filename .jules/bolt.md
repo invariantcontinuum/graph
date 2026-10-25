@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2024-10-25 - Optimize Canvas Text Wrapping
+**Learning:** During text wrapping computations (`wrapIntoLines`), the renderer used an O(N) iterative loop to measure chunks of text (`ctx.measureText`) to find the breaking point. This is extremely expensive in the hot path.
+**Action:** Replaced the linear loop with an O(log N) binary search pattern in `fitChars` to drastically reduce the number of slow native measurement calls.
