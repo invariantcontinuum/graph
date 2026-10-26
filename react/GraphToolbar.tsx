@@ -39,12 +39,17 @@ export function GraphToolbar({
   }, []);
 
   const handleSearch = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!graphRef.current || !searchQuery.trim()) return;
       const found = graphRef.current.search(searchQuery.trim());
+      const inputEl = e.currentTarget.querySelector('input[type="search"]') as HTMLInputElement;
       if (found.length > 0) {
+        if (inputEl) inputEl.setCustomValidity("");
         graphRef.current.focusFit(found[0].id, 40);
+      } else if (inputEl) {
+        inputEl.setCustomValidity("No nodes found");
+        inputEl.reportValidity();
       }
     },
     [graphRef, searchQuery],
@@ -76,7 +81,10 @@ export function GraphToolbar({
           type="search"
           placeholder="Search nodes…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            e.target.setCustomValidity("");
+          }}
           aria-label="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
