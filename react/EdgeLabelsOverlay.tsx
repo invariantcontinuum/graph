@@ -23,7 +23,7 @@ export function EdgeLabelsOverlay({
 
   const renderFrame = useCallback(
     (ctx: CanvasRenderingContext2D, cvs: HTMLCanvasElement) => {
-      const { edgeData, edgeTypeKeys, focusIdx } = edgesRef.current;
+      const { edgeData, edgeLabels, focusIdx } = edgesRef.current;
       const { positions, vpMatrix: vp } = frameRef.current;
       if (focusIdx < 0 || !edgeData || !positions || !vp) return;
 
@@ -42,7 +42,7 @@ export function EdgeLabelsOverlay({
         if (sKey !== focusKey && tKey !== focusKey) continue;
 
         const typeIdx = Math.floor(edgeData[i + 4]);
-        const label = edgeTypeKeys[typeIdx]?.replaceAll("_", " ") ?? "";
+        const label = edgeLabels[typeIdx] ?? "";
         if (!label) continue;
 
         const mx = (sx + tx) / 2;
