@@ -243,3 +243,7 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2026-10-26 - Provide accessible feedback for empty search results
+**Learning:** Search inputs that fail silently when yielding no results leave users confused and provide no feedback to screen readers.
+**Action:** Leveraged the native HTML5 Constraint Validation API (`setCustomValidity` and `reportValidity`) on the search input to provide inline, accessible feedback without adding new UI dependencies, and cleared the validity state on subsequent changes to unblock the form.
