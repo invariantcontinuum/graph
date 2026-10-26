@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-26 - [Precompute string replacement for edge labels]
+**Learning:** In hot React Canvas render loops, calling string allocation methods like `.replaceAll()` directly inside per-edge loops (e.g. iterating over edges in `EdgeLabelsOverlay`) creates massive amounts of short-lived objects leading to Garbage Collection churn.
+**Action:** Precompute derived string properties (like replacing underscores in `edgeTypeKeys`) outside the render loop, e.g. when subscribing to edge updates in `useEngineEdgesState`, to eliminate redundant allocations per frame.
