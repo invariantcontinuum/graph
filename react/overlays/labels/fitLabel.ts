@@ -166,14 +166,19 @@ function fitChars(
   start: number,
   maxWidth: number,
 ): number {
-  let best = start;
-  let chunk = "";
-  for (let i = start; i < chars.length; i++) {
-    chunk += chars[i];
-    if (ctx.measureText(chunk).width > maxWidth) break;
-    best = i + 1;
+  // Use binary search (O(log N)) instead of linear search to drastically
+  // reduce expensive ctx.measureText calls during text wrapping.
+  // Manual string concatenation is used to avoid O(N) array allocation overhead.
+  let lo = start;
+  let hi = chars.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    let chunk = "";
+    for (let i = start; i < mid; i++) chunk += chars[i];
+    if (ctx.measureText(chunk).width <= maxWidth) lo = mid;
+    else hi = mid - 1;
   }
-  return best;
+  return lo;
 }
 
 function findSoftBreak(

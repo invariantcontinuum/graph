@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-27 - Optimize Canvas Text Measurement
+**Learning:** Calling `ctx.measureText` iteratively inside O(N) linear loops creates a severe performance bottleneck due to JS-to-native bridging overhead in hot render loops.
+**Action:** Replace linear character-by-character measurement loops with O(log N) binary search. Use manual string concatenation (e.g., `chunk += chars[i]`) inside the loop rather than `.slice().join("")` to avoid allocating temporary arrays that cause GC churn.
