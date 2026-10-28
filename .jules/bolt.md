@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-28 - [Regex Optimization for Search]
+**Learning:** Avoid using string methods like `.toLowerCase()` inside search loops, as they create O(N) string allocation overhead per tick. Pre-compiling a case-insensitive Regular Expression outside the loop and using `regex.test()` improves execution speed and reduces memory GC churn. When escaping dynamic strings for regex, the standard MDN pattern `/[.*+?^${}()|[\]\\]/g` can falsely trigger SonarCloud's typescript:S5843 (catastrophic backtracking) rule, which should be explicitly suppressed using an inline comment.
+**Action:** Optimized case-insensitive searching in `react/Graph.tsx` and `react/Graph.test.ts` by pre-compiling a case-insensitive regex outside the search loop instead of calling `.toLowerCase()` inside the loop. Added `// NOSONAR typescript:S5843` to suppress the false positive.
