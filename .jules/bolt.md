@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-28 - [Precompute derived string properties outside render loops]
+**Learning:** Performing `.replaceAll("_", " ")` on edge labels inside the per-edge hot Canvas render loop (`EdgeLabelsOverlay.tsx`) causes redundant short-lived object creation and GC churn for every visible edge on every frame.
+**Action:** Precompute derived string properties when subscribing to data changes (`useEngineEdgesState.ts`) outside the hot loop so the render function only reads precomputed strings.

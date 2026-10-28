@@ -42,7 +42,7 @@ export function EdgeLabelsOverlay({
         if (sKey !== focusKey && tKey !== focusKey) continue;
 
         const typeIdx = Math.floor(edgeData[i + 4]);
-        const label = edgeTypeKeys[typeIdx]?.replaceAll("_", " ") ?? "";
+        const label = edgeTypeKeys[typeIdx] ?? "";
         if (!label) continue;
 
         const mx = (sx + tx) / 2;

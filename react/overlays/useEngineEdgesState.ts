@@ -24,7 +24,11 @@ export function useEngineEdgesState(
     if (!engine) return;
     const unsub = engine.subscribeEdges(
       ({ edgeData, focusIdx, edgeTypeKeys }) => {
-        edgesRef.current = { edgeData, focusIdx, edgeTypeKeys };
+        edgesRef.current = {
+          edgeData,
+          focusIdx,
+          edgeTypeKeys: edgeTypeKeys.map((k) => k.replaceAll("_", " ")),
+        };
         dirtyRef.current = true;
       },
     );
