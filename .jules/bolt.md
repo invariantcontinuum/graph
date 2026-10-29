@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-10-29 - [Use O(log N) binary search for text wrapping]
+**Learning:** When laying out text via CanvasRenderingContext2D and wrapping lines, O(N) linear measurement loops (iteratively adding characters and calling `ctx.measureText`) are expensive.
+**Action:** Replaced O(N) linear measurement loops with an O(log N) binary search to drastically reduce the number of expensive measurement calls and minimize performance bottlenecks in hot render paths.
