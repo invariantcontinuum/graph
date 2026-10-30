@@ -17,8 +17,6 @@ SonarCloud automatic analysis for `invariantcontinuum_graph` currently reports
 
 | Rule | File | Problem | Preferred fix |
 | --- | --- | --- | --- |
-| `typescript:S3776` | `react/Graph.tsx` around pointer `onMove` | Cognitive complexity is 27, above the allowed 15 | Extract hover, drag, pan, pinch, and worker-pump branches into named helpers or a local pointer-controller hook |
-| `text:S8570` | `crates/*/Cargo.toml` | Analyzer thinks crate manifests lack a predictable lock file | Keep root `Cargo.lock`; document and configure a targeted Sonar ignore for nested workspace manifests if SonarCloud keeps flagging them |
 
 Accessibility findings for overlay canvas semantics are tracked in
 `.jules/palette.md` because they are UX-facing, but fix them in the same release
@@ -57,40 +55,6 @@ When a principle issue is found, record the concrete symptom, affected files,
 and the smallest fix that improves maintainability without weakening runtime
 performance. If the "fix" would create a larger abstraction than the problem,
 leave a note and keep the simpler code.
-
-## `Graph.tsx` Complexity Plan
-
-The pointer event section should be split by responsibility:
-
-1. `toLocalPointer(event, canvas)` returns graph-local coordinates.
-2. `handleHoverOnly(local)` owns hover callbacks and cursor updates.
-3. `handleSinglePointerMove(local, mode)` owns node drag and pan branches.
-4. `handlePinchMove(activePointers)` owns centroid, zoom, and pan delta math.
-5. `flushWorkerMessages()` stays tiny and is called only after mutations.
-
-Done criteria:
-
-- `onMove` is readable at a glance and delegates each branch to a named helper.
-- SonarCloud no longer reports `typescript:S3776` for `react/Graph.tsx`.
-- Pointer drag still updates connected edges immediately.
-- Pinch zoom still preserves the gesture centroid.
-- `npm test`, `tsc --noEmit`, and WASM browser tests pass.
-
-## Cargo Lockfile Finding Plan
-
-The workspace has a root `Cargo.lock`, so the nested crate findings are likely
-Sonar text-rule noise rather than an actual supply-chain defect.
-
-Preferred remediation order:
-
-1. Confirm `Cargo.lock` is committed at the repository root.
-2. Confirm CI runs `cargo test`, `cargo clippy`, and WASM builds from the
-   workspace root.
-3. If SonarCloud still reports `text:S8570` on `crates/**/Cargo.toml`, add a
-   narrow `sonar.issue.ignore.multicriteria` entry for that rule and path only.
-4. Add a comment explaining that the Rust workspace lock file is root-scoped.
-
-Do not add fake crate-local lock files.
 
 ## Performance Priorities
 
