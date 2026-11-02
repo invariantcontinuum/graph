@@ -333,3 +333,6 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+## 2026-11-02 - [Replace toLowerCase with RegExp for Search Performance]
+**Learning:** Iterating over large maps and calling `.toLowerCase()` on every item's name string to perform case-insensitive search creates an O(N) allocation bottleneck. On a large graph, this GC churn drops search performance and spikes memory use.
+**Action:** Use a single escaped case-insensitive `RegExp` to test strings directly, bypassing the need to allocate intermediate lowercase strings. Add SonarCloud suppression for the standard escape regex to avoid S5843.
