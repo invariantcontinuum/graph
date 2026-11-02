@@ -333,3 +333,11 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-02 - [Extract onMove pointer events to hook]
+**Learning:** Keeping dense pointer interactions in the `Graph.tsx` render file leads to cognitive complexity issues (e.g. SonarCloud `typescript:S3776`).
+**Action:** Extracted hover, drag, pan, pinch branches into a `usePointerController` hook and `pointerUtils.ts` helpers.
+
+## 2026-11-02 - [SonarCloud text:S8570 for workspace lockfile]
+**Learning:** SonarCloud incorrectly flags nested Cargo.toml files in workspaces as missing a lockfile, despite the root `Cargo.lock` covering the entire workspace.
+**Action:** Configured a targeted `sonar.issue.ignore.multicriteria` rule in `sonar-project.properties` specifically for `crates/**/Cargo.toml` rather than adding artificial nested lock files.
