@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-03 - [Use pre-compiled RegExp instead of toLowerCase() in hot search loops]
+**Learning:** Avoid calling `.toLowerCase()` or creating new strings inside hot search loops over large datasets (like the O(N) loop iterating over all nodes in the Graph search). It creates an O(N) allocation bottleneck leading to severe Garbage Collection (GC) churn.
+**Action:** Pre-compile and reuse a case-insensitive `RegExp` (`new RegExp(escaped, 'i')`) to test the existing strings directly without re-allocating lowercased variants for every item.
