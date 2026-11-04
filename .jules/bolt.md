@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-04 - Precompile RegExp in search
+**Learning:** Calling `.toLowerCase()` repeatedly in a hot search loop over a large dataset creates an O(N) allocation bottleneck leading to severe Garbage Collection (GC) churn.
+**Action:** Pre-compiled a case-insensitive `RegExp` outside the loop in `react/Graph.tsx` to test existing strings directly, improving search performance.
