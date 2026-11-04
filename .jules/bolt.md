@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-04 - [Pre-compile case-insensitive RegExp in search loops]
+**Learning:** In frontend functions that iterate over large data structures (like searching a Map of 100k nodes as the user types), calling `.toLowerCase()` on every iteration creates massive amounts of short-lived string allocations for every keystroke. This causes excessive memory churn and severe Garbage Collection (GC) pauses that degrade UI responsiveness.
+**Action:** Replace inline string transformations like `.toLowerCase()` inside search loops with a pre-compiled case-insensitive `RegExp` to test the original strings directly, bypassing O(N) allocation overhead.
