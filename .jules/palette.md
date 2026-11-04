@@ -243,3 +243,7 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2026-11-04 - [Provide inline feedback for empty search results]
+**Learning:** When a search returns no results, failing to provide immediate visual and programmatic feedback leaves the user wondering if the search actually executed or if the system broke.
+**Action:** Added `aria-invalid={true}` and a red border explicitly for the "no results" state to communicate the failed search directly on the input field without requiring intrusive modals.
