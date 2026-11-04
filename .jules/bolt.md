@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-04 - Optimize Graph Search O(N) String Allocations
+**Learning:** Avoid calling `.toLowerCase()` or creating new strings inside hot search loops over large datasets, as it creates an O(N) allocation bottleneck leading to severe Garbage Collection (GC) churn.
+**Action:** Pre-compile and reuse a case-insensitive `RegExp` (`new RegExp(escaped, 'i')`) to test the existing strings directly.
