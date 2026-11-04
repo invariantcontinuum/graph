@@ -498,9 +498,8 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       },
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
-        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         // NOSONAR typescript:S5843 - Standard MDN regex escape pattern
-        const regex = new RegExp(escaped, "i");
+        const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
         const results: NodeData[] = [];
         for (const node of nodeDataByIdRef.current.values()) {
           if (node.name && regex.test(node.name)) {
