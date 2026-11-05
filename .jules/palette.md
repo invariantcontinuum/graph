@@ -243,3 +243,7 @@ Browser smoke must cover:
 ## 2024-11-13 - Add hover tooltips to non-obvious inputs
 **Learning:** Icon-only inputs or interactive select dropdowns with complex icon-like shapes or minimal context might be missed by sighted users, lacking a visual indication of their specific function on hover.
 **Action:** Provide `title` attributes on select elements and minimal icon controls alongside their `aria-label`s to expose functionality to sighted users on hover.
+
+## 2026-11-05 - [Add visual and accessible feedback for failed searches]
+**Learning:** When users submit a search that yields no results, silently doing nothing leaves them wondering if the system is broken. Furthermore, screen readers need programmatic notification (like `aria-invalid`) to understand the input state is invalid.
+**Action:** Added explicit visual inline feedback (red border) and `aria-invalid={true}` to the search input in `react/GraphToolbar.tsx` when the search yields no results.

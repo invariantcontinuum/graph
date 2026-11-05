@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-05 - [Pause overlay render loops when offscreen]
+**Learning:** Overlay canvases (labels, grids) continuously render via `requestAnimationFrame` even when the graph scene is scrolled out of view, wasting CPU and battery on invisible paints.
+**Action:** Added an `IntersectionObserver` to `useOverlayRenderLoop` to track visibility, pausing the render loop when the canvas is offscreen and forcing a redraw when it re-enters the viewport.
