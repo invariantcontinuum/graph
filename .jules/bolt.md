@@ -333,3 +333,6 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+## 2026-11-05 - [Pre-compiled Regex for Search]
+**Learning:** Avoid calling .toLowerCase() or creating new strings inside hot search loops over large datasets, as it creates an O(N) allocation bottleneck leading to severe Garbage Collection (GC) churn. Instead, pre-compile and reuse a case-insensitive RegExp to test the existing strings directly. SonarCloud's typescript:S5843 can be correctly suppressed by combining the replace and instantiation on one line.
+**Action:** Use a pre-compiled case-insensitive RegExp with inline SonarCloud suppression when performing substring searches inside hot loops over large datasets.
