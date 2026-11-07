@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-07 - [Precompute string labels outside canvas render loops]
+**Learning:** In React Canvas applications, calling string manipulation methods like `.replaceAll("_", " ")` directly inside hot, per-frame render loops over large datasets creates massive amounts of short-lived objects leading to Garbage Collection churn.
+**Action:** Augment state interfaces (like adding `edgeTypeLabels`) to precompute these display strings during initial state subscription, bypassing string allocation in the hot render path.
