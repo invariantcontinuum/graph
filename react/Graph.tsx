@@ -499,7 +499,6 @@ export const Graph = forwardRef<GraphHandle, GraphProps>(function Graph(
       setData: (nextSnapshot) => applySnapshot(nextSnapshot),
       search: (query) => {
         // Optimize O(N) string allocation bottleneck in search loop by pre-compiling a regex.
-        // NOSONAR typescript:S5843 - standard regex escape does not backtrack unsafely
         const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
         const results: NodeData[] = [];
         for (const node of nodeDataByIdRef.current.values()) {
