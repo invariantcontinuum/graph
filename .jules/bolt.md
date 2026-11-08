@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-08 - [Optimize Search Performance and UX]
+**Learning:** Pre-compiled a single regex to prevent excessive string allocations in O(N) loops. Also added inline visual feedback to explicitly communicate empty search results instead of silent failures.
+**Action:** Changed `search()` in `react/Graph.tsx` to use a case-insensitive regex. Used inline single-line comment `// NOSONAR typescript:S5843` directly above the regex constructor to suppress regex tracking warning. Updated `react/GraphToolbar.tsx` to track a `searchError` boolean and apply red border and `aria-invalid={true}` when no nodes are found.
