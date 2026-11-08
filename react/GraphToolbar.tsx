@@ -17,6 +17,7 @@ export function GraphToolbar({
   onThemeToggle,
 }: GraphToolbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFailed, setSearchFailed] = useState(false);
 
   const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
     if (e.currentTarget.matches(":focus-visible")) {
@@ -44,7 +45,10 @@ export function GraphToolbar({
       if (!graphRef.current || !searchQuery.trim()) return;
       const found = graphRef.current.search(searchQuery.trim());
       if (found.length > 0) {
+        setSearchFailed(false);
         graphRef.current.focusFit(found[0].id, 40);
+      } else {
+        setSearchFailed(true);
       }
     },
     [graphRef, searchQuery],
@@ -76,7 +80,11 @@ export function GraphToolbar({
           type="search"
           placeholder="Search nodes…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setSearchFailed(false);
+          }}
+          aria-invalid={searchFailed}
           aria-label="Search nodes"
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -85,7 +93,7 @@ export function GraphToolbar({
           style={{
             padding: "4px 8px",
             borderRadius: 4,
-            border: `1px solid ${themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
+            border: `1px solid ${searchFailed ? "#ef4444" : themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
             background: themeMode === "dark" ? "#0f172a" : "#f1f5f9",
             color: "inherit",
             transition: "filter 0.2s",
