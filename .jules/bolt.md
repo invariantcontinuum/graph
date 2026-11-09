@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-09 - [Replace toLowerCase with RegExp for Search Loops]
+**Learning:** Inside hot search loops, using `.toLowerCase()` or `.includes()` can create an O(N) allocation bottleneck, leading to severe Garbage Collection (GC) churn. Using a pre-compiled case-insensitive `RegExp` (`new RegExp(escaped, 'i')`) allows us to test the existing strings directly without allocating new ones. Also, when escaping dynamic strings for `RegExp`, the standard MDN pattern `/[.*+?^${}()|[\]\\]/g` triggers SonarCloud's `S5843` rule (catastrophic backtracking). Inline `// NOSONAR` comments often fail, requiring explicit suppressions in `sonar-project.properties`.
+**Action:** When performing case-insensitive string filtering over large datasets, pre-compile a `RegExp` outside the loop. If escaping dynamic input, add the necessary `S5843` suppressions (both `typescript:S5843` and `javascript:S5843`) strictly targeting the modified files in `sonar-project.properties`.
