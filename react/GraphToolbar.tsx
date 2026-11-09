@@ -17,6 +17,7 @@ export function GraphToolbar({
   onThemeToggle,
 }: GraphToolbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [hasNoResults, setHasNoResults] = useState(false);
 
   const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
     if (e.currentTarget.matches(":focus-visible")) {
@@ -41,10 +42,13 @@ export function GraphToolbar({
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      setHasNoResults(false);
       if (!graphRef.current || !searchQuery.trim()) return;
       const found = graphRef.current.search(searchQuery.trim());
       if (found.length > 0) {
         graphRef.current.focusFit(found[0].id, 40);
+      } else {
+        setHasNoResults(true);
       }
     },
     [graphRef, searchQuery],
@@ -76,8 +80,12 @@ export function GraphToolbar({
           type="search"
           placeholder="Search nodes…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setHasNoResults(false);
+          }}
           aria-label="Search nodes"
+          aria-invalid={hasNoResults}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onMouseEnter={handleMouseEnter}
@@ -85,10 +93,16 @@ export function GraphToolbar({
           style={{
             padding: "4px 8px",
             borderRadius: 4,
-            border: `1px solid ${themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
+            border: `1px solid ${
+              hasNoResults
+                ? "#ef4444"
+                : themeMode === "dark"
+                  ? "#475569"
+                  : "#cbd5e1"
+            }`,
             background: themeMode === "dark" ? "#0f172a" : "#f1f5f9",
             color: "inherit",
-            transition: "filter 0.2s",
+            transition: "filter 0.2s, border-color 0.2s",
           }}
         />
         <button
