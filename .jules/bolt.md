@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-10 - Precompute edge labels to prevent GC churn in render loop
+**Learning:** In hot React Canvas render loops, performing string manipulations like `.replaceAll("_", " ")` inside the loop (e.g., per-edge per-frame iterations) creates unnecessary short-lived objects. This leads to Garbage Collection (GC) churn that drops FPS.
+**Action:** Precompute derived string properties (like replacing underscores with spaces) outside the hot loop (e.g., upon data subscription) and augment the shared state interface to retain them, passing the precomputed values down to avoid redundant allocations on every frame.

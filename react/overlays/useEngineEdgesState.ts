@@ -4,6 +4,7 @@ import type { GraphHandle } from "../Graph";
 export interface EdgesState {
   edgeData: Float32Array | null;
   edgeTypeKeys: string[];
+  edgeTypeLabels: string[];
   focusIdx: number;
 }
 
@@ -15,6 +16,7 @@ export function useEngineEdgesState(
   const edgesRef = useRef<EdgesState>({
     edgeData: null,
     edgeTypeKeys: [],
+    edgeTypeLabels: [],
     focusIdx: -1,
   });
 
@@ -24,7 +26,8 @@ export function useEngineEdgesState(
     if (!engine) return;
     const unsub = engine.subscribeEdges(
       ({ edgeData, focusIdx, edgeTypeKeys }) => {
-        edgesRef.current = { edgeData, focusIdx, edgeTypeKeys };
+        const edgeTypeLabels = edgeTypeKeys.map((k) => k.replaceAll("_", " "));
+        edgesRef.current = { edgeData, focusIdx, edgeTypeKeys, edgeTypeLabels };
         dirtyRef.current = true;
       },
     );
