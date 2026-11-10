@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-10 - [Precompute string replacements outside render loops]
+**Learning:** Calling string allocation methods like `.replaceAll()` directly inside hot, per-frame render loops (e.g. iterating over edges in `EdgeLabelsOverlay`) creates massive amounts of short-lived objects leading to Garbage Collection churn.
+**Action:** Precompute derived strings (like `edgeTypeLabels`) from `edgeTypeKeys` upon data subscription, avoiding allocations inside the frame rendering loop while preserving the original keys in the data model.
