@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-10 - [Avoid overlay render loops when the scene is not visible]
+**Learning:** React canvas overlays (like CompoundFramesOverlay, EdgeLabelsOverlay) use `requestAnimationFrame` to continuously render frames. When the graph scene is scrolled out of view, continuing to run the render loops wastes CPU and battery.
+**Action:** Modified `react/overlays/useOverlayRenderLoop.ts` to wrap the canvas element with an `IntersectionObserver`. The loop skips `ctx.clearRect` and `renderFrame` when the canvas is not intersecting the viewport, effectively pausing overhead while preserving the effect's lifecycle and dependencies.
