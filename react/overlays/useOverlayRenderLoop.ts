@@ -13,13 +13,22 @@ export function useOverlayRenderLoop(
     const cvs = canvasRef.current;
     if (!cvs) return;
 
+    let isVisible = true;
+    const observer = new IntersectionObserver((entries) => {
+      isVisible = entries[0].isIntersecting;
+      if (isVisible) {
+        dirtyRef.current = true;
+      }
+    });
+    observer.observe(cvs);
+
     // Force a redraw whenever dependencies (like themes or node state) change
     // and recreate the effect, ensuring the UI doesn't become stale.
     dirtyRef.current = true;
 
     const tick = () => {
       const ctx = cvs.getContext("2d");
-      if (!ctx || !dirtyRef.current) {
+      if (!ctx || !dirtyRef.current || !isVisible) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
@@ -34,6 +43,7 @@ export function useOverlayRenderLoop(
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
+      observer.disconnect();
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
   }, [canvasRef, dirtyRef, renderFrame]);
