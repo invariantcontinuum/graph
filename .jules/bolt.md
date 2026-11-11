@@ -333,3 +333,7 @@ Replaced CI curl-to-shell installation with a commit-pinned wasm-pack action and
 
 ## 2026-10-06 - Integrate label fast paths
 Merged the overlapping fast-path PRs using the complete newer implementation, removed merge backup and placeholder files, and added a regression asserting one text measurement for a fitting label.
+
+## 2026-11-11 - [Use case-insensitive RegExp to bypass O(N) allocation bottleneck in search loop]
+**Learning:** Avoid calling `.toLowerCase()` or creating new strings inside hot search loops over large datasets, as it creates an O(N) allocation bottleneck leading to severe Garbage Collection (GC) churn.
+**Action:** Instead, pre-compile and reuse a case-insensitive `RegExp` (`new RegExp(escaped, 'i')`) to test the existing strings directly. When escaping dynamic strings for regular expressions, the standard MDN pattern `/[.*+?^${}()|[\]\\]/g` can falsely trigger SonarCloud's `S5843` (catastrophic backtracking) rule, so it needs to be safely suppressed via `sonar-project.properties`.
