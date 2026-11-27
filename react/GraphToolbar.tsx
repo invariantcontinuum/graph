@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { GraphHandle, LayoutType } from "./index";
 
 export interface GraphToolbarProps {
@@ -17,6 +17,7 @@ export function GraphToolbar({
   onThemeToggle,
 }: GraphToolbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFailed, setSearchFailed] = useState(false);
 
   const handleFocus = useCallback((e: React.FocusEvent<HTMLElement>) => {
     if (e.currentTarget.matches(":focus-visible")) {
@@ -38,13 +39,28 @@ export function GraphToolbar({
     e.currentTarget.style.filter = "";
   }, []);
 
+  const [noResults, setNoResults] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const handleSearch = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setNoResults(false);
+      const input = searchInputRef.current;
+      input?.setCustomValidity("");
       if (!graphRef.current || !searchQuery.trim()) return;
+
       const found = graphRef.current.search(searchQuery.trim());
       if (found.length > 0) {
+        setSearchFailed(false);
         graphRef.current.focusFit(found[0].id, 40);
+      } else {
+        setSearchFailed(true);
+        setNoResults(true);
+        if (input) {
+          input.setCustomValidity("No nodes found");
+          input.reportValidity();
+        }
       }
     },
     [graphRef, searchQuery],
@@ -73,11 +89,18 @@ export function GraphToolbar({
     >
       <form onSubmit={handleSearch} style={{ display: "flex", gap: 4 }}>
         <input
+          ref={searchInputRef}
           type="search"
-          placeholder="Search nodes…"
+          placeholder={noResults ? "No nodes found" : "Search nodes…"}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setSearchFailed(false);
+            setNoResults(false);
+            e.target.setCustomValidity("");
+          }}
           aria-label="Search nodes"
+          aria-invalid={searchFailed}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onMouseEnter={handleMouseEnter}
@@ -85,10 +108,10 @@ export function GraphToolbar({
           style={{
             padding: "4px 8px",
             borderRadius: 4,
-            border: `1px solid ${themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
+            border: `1px solid ${searchFailed ? "#ef4444" : themeMode === "dark" ? "#475569" : "#cbd5e1"}`,
             background: themeMode === "dark" ? "#0f172a" : "#f1f5f9",
             color: "inherit",
-            transition: "filter 0.2s",
+            transition: "filter 0.2s, border-color 0.2s",
           }}
         />
         <button
