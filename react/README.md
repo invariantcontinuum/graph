@@ -214,3 +214,6 @@ See `index.ts` — the public surface is:
   `themeOverrides`.
 - Types: `GraphSnapshot`, `NodeData`, `EdgeData`, `LayoutType`,
   `LegendSummary`, `GraphTheme`, `GraphThemeOverrides`, and more.
+
+### Toolbar Search Validation
+When using `GraphToolbar`, if a user submits a search that returns no nodes, the component uses HTML5 constraint validation to surface an accessible tooltip on the input natively, rather than failing silently. This requires no additional dependencies and hooks into the existing browser accessible error feedback mechanism.
