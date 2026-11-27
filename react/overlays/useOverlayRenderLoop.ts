@@ -8,6 +8,7 @@ export function useOverlayRenderLoop(
 ) {
   useDprCanvas(canvasRef, dirtyRef);
   const rafRef = useRef<number | null>(null);
+  const isVisibleRef = useRef<boolean>(true);
 
   useEffect(() => {
     const cvs = canvasRef.current;
@@ -19,22 +20,48 @@ export function useOverlayRenderLoop(
 
     const tick = () => {
       const ctx = cvs.getContext("2d");
-      if (!ctx || !dirtyRef.current) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
+      if (ctx && dirtyRef.current && isVisibleRef.current) {
+        dirtyRef.current = false;
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        renderFrame(ctx, cvs);
       }
 
-      dirtyRef.current = false;
-      ctx.clearRect(0, 0, cvs.width, cvs.height);
-      renderFrame(ctx, cvs);
-
-      rafRef.current = requestAnimationFrame(tick);
+      if (isVisibleRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
     };
 
-    rafRef.current = requestAnimationFrame(tick);
+    // Pause the render loop entirely when the canvas is scrolled out of view
+    // to save CPU; restart it (with a forced redraw) when it comes back.
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver((entries) => {
+        if (entries[0]) {
+          const visible = entries[0].isIntersecting;
+          isVisibleRef.current = visible;
+          if (visible) {
+            dirtyRef.current = true;
+            if (rafRef.current === null) {
+              rafRef.current = requestAnimationFrame(tick);
+            }
+          }
+        }
+      });
+      observer.observe(cvs);
+    }
+
+    if (rafRef.current === null && isVisibleRef.current) {
+      rafRef.current = requestAnimationFrame(tick);
+    }
 
     return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      if (observer) observer.disconnect();
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [canvasRef, dirtyRef, renderFrame]);
 }
